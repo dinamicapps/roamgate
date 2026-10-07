@@ -1,0 +1,30 @@
+# _archivos.yml — manifiesto de adjuntos gestionado por agentos. NO editar a mano.
+archivos:
+    - nombre: T-004-viabilidad-herdr.md
+      proposito: ""
+      ts: "2026-10-07T17:07:01Z"
+      autor: juliodiazr@dinamicapps.co
+    - nombre: T-002-anatomia-tabs.md
+      proposito: ""
+      ts: "2026-10-07T17:08:55Z"
+      autor: juliodiazr@dinamicapps.co
+    - nombre: T-001-anatomia-file-manager.md
+      proposito: ""
+      ts: "2026-10-07T17:09:22Z"
+      autor: juliodiazr@dinamicapps.co
+    - nombre: T-003-matriz-estado.md
+      proposito: ""
+      ts: "2026-10-07T17:17:35Z"
+      autor: juliodiazr@dinamicapps.co
+    - nombre: T-006-ficha-a2.md
+      proposito: ""
+      ts: "2026-10-07T17:25:43Z"
+      autor: juliodiazr@dinamicapps.co
+    - nombre: T-005-ficha-a1.md
+      proposito: ""
+      ts: "2026-10-07T17:26:58Z"
+      autor: juliodiazr@dinamicapps.co
+    - nombre: T-007-ficha-b.md
+      proposito: ""
+      ts: "2026-10-07T17:30:00Z"
+      autor: juliodiazr@dinamicapps.co

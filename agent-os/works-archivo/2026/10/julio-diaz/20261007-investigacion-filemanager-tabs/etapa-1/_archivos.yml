@@ -1,0 +1,10 @@
+# _archivos.yml — manifiesto de adjuntos gestionado por agentos. NO editar a mano.
+archivos:
+    - nombre: 01-discovery-investigacion.md
+      proposito: ""
+      ts: "2026-10-07T16:43:12Z"
+      autor: juliodiazr@dinamicapps.co
+    - nombre: cas-cobertura-insumo.md
+      proposito: ""
+      ts: "2026-10-07T16:43:13Z"
+      autor: juliodiazr@dinamicapps.co

@@ -1,0 +1,10 @@
+# _archivos.yml — manifiesto de adjuntos gestionado por agentos. NO editar a mano.
+archivos:
+    - nombre: bitacora.md
+      proposito: ""
+      ts: "2026-10-07T17:09:57Z"
+      autor: juliodiazr@dinamicapps.co
+    - nombre: insumo-consolidado.md
+      proposito: ""
+      ts: "2026-10-07T17:36:13Z"
+      autor: juliodiazr@dinamicapps.co

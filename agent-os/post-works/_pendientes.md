@@ -30,6 +30,11 @@ Usar `/post-works status` para ver conteos y antiguedad agregada.
 | id | resumen | work_origen | volcado_en | prioridad | estado |
 |----|---------|-------------|------------|-----------|--------|
 | <!-- ejemplo: HG-T003-01 | Logging de auth poco granular para investigar fallos productivos | 20260502-mejoras-auth | 2026-05-02 | media | pendiente --> |
+| FM-01 | Roamgate no suscribe el evento `tab.moved` de Herdr (`server/src/connections/runtime.ts:73`); un reorden de tabs hecho desde otro cliente tarda hasta el poll de respaldo de 5 s en verse | 20261007-investigacion-filemanager-tabs | 2026-10-07 | media | pendiente |
+| FM-02 | Esc no cierra el panel de archivos del Inspector: solo el modal lo registra (`web/src/components/FileExplorerDialog.tsx:689`) y el panel pasa `showCloseButton=false` | 20261007-investigacion-filemanager-tabs | 2026-10-07 | baja | pendiente |
+| FM-03 | Modal `FileExplorerDialog` sin importadores (codigo muerto, `web/src/components/FileExplorerDialog.tsx:108`) | 20261007-investigacion-filemanager-tabs | 2026-10-07 | baja | pendiente |
+| FM-04 | Al remover un worktree quedan claves huerfanas de cache de previews (por workspaceId) y de preferencias del Inspector en localStorage | 20261007-investigacion-filemanager-tabs | 2026-10-07 | baja | pendiente |
+| FM-05 | Hipotesis no probada en navegador: el menu contextual del explorador (`position:fixed`, sin portal) bajo `.workspace-stage` con `container-type: size` podria posicionarse o recortarse mal | 20261007-investigacion-filemanager-tabs | 2026-10-07 | media | pendiente |
 
 ## Items archivados
 
