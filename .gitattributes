@@ -1,0 +1,2 @@
+# Scripts de shell siempre con LF (los hooks de agent-os los ejecuta bash)
+*.sh text eol=lf
