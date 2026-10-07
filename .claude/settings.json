@@ -1,0 +1,156 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/agent-os-hooks/work-block-direct-edits.sh\"",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/agent-os-hooks/actividad-pre-edit.sh\"",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/agent-os-hooks/block-db-clients.sh\"",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/agent-os-hooks/block-remote-merge.sh\"",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__sqlserver__execute_query|mcp__sqlserver__execute_procedure",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/agent-os-hooks/block-destructive-sql.sh\"",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__.*playwright.*__browser_(evaluate|run_code(_unsafe)?)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/agent-os-hooks/work-block-browser-js.sh\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/agent-os-hooks/session-control-start.sh\"",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/agent-os-hooks/bridge-origen-start.sh\"",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/agent-os-hooks/alfred-gobierno-start.sh\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/agent-os-hooks/actividad-post-edit.sh\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/agent-os-hooks/alfred-gobierno-prompt.sh\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/agent-os-hooks/session-control-end.sh\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "mcp__claude-bridge__bridge_estado",
+      "mcp__claude-bridge__bridge_listar_grupos",
+      "mcp__claude-bridge__bridge_listar_miembros",
+      "mcp__claude-bridge__bridge_listar_instancias",
+      "mcp__claude-bridge__bridge_historial",
+      "mcp__claude-bridge__bridge_ver_mensaje",
+      "mcp__claude-bridge__bridge_leer",
+      "mcp__claude-bridge__bridge_esperar",
+      "mcp__claude-bridge__bridge_estado_solicitud",
+      "mcp__claude-bridge__bridge_crear_grupo",
+      "mcp__claude-bridge__bridge_unirse",
+      "mcp__claude-bridge__bridge_salir",
+      "mcp__claude-bridge__bridge_publicar",
+      "mcp__claude-bridge__bridge_dm",
+      "mcp__claude-bridge__bridge_cambiar_estado",
+      "mcp__claude-bridge__bridge_disponibilidad",
+      "mcp__claude-bridge__bridge_responder_solicitud",
+      "mcp__claude-bridge__bridge_marcar_hilo_cerrado",
+      "mcp__claude-bridge__bridge_invitar",
+      "mcp__claude-bridge__bridge_actualizar_grupo",
+      "mcp__claude-bridge__bridge_archivar_grupo",
+      "mcp__claude-bridge__bridge_retirar_miembro",
+      "mcp__claude-bridge__bridge_solicitar_alto_total",
+      "mcp__claude-bridge__bridge_confirmar_alto_total",
+      "mcp__claude-bridge__bridge_reanudar_grupo",
+      "mcp__claude-bridge__bridge_subir_adjunto",
+      "mcp__claude-bridge__bridge_listar_adjuntos",
+      "mcp__claude-bridge__bridge_obtener_adjunto",
+      "mcp__claude-bridge__bridge_solicitar_canal_humano",
+      "mcp__claude-bridge__bridge_listar_slots_disponibles",
+      "mcp__claude-bridge__bridge_enviar_humano",
+      "Bash(.claude/agent-os-bin/agentos.exe *)",
+      "Bash(./.claude/agent-os-bin/agentos.exe *)"
+    ]
+  }
+}

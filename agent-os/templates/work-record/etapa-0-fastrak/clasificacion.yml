@@ -1,0 +1,9 @@
+# Estado de items del manifiesto tras F0-aceptacion.
+# Cada item viene de `cas_por_participante[{mi-instancia}]` o `fases[].ejecuta == colaborador:{mi-instancia}`.
+manifiesto_version_evaluada: 0
+items: []
+# Ejemplo de item:
+# - ref: F-002
+#   estado: aprobado          # aprobado | rechazado | pendiente_autorizacion_a | pendiente_autorizacion_b | rechazado-veto-usuario-colaborador
+#   razon: "{si rechazado o pendiente}"
+#   solicitudes_relacionadas: [A-001]

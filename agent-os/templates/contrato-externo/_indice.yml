@@ -1,0 +1,19 @@
+# Indice de contratos externos del repo
+# Ubicacion: .documentacion/contratos-externos/_indice.yml
+#
+# Cada entrada resume un contrato. El contrato completo vive en {archivo}.
+#
+# Campo ultima_prueba_exitosa se sincroniza desde el contrato individual cuando
+# una sesion del grupo bridge cierra con evidencia de ambos lados.
+#
+# El abordaje de /alfred lee este indice al iniciar y reporta
+# contratos stale (> 3 meses sin prueba exitosa o null).
+
+contratos:
+  # Ejemplo:
+  # - sistema_destino: licenciamiento
+  #   endpoint_logico: validar-activacion
+  #   archivo: licenciamiento/validar-activacion.yml
+  #   version_actual: 3
+  #   ultima_prueba_exitosa: 2026-04-19
+  #   rol_aqui: consumidor

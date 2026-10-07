@@ -1,0 +1,51 @@
+# Contrato externo versionado
+# Ubicacion en repo consumidor/productor:
+#   .documentacion/contratos-externos/{sistema-destino}/{endpoint-logico}.yml
+
+contrato_version: 1
+sistema_local: "{NOMBRE_REPO_LOCAL}"
+sistema_destino: "{NOMBRE_SISTEMA_REMOTO}"
+rol_aqui: consumidor   # consumidor | productor
+
+# ultima_prueba_exitosa se rellena solo cuando una sesion del grupo bridge cierra en verde
+# con evidencia de ambos lados (ambos_lados_confirmaron: true).
+ultima_prueba_exitosa:
+  fecha: null            # YYYY-MM-DD o null si nunca se probo
+  work: null             # nombre del work-record director
+  grupo: null            # nombre del grupo bridge
+  sesion: null           # slug de la sesion
+  ambos_lados_confirmaron: false
+
+work_que_emitio: "{NOMBRE_WORK}"
+grupo_bridge: "{NOMBRE_GRUPO}"
+
+endpoint:
+  metodo: "{GET|POST|PUT|DELETE}"
+  ruta_relativa: "/api/v1/{path}"
+  # URL base NO vive aqui. Resolucion en runtime:
+  # - Desarrollo: test-env.local.json -> sistemas.{sistema_destino}.url
+  # - Produccion: Web.config / appsettings.json segun convencion del repo
+
+payload_envia:
+  - campo: "{nombre}"
+    tipo: "{string|int|datetime-iso|enum[...]|...}"
+    obligatorio: true
+    descripcion: "{proposito}"
+
+respuesta_espera:
+  - campo: "{nombre}"
+    tipo: "{tipo}"
+    obligatorio: true
+
+errores_posibles:
+  - codigo: "{HTTP_STATUS}"
+    significado: "{descripcion}"
+
+referencias_codigo:
+  - "{ruta-archivo}:{lineas}"
+
+changelog:
+  - version: 1
+    fecha: "{YYYY-MM-DD}"
+    cambios: "emision inicial"
+    ultima_prueba_exitosa_en_v1: null

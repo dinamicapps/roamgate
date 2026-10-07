@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://dinamicapps.co/schemas/sprints-local.schema.json",
+  "title": "sprints-local.json — Configuracion local por proyecto de integracion Zoho Sprints",
+  "description": "Schema de .claude/sprints-local.json. Creado por el skill zoho-sprints-bootstrap. Contiene valores por-instalacion (no versionables): team_id, project_id, sprint activo, allowed_owners, valid_status_ids.",
+  "type": "object",
+  "required": ["schema_version", "team", "project", "allowed_owners", "valid_status_ids"],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Version del schema. Permite migrar en el futuro."
+    },
+    "creado_en": {
+      "type": "string",
+      "format": "date",
+      "description": "Fecha de creacion del archivo."
+    },
+    "creado_por": {
+      "type": "string",
+      "description": "Herramienta que creo el archivo. Esperado: zoho-sprints-bootstrap."
+    },
+    "team": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" }
+      }
+    },
+    "project": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" }
+      }
+    },
+    "current_sprint": {
+      "type": ["object", "null"],
+      "properties": {
+        "id": { "type": ["string", "null"] },
+        "name": { "type": ["string", "null"] }
+      },
+      "description": "Sprint activo en el momento de la configuracion. Puede estar null si no hay sprints activos al crear."
+    },
+    "allowed_owners": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Mapa user_id -> nombre de usuarios cuyos items filtra este dev. El flujo normal tiene 1 entry (el dev); casos especiales pueden tener mas."
+    },
+    "valid_status_ids": {
+      "type": "object",
+      "required": ["to_do", "in_progress", "para_probar", "done"],
+      "properties": {
+        "to_do": { "type": "string" },
+        "in_progress": { "type": "string" },
+        "para_probar": { "type": "string" },
+        "done": { "type": "string" }
+      }
+    }
+  }
+}

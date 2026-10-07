@@ -1,0 +1,22 @@
+# Plantilla - sera reemplazada con el manifiesto descargado del bridge.
+# Schema completo en agent-os/skills/bridge-session/references/manifiesto-versionado.md
+manifiesto_version: 0
+emitido: "{ISO-8601}"
+hash: "{sha256}"
+work: "{nombre-director-kebab}"
+director:
+  instancia: "{nombre}"
+  repo: "{url}"
+  branch: "{branch}"
+objetivo: "{texto}"
+alcance:
+  incluye: []
+  excluye: []
+analisis_consolidado: |
+  {resumen}
+fases: []
+cas_por_participante: {}
+changelog:
+  - version: 0
+    fecha: "{timestamp}"
+    cambios: "plantilla"

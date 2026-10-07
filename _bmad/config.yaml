@@ -1,0 +1,8 @@
+﻿# Configuracion de agentes BMAD - Agent OS DinamicAPPS
+user_name: ""
+communication_language: "Spanish"
+document_output_language: "Spanish"
+work_output_path: null
+work_records: "agent-os/work-records"
+specs: "agent-os/specs"
+project_knowledge: ".documentacion"

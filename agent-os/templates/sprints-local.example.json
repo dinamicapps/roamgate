@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "creado_en": "2026-04-24",
+  "creado_por": "zoho-sprints-bootstrap",
+  "team": {
+    "id": "754516668",
+    "name": "DinamicAPPS"
+  },
+  "project": {
+    "id": "114312000000172003",
+    "name": "eMedico"
+  },
+  "current_sprint": {
+    "id": "114312000000944075",
+    "name": "Sprint 2026-04-20"
+  },
+  "allowed_owners": {
+    "114312000000002003": "JULIO CESAR DIAZ RUBIANO"
+  },
+  "valid_status_ids": {
+    "to_do": "114312000000036001",
+    "in_progress": "114312000000036003",
+    "para_probar": "114312000000036005",
+    "done": "114312000000036007"
+  }
+}

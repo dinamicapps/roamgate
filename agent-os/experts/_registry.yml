@@ -1,0 +1,737 @@
+# Registro de Expertos -- Agent OS
+#
+# DOS tipos de expertos:
+#
+# tipo: "especializado"
+#   Participan cuando el usuario los activa (sugeridos automaticamente o invocados manualmente).
+#   Estructura BMAD: SKILL.md + references/ -- se invocan como skills completos.
+#   momento: pre-discovery | post-discovery
+#   (puede invocarse en otras etapas via condicion HALT en work.md)
+#
+# tipo: "calidad"
+#   Participan SIEMPRE de forma automatica en los gates.
+#   Estructura BMAD: SKILL.md + references/ -- se invocan con capacidad especifica.
+#   No requieren activacion por el usuario.
+#
+# AUTORIDAD DE DESTILACION (capacidad DT):
+#   Varios expertos declaran DT. Quien tiene la ultima palabra sobre el CONTENIDO
+#   de un standard cuando dos expertos chocan se define en
+#   agent-os/skills/destilar-standard/SKILL.md, en la seccion de autoridad y
+#   resolucion de conflictos (tabla por dominio + protocolo de 3 pasos). NO duplicar aqui.
+#
+# ---------------------------------------------------------------------------
+# SENALES POR MODO (senales_por_modo)
+# ---------------------------------------------------------------------------
+# Cada experto declara sus senales agrupadas por modo del work.
+# Modos soportados: normal | investigacion | documentacion | hotfix (evolucion deprecado -> ruta rediseno-ui)
+#
+# Semantica por modo (valida para todos los expertos):
+#
+#   normal          -> senales que INVITAN al experto al analisis (pre-discovery
+#                      o post-discovery segun 'momento'). Rol de invitado.
+#
+#   evolucion (deprecado -> ruta rediseno-ui) -> legacy: senales que antes
+#                      proponian activar modo:evolucion (deprecado). Se conservan
+#                      para works historicos; Sally asumia invitada en E1/E2/E4 LE/VE.
+#
+#   investigacion   -> senales que proponen al usuario activar modo:investigacion.
+#                      Cuando se confirma, el experto asume el rol_por_modo
+#                      declarado (tipicamente Mary como anfitriona de E3).
+#
+#   documentacion   -> senales que proponen al usuario activar modo:documentacion.
+#                      Cuando se confirma, el experto asume el rol_por_modo
+#                      declarado (tipicamente Paige como anfitriona de E2-E3).
+#
+# Un experto puede no tener entradas para un modo -> no participa en ese modo.
+#
+# ROL POR MODO (rol_por_modo)
+# Cada experto declara que rol juega en cada modo:
+#
+#   invitada-pre-discovery   invitada al analisis durante el abordaje, antes de definir
+#                            alcance (no hay Etapa 0/1 en modo normal; el abordaje la reemplazo)
+#   invitada-post-discovery  invitada al analisis despues de discovery
+#   anfitriona-E1 .. E4      conduce la etapa N con prefijo A-{experto}
+#   invitada-E1 .. E4        invitada a la etapa N por el anfitrion
+#   anfitrion-E3-pool        host de E3 que coordina el pool de ejecutores+invitables;
+#                            autoridad de coordinacion pero last-word por dominio (Amelia=codigo,
+#                            Atlas=cross-lens, Sentinel=seguridad). Contrato en
+#                            agent-os/skills/host-protocol/etapas/etapa-3.md. NO duplicar aqui.
+#
+# ---------------------------------------------------------------------------
+# SENALES POR CODEBASE (senales_codebase)
+# ---------------------------------------------------------------------------
+# Independientes del modo. Invitan al experto cuando el patron matchea.
+#   tipo: "grep"         -> busca patron en contenido de archivos
+#   tipo: "glob"         -> busca archivos por patron de ruta
+#   tipo: "ausencia"     -> se activa si NO hay archivos en el area mencionada
+#   tipo: "escalamiento" -> se activa si el abordaje escalo el analisis a nivel Profundo
+#
+# CAMPO RETIRADO: `genera:` (los 10 de la seccion expertos). Nombraba un archivo
+# por experto (experto-{nombre}-analisis.md) que la politica de archivos
+# consolidados de 2026-04-30 elimino. Tenia cero consumidores. Los `genera:` de la
+# seccion `calidad:` son otra cosa (artefactos de gate vivos) y siguen vigentes.
+
+expertos:
+
+  mary-analyst:
+    nombre: "Mary"
+    rol: "Strategic Business Analyst"
+    rol_bmad: "bmad-agent-mary"
+    archivo: "agent-os/experts/bmad-agent-mary/SKILL.md"
+    momento: "pre-discovery"
+    descripcion_corta: "Clarifica el problema de negocio, usuarios y propuesta de valor antes de definir el alcance tecnico. Destila standards de dominio de negocio cuando aparecen en E1 (capacidad DT)."
+    etapa1:
+      - capacidad: "DT"
+        # <!-- FUENTE: agent-os/skills/destilar-standard/SKILL.md. Procedimiento DT y ejemplo de dominio de Mary viven alli. NO duplicar -- editar la fuente. -->
+      - capacidad: "DS"
+        # <!-- FUENTE: agent-os/skills/destilar-sesion/SKILL.md. Cruce documental y clasificacion de la ambiguedad viven alli. Mary asiste; Paige conduce. NO duplicar -- editar la fuente. -->
+    capacidades_disenar:
+      - capacidad: "DI"
+        # <!-- FUENTE: agent-os/experts/bmad-agent-mary/references/disenar-modo-inicial.md. NO duplicar -- editar la fuente. -->
+      - capacidad: "DRT"
+        # <!-- FUENTE: agent-os/experts/bmad-agent-mary/references/disenar-modo-retroceso.md. NO duplicar -- editar la fuente. -->
+    capacidades_expediente:
+      - capacidad: "EX"
+        # <!-- FUENTE: agent-os/experts/bmad-agent-mary/references/expediente-cumplimiento.md. NO duplicar -- editar la fuente. -->
+    etapa3_investigacion:
+      - capacidad: "RM"
+        # <!-- FUENTE: agent-os/experts/bmad-agent-mary/references/research-multi-repo.md. NO duplicar -- editar la fuente. -->
+    senales_por_modo:
+      normal:
+        - "nueva funcionalidad"
+        - "nuevo modulo"
+        - "nuevo componente"
+        - "analizar"
+        - "entender"
+        - "explorar opciones"
+        - "evaluar"
+        - "idea"
+        - "concepto"
+        - "prior art"
+        - "que existe ya"
+        - "como lo resuelven otros"
+      investigacion:
+        # Matchean -> el abordaje de Alfred (fase 4) propone la ruta correspondiente y confirma con el usuario.
+        # Al confirmar, Mary asume rol anfitriona-E3 ejecutando technical-research,
+        # domain-research, market-research o document-project segun sub-capability.
+        - "investigacion"
+        - "investigacion pura"
+        - "insumo para"
+        - "analisis de opciones"
+        - "evaluar alternativas"
+        - "estudio"
+        - "research"
+        - "viabilidad"
+        - "benchmark"
+        - "estado del arte"
+        - "comparar tecnologias"
+        - "preparar decision"
+        # Senales para document-project (brownfield code analysis sub-capability).
+        # IMPORTANTE: NO agregar tokens con "documentar" aqui - modo investigacion
+        # produce insumo consumible por otro work, NO documento entregable a un
+        # humano lector (eso es modo documentacion, anfitriona Paige). Las senales
+        # aqui son inequivocas hacia "leer/auditar/explorar codigo" sin redactar
+        # documento final.
+        - "analisis de codigo"
+        - "analizar codigo"
+        - "auditar codigo"
+        - "auditoria de codigo"
+        - "analisis brownfield"
+        - "inventario tecnico"
+        - "mapear codigo"
+        - "explorar codebase"
+        # Senales para research-multi-repo (capacidad RM via bridge). Disparan durante
+        # el abordaje (Fase 4) la pregunta de sub_modo single-repo vs multi-repo. Si el
+        # usuario elige multi-repo, el abordaje invoca bridge-session con tipo
+        # investigacion-multi-repo.
+        - "integracion entre sistemas"
+        - "integracion entre repos"
+        - "analizar integracion"
+        - "auditar integracion"
+        - "documentar integracion"
+        - "interfaz entre sistemas"
+        - "contrato entre sistemas"
+        - "registry entre repos"
+        - "migrar a registry"
+        - "legacy a registry"
+    rol_por_modo:
+      normal: "invitada-pre-discovery"
+      investigacion: "anfitriona-E1-E3"
+      documentacion: "invitada-E1"
+    senales_codebase:
+      - tipo: "ausencia"
+        descripcion: "no hay archivos previos en el area mencionada en la descripcion del trabajo"
+
+  john-pm:
+    nombre: "John"
+    rol: "Product Manager"
+    rol_bmad: "bmad-agent-john"
+    archivo: "agent-os/experts/bmad-agent-john/SKILL.md"
+    momento: "pre-discovery"
+    descripcion_corta: "Define requisitos, prioriza con MoSCoW y valida que el alcance sea coherente con el producto"
+    senales_por_modo:
+      normal:
+        - "requisitos"
+        - "priorizar"
+        - "backlog"
+        - "epica"
+        - "historia de usuario"
+        - "producto"
+        - "funcionalidad de negocio"
+        - "regla de negocio"
+        - "flujo de negocio"
+    rol_por_modo:
+      normal: "invitado-pre-discovery"
+    senales_codebase:
+      - tipo: "glob"
+        pattern: "agent-os/product/roadmap/*.yml"
+        descripcion: "existe roadmap de producto -- el trabajo puede afectar epicas activas"
+
+  sally-ux:
+    nombre: "Sally"
+    rol: "UX Designer"
+    rol_bmad: "bmad-agent-sally"
+    archivo: "agent-os/experts/bmad-agent-sally/SKILL.md"
+    momento: "post-discovery"
+    descripcion_corta: "Analiza flujos de usuario, usabilidad e interfaz. Entra post-discovery para trabajar con el alcance ya definido. Destila standards de UX/diseno cuando convenciones tacitas aparecen en E1 (capacidad DT). Emite el veredicto de usabilidad de la rubrica CU en E4 (capacidad VU)."
+    etapa1:
+      - capacidad: "DT"
+        # <!-- FUENTE: agent-os/skills/destilar-standard/SKILL.md. Procedimiento DT y ejemplo de dominio de Sally viven alli. NO duplicar -- editar la fuente. -->
+    etapa4:
+      - capacidad: "VU"
+        # <!-- FUENTE: agent-os/skills/host-protocol/etapas/etapa-4/calidad-ui.md seccion "Roles y produccion". Veredicto CU-3 + juicio perceptual CU-4 vive alli. NO duplicar -- editar la fuente. -->
+    senales_por_modo:
+      normal:
+        - "pantalla"
+        - "formulario"
+        - "flujo de usuario"
+        - "usabilidad"
+        - "interfaz"
+        - "diseno"
+        - "navegacion"
+        - "experiencia"
+        - "vista"
+        - "layout"
+      evolucion:  # deprecado -> ruta rediseno-ui
+        # DEPRECADO: modo evolucion en retiro. Senales de rediseno UI ahora activan
+        # la ruta rediseno-ui (ver senales_por_ruta.rediseno-ui abajo).
+        # Se conserva (legacy) para works historicos que declaran modo: evolucion.
+        - "redisenar"
+        - "rediseno"
+        - "evolucionar"
+        - "evolucion"  # legacy: token literal del modo deprecado
+        - "simplificar"
+        - "reorganizar"
+        - "densidad"
+        - "demasiados clicks"
+        - "muchos pasos"
+        - "ventana pesada"
+        - "formulario largo"
+        - "flujo pesado"
+        - "ux"
+        - "carga cognitiva"
+    senales_por_ruta:
+      rediseno-ui:
+        # Matchean -> abordaje propone ruta rediseno-ui (spec 2026-06-30 seccion 3.1).
+        # Sally asume rol anfitriona de las 4 fases con capacidad LE.
+        - "rediseno ui"
+        - "rediseno de vista"
+        - "re-alinear vista"
+        - "ajustar componentes"
+        - "ajustar visualizacion"
+        - "ajustar layout"
+        - "migrar vista al sistema visual"
+        - "adoptar tokens"
+        - "adoptar componentes"
+        - "sanear pagina"
+        - "deuda de css"
+        - "css inline"
+        - "componente duplicado"
+    rol_por_modo:
+      normal: "invitada-post-discovery + invitada-E4-condicional"
+      evolucion: "invitada-E1-E2-E4"  # legacy: modelo viejo (works abiertos antes de 2026-05-05, cuando E1 corria en todos los modos). Modo deprecado -> ruta rediseno-ui (ver rol_por_ruta). Works evolucion nuevos no se abren.
+    rol_por_ruta:
+      rediseno-ui: "anfitriona"
+    senales_codebase:
+      - tipo: "glob"
+        pattern: "**/*.cshtml"
+      - tipo: "glob"
+        pattern: "**/*.html"
+      - tipo: "grep"
+        pattern: "ng-model|ng-controller|kendo|<form|angular"
+
+  atlas-techlead:
+    nombre: "Atlas"
+    rol: "Senior Technical Lead"
+    rol_bmad: "bmad-agent-atlas"
+    archivo: "agent-os/experts/bmad-agent-atlas/SKILL.md"
+    momento: "post-discovery"
+    descripcion_corta: "Senior Technical Lead multidisciplinar. Su capa de conocimiento de dominio (12 lentes: ANA/DOC/PRD/UXD/ARQ/DEV/TST/SPR/FLW/SEC/E2E/DATA) es una vista materializada read-only de los especialistas, regenerada por reconstruir-atlas; su FUNCION propia (ejecutor pool E3 con Amelia, quick-flow, sabueso bugfix, router de lentes) es su ADN real. Aplica la lente de principios de diseno al codificar y revisar."
+    etapa3:
+      - capacidad: "DT"
+        # <!-- FUENTE: agent-os/skills/destilar-standard/SKILL.md. Procedimiento DT y ejemplo de dominio de Atlas viven alli. NO duplicar -- editar la fuente. -->
+      - capacidad: "DS"
+        # <!-- FUENTE: agent-os/skills/host-protocol/etapas/etapa-3.md seccion "Anfitrion por modo". El contrato del pool de ejecucion vive alli. NO duplicar -- editar la fuente. -->
+      - capacidad: "FLW"
+        # detalle en agent-os/experts/bmad-agent-atlas/SKILL.md tabla Capabilities (fila FLW)
+    senales_por_modo:
+      normal:
+        - "atlas"
+        - "tech lead"
+        - "full-stack"
+        - "fast lane"
+        - "quick flow"
+        - "implementacion"
+        - "code review"
+        - "tdd"
+    # Anfitrion propio solo en las rutas de flujo propio bugfix/hotfix (rutas no
+    # gobernadas por el eje modo, ver agent-os/flujo/MATRIZ-RUTAS.md Tabla A).
+    rol_por_modo:
+      normal: "invitado-E3-cross-lens"
+    senales_codebase:
+      - tipo: "escalamiento"
+        descripcion: "el trabajo requiere ejecucion multidisciplinaria condensada en un solo agente"
+
+  winston-architect:
+    nombre: "Winston"
+    rol: "System Architect"
+    rol_bmad: "bmad-agent-winston"
+    archivo: "agent-os/experts/bmad-agent-winston/SKILL.md"
+    momento: "post-discovery"
+    descripcion_corta: "Analiza arquitectura, patrones, deuda tecnica y autorizacion estructural. Destila standards de arquitectura/backend cuando convenciones tacitas aparecen en E2 (capacidad DT). Aplica la lente de principios de diseno (SOLID + patrones) al decidir estructura. Conduce la construccion del modelo del diseno contra el codebase (capacidad CM)."
+    etapa2:
+      - capacidad: "DT"
+        # <!-- FUENTE: agent-os/skills/destilar-standard/SKILL.md. Procedimiento DT y ejemplo de dominio de Winston viven alli. NO duplicar -- editar la fuente. -->
+    capacidades_disenar:
+      - capacidad: "CM"
+        # <!-- FUENTE: agent-os/experts/bmad-agent-winston/references/construccion-modelo.md. NO duplicar -- editar la fuente. -->
+    senales_por_modo:
+      normal:
+        - "refactor"
+        - "arquitectura"
+        - "reestructurar"
+        - "nueva capa"
+        - "migracion tecnica"
+        - "modularizar"
+        - "separar responsabilidades"
+        - "diseno tecnico"
+        - "modelo del diseno"
+        - "foco"
+        - "construir el modelo"
+      investigacion:
+        # En modo investigacion Winston sigue como anfitrion de E2 (plan de frentes
+        # de investigacion). Estas senales refuerzan su invitacion a E2.
+        - "arquitectura de opciones"
+        - "trade-offs tecnicos"
+    rol_por_modo:
+      normal: "anfitrion-E2"
+      investigacion: "anfitrion-E2"
+      evolucion: "anfitrion-E2"  # legacy: modo deprecado -> ruta rediseno-ui
+    senales_codebase:
+      - tipo: "escalamiento"
+        descripcion: "el abordaje escalo el analisis a nivel Profundo"
+      - tipo: "grep"
+        pattern: "Startup\\.cs|Program\\.cs"
+      - tipo: "grep"
+        pattern: "\\[Authorize\\]|AddAuthentication|AddAuthorization|AddPolicy|RequireRole"
+        descripcion: "configuracion de autorizacion -- impacto arquitectonico"
+
+  sentinel-security:
+    nombre: "Sentinel"
+    rol: "API Security Auditor"
+    rol_bmad: "bmad-agent-sentinel"
+    archivo: "agent-os/experts/bmad-agent-sentinel/SKILL.md"
+    momento: "post-discovery"
+    descripcion_corta: "Audita APIs REST, evalua riesgo OWASP, verifica compliance, instrumenta logs de seguridad, y mantiene el standard de permisos del repo (capacidades DP/VP/DT). Invitado a /expediente cuando un requisito toca seguridad/compliance."
+    etapa1:
+      - capacidad: "DP"
+        # detalle en agent-os/experts/bmad-agent-sentinel/SKILL.md (menu On Activation) + ./references/documentar-patron-permisos.md
+      - capacidad: "DT"
+        # <!-- FUENTE: agent-os/skills/destilar-standard/SKILL.md. Procedimiento DT y ejemplo de dominio de Sentinel viven alli. NO duplicar -- editar la fuente. -->
+      - capacidad: "ER"
+        # detalle en agent-os/experts/bmad-agent-sentinel/SKILL.md (menu On Activation) + ./references/evaluacion-riesgo.md
+    etapa3:
+      obligatorio_si: "alguna tarea con tipo_tarea:codigo tiene capa_seguridad.aplica:true"
+      # <!-- FUENTE: agent-os/skills/host-protocol/etapas/etapa-3.md. Acompanamiento pre/post-flight y senal #10 de drift viven alli. NO duplicar -- editar la fuente. -->
+    etapa4:
+      - capacidad: "IL"
+        # detalle en agent-os/experts/bmad-agent-sentinel/SKILL.md (menu On Activation) + ./references/instrumentacion-logs.md
+      - capacidad: "PA"
+        # detalle en agent-os/experts/bmad-agent-sentinel/SKILL.md (menu On Activation) + ./references/pruebas-activas.md
+      - capacidad: "VP"
+        # detalle en agent-os/experts/bmad-agent-sentinel/SKILL.md (menu On Activation) + ./references/verificar-permisos-aplicados.md
+    senales_por_modo:
+      normal:
+        - "seguridad"
+        - "autenticacion"
+        - "autorizacion"
+        - "permisos"
+        - "api"
+        - "endpoint"
+        - "token"
+        - "jwt"
+        - "compliance"
+        - "normativa"
+    rol_por_modo:
+      normal: "co-anfitrion-E2-condicional + invitada-post-discovery + invitada-E3-condicional + invitada-E4"
+      evolucion: "co-anfitrion-E2-condicional + invitada-post-discovery + invitada-E3-condicional + invitada-E4"  # legacy: modo deprecado -> ruta rediseno-ui
+    senales_codebase:
+      - tipo: "grep"
+        pattern: "\\[Authorize\\]|AddAuthentication|JWT|Bearer|ApiKey"
+      - tipo: "grep"
+        pattern: "swagger|openapi|\\[Route\\]|\\[HttpGet\\]|\\[HttpPost\\]"
+      - tipo: "ausencia"
+        pattern: "agent-os/standards/security/permisos-repo.md"
+        descripcion: "no hay patron de permisos documentado en el repo. El abordaje (Fase 2) lo clasifica no_documentado y Sentinel entra como co-anfitrion de la pieza de plan (E2)."
+
+  tessa-e2e:
+    nombre: "Tessa"
+    rol: "E2E Test Engineer"
+    rol_bmad: "bmad-agent-tessa"
+    archivo: "agent-os/experts/bmad-agent-tessa/SKILL.md"
+    momento: "post-discovery"
+    descripcion_corta: "Explora la app via MCP Playwright, genera tests E2E deterministas, documenta con screenshots y verifica flujos web en Etapa 4"
+    etapa4:
+      - capacidad: "E2E"
+        # detalle en agent-os/experts/bmad-agent-tessa/SKILL.md tabla Capabilities (fila E2E) + ./references/explore-and-test.md
+    senales_por_modo:
+      normal:
+        - "e2e"
+        - "playwright"
+        - "test"
+        - "prueba"
+        - "flujo de usuario"
+        - "automatizacion"
+        - "seguridad web"
+        - "xss"
+        - "csrf"
+      documentacion:
+        # En modo documentacion Tessa puede ser invitada por Quinn en E4 para
+        # capturar screenshots que alimenten el documento (ej. manuales de usuario).
+        - "screenshot"
+        - "documentacion visual"
+        - "captura de pantalla"
+    rol_por_modo:
+      normal: "invitada-post-discovery"
+      documentacion: "invitada-E4"
+    senales_codebase:
+      - tipo: "glob"
+        pattern: "**/*.spec.ts"
+      - tipo: "glob"
+        pattern: "**/playwright.config.*"
+      - tipo: "glob"
+        pattern: "**/e2e/**"
+      - tipo: "glob"
+        pattern: "**/*.spec.js"
+
+  paige-writer:
+    nombre: "Paige"
+    rol: "Technical Writer"
+    rol_bmad: "bmad-agent-paige"
+    archivo: "agent-os/experts/bmad-agent-paige/SKILL.md"
+    momento: "post-discovery"
+    descripcion_corta: "Documentacion tecnica, diagramas Mermaid, gramatica visual del modelo de diseno (DOT/Graphviz), validacion de docs y explicaciones. Conduce la destilacion de sesiones grabadas en E1 de la ruta documentacion (capacidad DS) y cura las plantillas de esa ruta (capacidad CP)."
+    etapa1:
+      - capacidad: "DS"
+        # <!-- FUENTE: agent-os/skills/destilar-sesion/SKILL.md. Autoridad por hablante, elevacion por captura y destilacion por ventanas viven alli. NO duplicar -- editar la fuente. -->
+    capacidades_curaduria:
+      - capacidad: "CP"
+        # <!-- FUENTE: agent-os/experts/bmad-agent-paige/references/curar-plantillas.md seccion "Modos de invocacion". Senales, acciones y modos de la curaduria viven alli. NO duplicar -- editar la fuente. -->
+    senales_por_modo:
+      normal:
+        - "documentar"
+        - "documentacion"
+        - "diagrama"
+        - "mermaid"
+        - "readme"
+        - "guia tecnica"
+        - "grafo"
+        - "dot"
+        - "graphviz"
+        - "vista del modelo"
+      documentacion:
+        # Matchean -> el abordaje de Alfred (fase 4) propone la ruta correspondiente y confirma con el usuario.
+        # Al confirmar, Paige asume rol anfitriona-E1-E2-E3 ejecutando write-document,
+        # document-project, mermaid-gen y validate-doc segun la tarea.
+        - "manual"
+        - "manual de usuario"
+        - "documentacion tecnica"
+        - "guia de usuario"
+        - "tutorial"
+        - "onboarding"
+        - "spec tecnica"
+        - "diagrama de arquitectura"
+        - "diagramar"
+        - "plantilla de documentacion"
+        - "re-plantillar"
+      investigacion:
+        # En modo investigacion Paige es invitada por Quinn en E4 para revision
+        # editorial del insumo investigativo (claridad, trazabilidad de fuentes).
+        - "validar documento"
+        - "revision editorial"
+    rol_por_modo:
+      normal: "invitada-post-discovery"
+      documentacion: "anfitriona-E1-E2-E3 + invitada-E4"
+      investigacion: "invitada-E4"
+    senales_codebase:
+      - tipo: "glob"
+        pattern: "**/docs/**"
+      - tipo: "ausencia"
+        descripcion: "no hay documentacion en el area del trabajo"
+
+  dexter-modeler:
+    nombre: "Dexter"
+    rol: "Data Modeler"
+    rol_bmad: "bmad-agent-dexter"
+    archivo: "agent-os/experts/bmad-agent-dexter/SKILL.md"
+    momento: "post-discovery"
+    descripcion_corta: "Data Modeler MSSQL normador critico. Eleva la persistencia a protagonista: anfitrion del pre-diseno de datos en /disenar, invitado con freno en procesos/brief/E2, verificador de BD (CD-N) en E4. Custodia el standard de datos del repo. Produccion intocable (P-D4). Invitado al gap analysis de /expediente (lectura prod, P-D4). Invitado a la ruta bugfix (Flujo 2) para la dimension de produccion de la investigacion forense (lectura prod, P-D4)."
+    etapa1:
+      - capacidad: "DT"
+        # detalle en agent-os/experts/bmad-agent-dexter/SKILL.md tabla Capabilities (fila DT) -> agent-os/skills/destilar-standard/SKILL.md
+    capacidades_disenar:
+      - capacidad: "MD"
+        # detalle en agent-os/experts/bmad-agent-dexter/SKILL.md tabla Capabilities (fila MD) + ./references/modelar-datos.md
+      - capacidad: "GE"
+        # detalle en agent-os/experts/bmad-agent-dexter/SKILL.md tabla Capabilities (fila GE) + ./references/modelar-datos.md
+    etapa2:
+      - capacidad: "PD"
+        # detalle en agent-os/experts/bmad-agent-dexter/SKILL.md tabla Capabilities (fila PD) + ./references/plan-y-verificar-bd.md
+    etapa4:
+      - capacidad: "VD"
+        # detalle en agent-os/experts/bmad-agent-dexter/SKILL.md tabla Capabilities (fila VD) + ./references/plan-y-verificar-bd.md
+    capacidad_transversal:
+      - capacidad: "OD"
+        # detalle en agent-os/experts/bmad-agent-dexter/SKILL.md tabla Capabilities (fila OD) + ./references/memory-system.md
+    capacidades_fix:
+      - capacidad: "FP"
+        # <!-- FUENTE: agent-os/experts/bmad-agent-alfred/rutas/bugfix/investigacion.md. Dimension 2 (parametrizacion en produccion) vive alli. NO duplicar -- editar la fuente. -->
+    senales_por_modo:
+      normal:
+        - "tabla"
+        - "campo"
+        - "base de datos"
+        - "persistencia"
+        - "modelo de datos"
+        - "esquema"
+        - "stored procedure"
+        - "sql"
+        - "migracion"
+        - "indice"
+        - "foreign key"
+        - "diccionario de datos"
+      evolucion:  # legacy: modo deprecado -> ruta rediseno-ui
+        - "redisenar tabla"
+        - "normalizar"
+        - "reestructurar datos"
+      investigacion:
+        - "analizar BD"
+        - "auditar base de datos"
+        - "analizar esquema"
+        - "mapear modelo de datos"
+        - "diccionario de datos"
+      documentacion:
+        - "documentar modelo de datos"
+        - "diagrama E/R"
+        - "documentar esquema"
+        - "documentar base de datos"
+    rol_por_modo:
+      normal: "anfitrion-disenar-datos + invitada-post-discovery + invitada-E2 + invitada-E4"
+      evolucion: "anfitrion-disenar-datos + invitada-E2 + invitada-E4"  # legacy: modo deprecado -> ruta rediseno-ui
+      investigacion: "invitada-E3"
+      documentacion: "invitada-E2-E3"
+    senales_codebase:
+      - tipo: "glob"
+        pattern: "**/*.sql"
+      - tipo: "glob"
+        pattern: "**/Migrations/**"
+      - tipo: "grep"
+        pattern: "CREATE TABLE|ALTER TABLE|CREATE PROCEDURE|FOREIGN KEY"
+      - tipo: "glob"
+        pattern: "agent-os/standards/database/*.md"
+
+  cipher-crypto:
+    nombre: "Cipher"
+    rol: "Criptografo Aplicado"
+    rol_bmad: "bmad-agent-cipher"
+    archivo: "agent-os/experts/bmad-agent-cipher/SKILL.md"
+    momento: "post-discovery"
+    descripcion_corta: "Criptografo aplicado normador critico. Eleva la confianza criptografica a protagonista: anfitrion del pre-diseno cripto en /disenar, invitado con freno en E2, sign-off cripto en E3, verificador CR-N en E4. Custodia el standard criptografico del repo (agent-os/standards/security/criptografia/). En junturas (credenciales, tokens, interconexion) firma junto a Sentinel y Dexter bajo el Acuerdo de Juntura."
+    etapa1:
+      - capacidad: "DT"
+        # <!-- FUENTE: agent-os/skills/destilar-standard/SKILL.md. Procedimiento DT y autoridad del dominio cripto viven alli. NO duplicar -- editar la fuente. -->
+    capacidades_disenar:
+      - capacidad: "MC"
+        # detalle en agent-os/experts/bmad-agent-cipher/SKILL.md tabla Capabilities (fila MC) + ./references/modelar-cripto.md
+    etapa2:
+      - capacidad: "PC"
+        # detalle en agent-os/experts/bmad-agent-cipher/SKILL.md tabla Capabilities (fila PC) + ./references/plan-y-verificar-cripto.md
+    etapa3:
+      obligatorio_si: "alguna tarea con tipo_tarea:codigo declara capa_seguridad.dominios conteniendo cripto"
+      # <!-- FUENTE: agent-os/skills/host-protocol/etapas/etapa-3/capa-seguridad.md. Sign-off de Cipher (capacidad SC) vive alli. NO duplicar -- editar la fuente. -->
+    etapa4:
+      - capacidad: "VF"
+        # detalle en agent-os/experts/bmad-agent-cipher/SKILL.md tabla Capabilities (fila VF) + ./references/plan-y-verificar-cripto.md
+    capacidad_transversal:
+      - capacidad: "OC"
+        # detalle en agent-os/experts/bmad-agent-cipher/SKILL.md tabla Capabilities (fila OC) + ./references/memory-system.md
+    capacidades_fix:
+      - capacidad: "FC"
+        # <!-- FUENTE: agent-os/experts/bmad-agent-alfred/rutas/bugfix/investigacion.md. Dimension 2b (material criptografico en produccion) vive alli. NO duplicar -- editar la fuente. -->
+    senales_por_modo:
+      normal:
+        - "firma digital"
+        - "firmar documento"
+        - "firma electronica"
+        - "certificado digital"
+        - "estampa de tiempo"
+        - "sellado de tiempo"
+        - "estampa cronologica"
+        - "timestamp"
+        - "tsa"
+        - "pki"
+        - "criptografia"
+        - "cifrado"
+        - "cifrar"
+        - "encriptar"
+        - "descifrar"
+        - "llave privada"
+        - "llave publica"
+        - "key vault"
+        - "hsm"
+        - "kms"
+        - "hash de contrasena"
+        - "hashing"
+        - "token de firma"
+        - "token de activacion"
+        - "mtls"
+        - "rotacion de llaves"
+        - "rotar llave"
+        - "certificado vencido"
+        - "verificar firma"
+        - "jwt firmado"
+      investigacion:
+        - "auditar criptografia"
+        - "inventario de certificados"
+        - "analizar firma digital"
+    rol_por_modo:
+      normal: "anfitrion-disenar-cripto + invitado-post-discovery + invitado-E2 + invitado-E3-condicional + invitado-E4"
+      investigacion: "invitado-E3"
+    senales_codebase:
+      - tipo: "grep"
+        pattern: "SignedCms|X509Certificate|RSACryptoServiceProvider|RSA\\.(Create|SignData|SignHash)|ECDsa|BouncyCastle|iText.*[Ss]ign|HMACSHA|Rfc2898DeriveBytes|ProtectedData|JwtSecurityToken|SecurityTokenDescriptor"
+        descripcion: "operaciones criptograficas .NET: firma, certificados, HMAC, derivacion de llave, DPAPI, JWT"
+      - tipo: "grep"
+        pattern: "crypto/(rsa|ecdsa|x509|tls|hmac)|pkcs7|pkcs12|golang-jwt|jwt\\.(New|Parse|Sign)"
+        descripcion: "operaciones criptograficas Go: primitivos, formatos PKCS, JWT"
+      - tipo: "glob"
+        pattern: "**/*.pfx"
+      - tipo: "glob"
+        pattern: "**/*.p12"
+      - tipo: "glob"
+        pattern: "**/certs/**"
+      - tipo: "ausencia"
+        pattern: "agent-os/standards/security/criptografia/"
+        descripcion: "no hay standard criptografico documentado y el trabajo menciona firma/cifrado/llaves. Cipher entra a la pieza de plan (E2) para fundarlo (capacidad DT)."
+
+  # barry-quickdev: REMOVIDO 2026-04-26 -- Atlas FLW cubre este caso completamente.
+  # Si necesitas el patron quick-flow, usar Atlas con capacidad FLW.
+  # Directorio bmad-agent-barry/ eliminado fisicamente.
+
+# ---------------------------------------------------------------------------
+# CAPA DE CALIDAD AUTOMATICA
+# Siempre participan en los gates -- no requieren activacion por el usuario.
+# Se invocan con su capacidad especifica (RC, RS, RT, RI, etc.)
+# ---------------------------------------------------------------------------
+
+calidad:
+
+  bob-scrum-master:
+    nombre: "Bob"
+    rol: "Scrum Master"
+    rol_bmad: "bmad-agent-bob"
+    tipo: "calidad+tareas"
+    archivo: "agent-os/experts/bmad-agent-bob/SKILL.md"
+    descripcion_corta: "Revisa CAs (Etapa 1, solo investigacion/documentacion), genera tareas formales para ejecucion (Etapa 2, todos los modos), revisa tareas (Etapa 2 gate)"
+    momentos:
+      - etapa: "etapa1-gate"
+        capacidad: "RC"
+        genera: "calidad-bob-cas.md"
+      - etapa: "etapa2-tareas"
+        capacidad: "CS"
+        # detalle en agent-os/experts/bmad-agent-bob/SKILL.md tabla Capabilities (fila CS) + ./references/create-story.md (incl. Regla 4 de capa_seguridad)
+      - etapa: "etapa2-gate"
+        capacidad: "RS"
+        genera: "calidad-bob-tareas.md"
+
+  quinn-qa:
+    nombre: "Quinn"
+    rol: "QA Engineer"
+    rol_bmad: "bmad-agent-quinn"
+    tipo: "calidad+verificacion"
+    archivo: "agent-os/experts/bmad-agent-quinn/SKILL.md"
+    descripcion_corta: "Revisa testeabilidad de CAs (Etapa 1, solo investigacion/documentacion) y orquesta verificacion completa del work (Etapa 4) en todos los modos"
+    momentos:
+      - etapa: "etapa1-gate"
+        capacidad: "RT"
+        genera: "calidad-quinn-testeabilidad.md"
+      - etapa: "etapa4-verificacion"
+        capacidad: "VC"
+        # detalle (roster de invitables por modo) en agent-os/skills/host-protocol/etapas/etapa-4.md seccion "Roster de invitables por modo" + SKILL.md tabla Capabilities (fila VC)
+      - etapa: "etapa4-verificacion-seguridad"
+        capacidad: "VS"
+        # <!-- FUENTE: agent-os/skills/host-protocol/etapas/etapa-4/capa-seguridad.md. CS-1/CS-2/CS-2b/CS-3 viven alli. NO duplicar -- editar la fuente. -->
+      - etapa: "etapa4-verificacion-evidencia"
+        capacidad: "VE-EV"
+        # <!-- FUENTE: agent-os/skills/host-protocol/etapas/etapa-4/evidencia.md. EV-1..EV-4 viven alli. NO duplicar -- editar la fuente. -->
+      - etapa: "etapa4-verificacion-cripto"
+        capacidad: "VCR"
+        # <!-- FUENTE: agent-os/experts/bmad-agent-cipher/references/plan-y-verificar-cripto.md. CR-1..CR-6 viven alli (Quinn coordina; Cipher produce). NO duplicar -- editar la fuente. -->
+    capacidad_transversal:
+      - capacidad: "MP"
+        # detalle en agent-os/experts/bmad-agent-quinn/references/abordaje-modelo-pruebas.md. Abordaje de modelo de pruebas (fundacion del modelo de reglas de un repo, agnostico de stack; Quinn funda y audita, E3 implementa). NO duplicar -- editar la fuente.
+
+  amelia-dev:
+    nombre: "Amelia"
+    rol: "Senior Developer"
+    rol_bmad: "bmad-agent-amelia"
+    tipo: "calidad+ejecutora"
+    archivo: "agent-os/experts/bmad-agent-amelia/SKILL.md"
+    descripcion_corta: "Revisa implementabilidad de tareas (Etapa 2 gate) y ejecuta tareas con TDD en modo pool (Etapa 3 en modo `normal`, o el flujo `rediseno-ui`). Aplica la lente de principios de diseno (SOLID + patrones) en refactor y code review."
+    momentos:
+      - etapa: "etapa2-gate"
+        capacidad: "RI"
+        genera: "calidad-amelia-implementabilidad.md"
+      - etapa: "etapa3-ejecucion"
+        capacidad: "DS"
+        # <!-- FUENTE: agent-os/skills/host-protocol/etapas/etapa-3.md seccion "Anfitrion por modo". El contrato del pool de ejecucion vive alli. NO duplicar -- editar la fuente. -->
+      - etapa: "etapa3-destilacion"
+        capacidad: "DT"
+        # <!-- FUENTE: agent-os/skills/destilar-standard/SKILL.md. Procedimiento DT y ejemplo de dominio de Amelia viven alli. NO duplicar -- editar la fuente. -->
+    rol_por_modo:
+      normal: "anfitrion-E3-pool"
+
+# ---------------------------------------------------------------------------
+# GOBERNADOR DEL FLUJO
+# Conduce el flujo de trabajo: abordaje -> ruta -> piezas. Activa a los
+# expertos en cada pieza; NO participa en gates como invitado. Paralelo a
+# 'expertos:' y 'calidad:'. Reemplaza progresivamente al motor `/work` (legacy, en retiro).
+# ---------------------------------------------------------------------------
+
+gobernador:
+
+  alfred:
+    nombre: "Alfred"
+    rol: "Gobernador del flujo de trabajo"
+    rol_bmad: "bmad-agent-alfred"
+    archivo: "agent-os/experts/bmad-agent-alfred/SKILL.md"
+    descripcion_corta: "Conduce el flujo de trabajo de agent-os: abordaje -> ruta -> piezas. Activa a los expertos en cada pieza; no participa en gates como invitado. Reemplaza progresivamente al motor `/work` (legacy, en retiro). Incorpora la lente analitica de principios de diseno al proponer rutas de codigo."
+    comando: "/alfred"
+    rutas: [responder, bugfix, acotado, diseno, rediseno-ui, investigacion, documentacion, hotfix]
+    no_participa_en_gates: true
+    convive_con: "/work (legacy, en retiro)"
+    aprendizaje:
+      sidecar: "_bmad/memory/alfred-sidecar/ (repo destino)"
+      buffer_reflexion: "devs/{dev}/reflexion-adn.md (5 categorias, evidencia anclada)"
+      promocion_a_adn: "/alfred learn consolidar-reflexiones (SOLO repo origen)"
+      invariante: "el ADN no se modifica fuera del repo origen"

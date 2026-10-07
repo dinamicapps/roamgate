@@ -1,0 +1,32 @@
+﻿# Agent OS Standards Index
+
+documentacion:
+  estructura-archivos:
+    description: Pendiente - ejecutar /index-standards
+  registro-trabajo:
+    description: Pendiente - ejecutar /index-standards
+
+global:
+  commit-format:
+    description: Pendiente - ejecutar /index-standards
+  error-handling:
+    description: Pendiente - ejecutar /index-standards
+  naming:
+    description: Pendiente - ejecutar /index-standards
+  tech-stack:
+    description: Pendiente - ejecutar /index-standards
+
+security:
+  permisos-repo.template:
+    description: Pendiente - ejecutar /index-standards
+
+testing:
+  e2e:
+    description: Pendiente - ejecutar /index-standards
+  unit:
+    description: Pendiente - ejecutar /index-standards
+
+tooling:
+  codebase-memory-mcp:
+    description: Pendiente - ejecutar /index-standards
+

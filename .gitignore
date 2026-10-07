@@ -23,3 +23,41 @@ server/roamgate
 server/roamgate.exe
 server/roamgate-*
 server/*.bun-build
+
+# Config local de integracion Zoho Sprints (valores por-instalacion)
+.claude/sprints-local.json
+
+# Config local de parametrizacion agent-os (valores por-instalacion)
+.claude/agent-os.local.json
+
+# Grafo del modelo de diseño (derivado puro de modelo.yml, regenerable)
+agent-os/disenos/*/grafo.dot
+agent-os/disenos/*/grafo.svg
+
+# Bitacora de diagnostico del runtime (local, nunca se versiona)
+agent-os/_runtime.log
+
+# agent-os/.actividad/: carretes de actividad (FOCO y archivos, se purgan
+# solos a los 7 dias por la fecha del nombre) + scratch de _pre/ (se purgan
+# solos a los pocos minutos por mtime). Rastro operativo, no versionar.
+agent-os/.actividad/
+
+# Respaldos .bak historicos del catalogo (nunca se versionan)
+_catalogo.yml.bak*
+
+# Catalogos de works (derivados en memoria; el runtime los reconstruye)
+agent-os/work-records/_catalogo.yml
+agent-os/works-archivo/_catalogo.yml
+
+# Binario local del runtime agent-os (por-instalacion, nunca se versiona)
+.claude/agent-os-bin/
+
+# Agent OS - marcadores por-sesion (gobierno alfred)
+.claude/agent-os-sesiones/
+
+# Agent OS - archivos por-instalacion / por-sesion (nunca se versionan)
+test-env.local.json
+.bridge.session.*.local
+agent-os/work-records/_sesiones/
+.claude/settings.local.json
+.claude/*.local.*

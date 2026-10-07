@@ -1,0 +1,49 @@
+manifiesto_version: 1
+emitido: "{YYYY-MM-DDTHH:MM:SSZ}"
+hash: pendiente-calcular
+grupo_nombre: "{NOMBRE_GRUPO}"
+id_bridge: "{UUID_GRUPO_BRIDGE}"
+work_contenedor: "{NOMBRE_WORK}"
+
+# estado_grupo: exploracion | acordado | archivado
+# - exploracion: grupo recien creado, dialogo abierto, fases y CAs vacios son validos.
+# - acordado: checklist listo-para-CAs paso, fases y cas_por_participante definidos.
+# - archivado: grupo cerrado, no acepta nuevos mensajes ni sesiones.
+estado_grupo: exploracion
+
+director:
+  instancia: "{NOMBRE_DIRECTOR}"
+  repo: "{GIT_REMOTE_URL}"
+  branch: "{BRANCH_ACTUAL}"
+  commit: "{COMMIT_SHA}"
+
+objetivo: |
+  {DESCRIPCION_OBJETIVO_COORDINACION}
+
+alcance:
+  incluye:
+    - "{QUE_SI_ENTRA}"
+  excluye:
+    - "{QUE_NO_ENTRA}"
+
+# fases: [] es valido cuando estado_grupo = exploracion.
+# Se llenan cuando el grupo promueve a acordado.
+fases: []
+
+cas_por_participante:
+  director: []
+  # Por cada colaborador que se una:
+  # "colaborador:{nombre}": []
+
+contratos_referenciados: []
+# Cuando haya contratos:
+# contratos_referenciados:
+#   - endpoint: licenciamiento/validar-activacion
+#     version_actual_en_repo: 3
+#     version_en_discusion: 4-draft
+#     ubicacion_borrador: contratos/borradores/validar-activacion-v4-draft.yml
+
+changelog:
+  - version: 1
+    fecha: "{YYYY-MM-DD}"
+    cambios: "emision inicial, modo exploracion"

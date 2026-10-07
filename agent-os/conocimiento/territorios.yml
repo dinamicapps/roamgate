@@ -1,0 +1,8 @@
+# territorios.yml -- zonas del arbol de documentacion contra las que se mide la
+# cobertura de conocimiento destilado. Lo declara ESTE repo; agent-os solo define
+# la forma. Las rutas no pueden solaparse: ninguna puede estar contenida en otra.
+#
+# Campos: id (unico), ruta (relativa al repo, con barra final), descripcion.
+# Opcional: derivado_de, para declarar que este territorio se separo de otro.
+
+territorios: []

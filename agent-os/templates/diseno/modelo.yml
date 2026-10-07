@@ -1,0 +1,13 @@
+# modelo.yml -- el modelo validable del diseno.
+# Nodos tipados y aristas de los que se proyectan las vistas y contra los que
+# cada etapa valida su cobertura. Lo escribe el runtime; no editar a mano.
+#
+# Estados: abierto | resuelto | descartado (exige razon) | obsoleto (exige razon;
+#          admite reemplazado_por). `descartado` es "nunca existio"; `obsoleto` es
+#          "existio y dejo de valer".
+# Ni la cita ni la prosa anclada las exige el archivo: las reclama la compuerta de
+# la etapa -- la cita de los nodos resueltos que describen algo existente, y la
+# prosa anclada de los pocos tipos que la exigen al proponer (ver el schema). Un
+# modelo a medio construir se puede guardar; lo que no puede es cerrar la etapa.
+nodos: []
+aristas: []
