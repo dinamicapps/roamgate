@@ -61,3 +61,7 @@ test-env.local.json
 agent-os/work-records/_sesiones/
 .claude/settings.local.json
 .claude/*.local.*
+
+# Archivos personales de la instalacion local (no se versionan)
+claude-roamgate.bat
+.zoho-watch.json
