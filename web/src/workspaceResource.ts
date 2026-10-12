@@ -238,7 +238,7 @@ function finiteSize(value: unknown, fallback: number): number {
     : fallback;
 }
 
-function finiteNavigationRatio(value: unknown): number {
+export function finiteNavigationRatio(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value)
     ? Math.min(Math.max(value, 0.15), 0.75)
     : DEFAULT_INSPECTOR_NAVIGATION_RATIO;

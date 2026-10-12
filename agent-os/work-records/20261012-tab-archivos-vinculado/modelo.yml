@@ -1,0 +1,2306 @@
+nodos:
+    - id: CAP_vista_files_inspector
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_vista_files_inspector
+      rol: consume
+      cita:
+        archivo: web/src/components/WorkspaceInspectorHost.tsx
+        linea: 677
+        fragmento: <FileExplorerPanel
+      campos:
+        clasificacion: desaparece
+        nombre: Vista Files del Workspace Inspector
+    - id: CAP_bloque_files
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_bloque_files
+      rol: consume
+      campos:
+        clasificacion: nueva
+        nombre: Componente host del bloque Files montable fuera del Inspector (N1)
+    - id: CAP_panel_files
+      tipo: capacidad
+      estado: descartado
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_panel_files
+      rol: consume
+      razon: 'regreso 2026-10-09: el humano redirigio de panel independiente (B) a tab de archivos del cliente vinculado 1:1 a un tab de consola (A1)'
+      campos:
+        clasificacion: nueva
+        nombre: Panel independiente de archivos, hermano del Inspector
+    - id: CAP_explorador_archivos
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_explorador_archivos
+      rol: consume
+      cita:
+        archivo: web/src/components/FileExplorerDialog.tsx
+        linea: 139
+        fragmento: export function FileExplorerPanel({
+      campos:
+        clasificacion: se_conserva
+        nombre: Arbol del explorador de archivos (FileExplorerPanel)
+    - id: CAP_pestanas_preview
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_pestanas_preview
+      rol: consume
+      cita:
+        archivo: web/src/components/FilePreviewTabs.tsx
+        linea: 6
+        fragmento: export function FilePreviewTabs({
+      campos:
+        clasificacion: se_conserva
+        nombre: Pestanas de vista previa de archivos (FilePreviewTabs)
+    - id: CAP_visor_diffs_changes
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_visor_diffs_changes
+      rol: consume
+      cita:
+        archivo: web/src/components/WorkspaceInspectorHost.tsx
+        linea: 772
+        fragmento: diffViewerRef.current?.selectWorkingEntries(
+      campos:
+        clasificacion: se_conserva
+        nombre: Visor de diffs de Changes usado por la sub-vista de cambios del archivo
+    - id: CAP_contrato_backend_archivos
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_contrato_backend_archivos
+      rol: consume
+      cita:
+        archivo: server/src/workspace/files.ts
+        linea: 63
+        fragmento: export function createFileHandlers({
+      campos:
+        clasificacion: se_conserva
+        nombre: Contrato backend file.* (list/read/search/resolve/reveal, download/upload/delete)
+    - id: CAP_abrir_inspector
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_abrir_inspector
+      rol: consume
+      cita:
+        archivo: web/src/App.tsx
+        linea: 1738
+        fragmento: const openInspector = useCallback(
+      campos:
+        clasificacion: se_modifica
+        nombre: Apertura del Inspector por vista (openInspector)
+    - id: CAP_abrir_file_explorer
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_abrir_file_explorer
+      rol: consume
+      cita:
+        archivo: web/src/App.tsx
+        linea: 2154
+        fragmento: const openFileExplorer = useCallback(
+      campos:
+        clasificacion: se_modifica
+        nombre: Punto de convergencia de las entradas a Files (openFileExplorer)
+    - id: CAP_atajo_files_toggle
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_atajo_files_toggle
+      rol: consume
+      cita:
+        archivo: web/src/shortcutBindings.ts
+        linea: 48
+        fragmento: '"files.toggle": ["Ctrl+Alt+E"],'
+      campos:
+        clasificacion: se_modifica
+        nombre: Atajo files.toggle
+    - id: CAP_preferencias_inspector
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_preferencias_inspector
+      rol: consume
+      cita:
+        archivo: web/src/workspaceResource.ts
+        linea: 294
+        fragmento: ': "files",'
+      campos:
+        clasificacion: se_modifica
+        nombre: Preferencias del Inspector con vista por defecto files
+    - id: CAP_tipo_inspector_view
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_tipo_inspector_view
+      rol: consume
+      cita:
+        archivo: web/src/workspaceResource.ts
+        linea: 7
+        fragmento: export type InspectorView = "files" | "changes" | "commits" | "history";
+      campos:
+        clasificacion: se_modifica
+        nombre: Union InspectorView con el miembro files
+    - id: CAP_guarda_foco_terminal
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_guarda_foco_terminal
+      rol: consume
+      cita:
+        archivo: web/src/terminalFocus.ts
+        linea: 12
+        fragmento: .workspace-inspector, .annotation-panel, .assistant-panel
+      campos:
+        clasificacion: se_modifica
+        nombre: Guarda que impide que la terminal robe el foco a superficies laterales
+    - id: CAP_activar_superficie_terminal
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_activar_superficie_terminal
+      rol: consume
+      cita:
+        archivo: web/src/App.tsx
+        linea: 1645
+        fragmento: const activateTerminalSurface = useCallback(() => {
+      campos:
+        clasificacion: se_modifica
+        nombre: Volver a la terminal en mobile (activateTerminalSurface)
+    - id: CAP_nav_mobile_files
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_nav_mobile_files
+      rol: consume
+      cita:
+        archivo: web/src/App.tsx
+        linea: 3982
+        fragmento: onClick={() => openFileExplorer()}
+      campos:
+        clasificacion: se_modifica
+        nombre: Boton Files de la navegacion mobile
+    - id: CAP_foco_compartido_inspector
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_foco_compartido_inspector
+      rol: consume
+      cita:
+        archivo: web/src/App.tsx
+        linea: 1829
+        fragmento: if (!workspace.focused) void store.focusWorkspace(workspace.workspace_id);
+      campos:
+        clasificacion: se_modifica
+        nombre: Efecto de foco hacia Herdr al abrir el Inspector sobre un workspace no enfocado
+    - id: REST_panel_hermano_superficies
+      tipo: restriccion
+      estado: descartado
+      etapa: foco
+      origen: 20261007-file-manager-panel#REST_panel_hermano_superficies
+      rol: consume
+      razon: 'regreso 2026-10-09: el humano redirigio de panel independiente (B) a tab de archivos del cliente vinculado 1:1 a un tab de consola (A1); el tab ocupa la superficie de la terminal, no un hueco hermano'
+      cita:
+        archivo: web/src/App.tsx
+        linea: 4195
+        fragmento: 'className={`workspace-surfaces ${annotationsDocked ? "has-annotations" : ""} ${assistantDocked ? "has-assistant" : ""}`}'
+      campos:
+        enunciado: 'El panel se monta como hermano en .workspace-surfaces siguiendo el patron de AnnotationPanel y AssistantPanel (copia adaptada: el panel de archivos lleva scope por workspace/checkout y su propio estado, que esos paneles no tienen)'
+        tipo: arquitectonica
+    - id: REST_estado_por_conexion
+      tipo: restriccion
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REST_estado_por_conexion
+      rol: consume
+      cita:
+        archivo: web/src/connectionStorage.ts
+        linea: 42
+        fragmento: return `herdr.connection/${encodeURIComponent(connectionId)}/${encodeURIComponent(baseKey)}`;
+      campos:
+        enunciado: El estado persistido del panel se guarda en localStorage con clave namespaceada por conexion, como el resto del estado por conexion (copia literal)
+        tipo: arquitectonica
+    - id: REST_foco_rpc_herdr
+      tipo: restriccion
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REST_foco_rpc_herdr
+      rol: consume
+      cita:
+        archivo: web/src/store.ts
+        linea: 2627
+        fragmento: 'return lease.client.call("tab.focus", { tab_id: tabId });'
+      campos:
+        enunciado: En modo shared, enfocar un tab es un RPC a Herdr que mueve el foco de todos los clientes y de la TUI
+        tipo: tecnica
+    - id: REST_mobile_view_cerrada
+      tipo: restriccion
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REST_mobile_view_cerrada
+      rol: consume
+      cita:
+        archivo: web/src/App.tsx
+        linea: 349
+        fragmento: type MobileView =
+      campos:
+        enunciado: Mobile muestra una superficie a la vez mediante la union cerrada MobileView; toda superficie nueva necesita su miembro o reutilizar uno
+        tipo: arquitectonica
+    - id: ACT_usuario
+      tipo: actor
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#ACT_usuario
+      rol: consume
+      cita:
+        archivo: README.md
+        linea: 10
+        fragmento: A **browser client** for [Herdr](https://herdr.dev). Control terminals, inspect
+      campos:
+        nombre: Usuario de Roamgate en el navegador (desktop o mobile)
+        tipo: humano
+    - id: PRO_explorar_archivos
+      tipo: proceso
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRO_explorar_archivos
+      rol: construye
+      campos:
+        entradas:
+            - vinculo activo (ownerTabId) y su scope
+            - ruta seleccionada en el arbol o pestana de archivo
+            - 'accion: navegar, abrir, cerrar pestana, ver cambios'
+        modulo: web/src
+        nombre: Explorar y previsualizar archivos dentro del tab de archivos
+        salidas:
+            - seleccion y preview actualizados con gating por el scope del vinculo
+            - pestanas del vinculo persistidas en filesTabFiles:{ownerTabId}
+            - Inspector abierto en Changes con el archivo seleccionado cuando se piden sus cambios
+            - vista pedida (changes, commits, history)
+        trigger: el usuario navega el arbol, abre o cierra una pestana de archivo o pide ver los cambios de un archivo con el tab de archivos activo
+    - id: PAN_panel_files
+      tipo: pantalla
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PAN_panel_files
+      rol: construye
+      campos:
+        cadena_navegacion: TabBar > boton Files | menu del tab de consola > Abrir archivos de esta consola | Ctrl+Alt+E | paleta > Files | nav mobile > Files | arbol de workspaces > Browse files | ciclo de worktrees > Files | link de archivo en la terminal -> tab de archivos de la consola (se abre o se enfoca)
+        nombre: Tab de archivos
+        prerequisitos: conexion activa a Herdr con un workspace y al menos un tab de consola
+    - id: ENT_preferencias_inspector
+      tipo: entidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#ENT_preferencias_inspector
+      rol: construye
+      cita:
+        archivo: web/src/workspaceResource.ts
+        linea: 108
+        fragmento: export interface InspectorPreferences {
+      campos:
+        columnas:
+            - default: null
+              nombre: clave
+              nulo: "no"
+              pk: true
+              tipo: 'connectionStorageKey(connectionId, ''workspaceInspector:{owner}''): herdr.connection/{id}/workspaceInspector:{owner}, o workspaceInspector:{owner} sin prefijo con legacy-default (connectionStorage.ts:41)'
+            - default: changes tras la migracion
+              nombre: view
+              nulo: "no"
+              pk: false
+              tipo: InspectorView; tras B mover solo changes|commits|history (files se sanea a changes al leer)
+            - default: right
+              nombre: dock
+              nulo: "no"
+              pk: false
+              tipo: right|bottom
+            - default: false
+              nombre: expanded
+              nulo: "no"
+              pk: false
+              tipo: boolean
+            - default: {}
+              nombre: expandedNavigationRatios
+              nulo: "no"
+              pk: false
+              tipo: Partial<Record<files|changes, number>>; la entrada files queda sin uso tras migrar
+            - default: 520
+              nombre: rightSize
+              nulo: "no"
+              pk: false
+              tipo: number px
+            - default: 360
+              nombre: bottomSize
+              nulo: "no"
+              pk: false
+              tipo: number px
+            - default: 0.4
+              nombre: filesNavigationRatio
+              nulo: "no"
+              pk: false
+              tipo: number 0..1; sin uso tras migrar (fuente de la derivacion del panel)
+            - default: 0.4
+              nombre: changesNavigationRatio
+              nulo: "no"
+              pk: false
+              tipo: number 0..1
+        existencia: existente
+        nombre: Preferencias del Inspector en localStorage (dock, size, view, expanded, ratios)
+    - id: ENT_resource_file_tabs
+      tipo: entidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#ENT_resource_file_tabs
+      rol: construye
+      cita:
+        archivo: web/src/workspaceResource.ts
+        linea: 366
+        fragmento: export interface ResourceFileTabs {
+      campos:
+        columnas:
+            - default: null
+              nombre: clave
+              nulo: "no"
+              pk: true
+              tipo: 'connectionStorageKey(connectionId, ''workspaceInspectorFile:{owner}''): herdr.connection/{id}/workspaceInspectorFile:{owner}, o workspaceInspectorFile:{owner} sin prefijo con legacy-default (connectionStorage.ts:41)'
+            - default: 2
+              nombre: version
+              nulo: "no"
+              pk: false
+              tipo: 1|2 (se escribe 2)
+            - default: []
+              nombre: paths
+              nulo: "no"
+              pk: false
+              tipo: string[] rutas abiertas
+            - default: null
+              nombre: activePath
+              nulo: si
+              pk: false
+              tipo: string|null
+            - default: null
+              nombre: previewPath
+              nulo: si
+              pk: false
+              tipo: string|null
+        existencia: existente
+        nombre: 'ResourceFileTabs por scope en localStorage (legado: deja de escribirse con B->A1 mover; fuente de derivacion del primer vinculo del scope)'
+    - id: ENT_estado_panel_files
+      tipo: entidad
+      estado: obsoleto
+      etapa: foco
+      origen: 20261007-file-manager-panel#ENT_estado_panel_files
+      rol: construye
+      razon: 'regreso 2026-10-09: el humano redirigio de panel independiente (B) a tab de archivos del cliente vinculado 1:1 a un tab de consola (A1)'
+      campos:
+        columnas:
+            - default: null
+              nombre: clave
+              nulo: "no"
+              pk: true
+              tipo: 'connectionStorageKey(connectionId, ''filesPanel:{owner}''): herdr.connection/{id}/filesPanel:{owner}, o filesPanel:{owner} sin prefijo con legacy-default (connectionStorage.ts:41)'
+            - default: 1
+              nombre: version
+              nulo: "no"
+              pk: false
+              tipo: number
+            - default: 520
+              nombre: width
+              nulo: "no"
+              pk: false
+              tipo: number px (finiteSize)
+            - default: false
+              nombre: expanded
+              nulo: "no"
+              pk: false
+              tipo: boolean (maximizado)
+            - default: 0.4
+              nombre: navigationRatio
+              nulo: "no"
+              pk: false
+              tipo: number 0..1 (finiteNavigationRatio); derivado de filesNavigationRatio si la clave no existe
+            - default: null
+              nombre: expandedNavigationRatio
+              nulo: si
+              pk: false
+              tipo: number 0..1; derivado de expandedNavigationRatios.files si existe
+        existencia: nueva
+        nombre: Estado y preferencias del panel de archivos
+    - id: DEC_opcion_b_mover
+      tipo: decision
+      estado: obsoleto
+      etapa: foco
+      origen: 20261007-file-manager-panel#DEC_opcion_b_mover
+      rol: consume
+      razon: 'regreso 2026-10-09: el humano redirigio de panel independiente (B) a tab de archivos del cliente vinculado 1:1 a un tab de consola (A1)'
+      campos:
+        afecta: CAP_panel_files
+        enunciado: 'Se implementa la opcion B (panel independiente) en variante mover: Files deja de ser vista del Inspector'
+        que_resolvio: alternativa elegida
+        razon: recomendacion verificada del work 20261007-investigacion-filemanager-tabs; el humano eligio B mover completo en el abordaje
+    - id: PRG_D2_foco_shared
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_D2_foco_shared
+      rol: consume
+      campos:
+        enunciado: 'D-2: foco al volver a una consola y ante foco externo'
+        motiva: CAP_tab_archivos_vinculado
+        severidad: media
+    - id: PRG_D3_tipo_files
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_D3_tipo_files
+      rol: consume
+      campos:
+        enunciado: 'D-3: quitar files de InspectorView'
+        motiva: CAP_panel_files
+        severidad: media
+    - id: PRG_D4_migracion_prefs
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_D4_migracion_prefs
+      rol: consume
+      campos:
+        enunciado: 'D-4: migracion de view:files persistido y de los ratios de Files huerfanos'
+        motiva: ENT_preferencias_inspector
+        severidad: media
+    - id: PRG_D5_seguir_workspace
+      tipo: pregunta
+      estado: descartado
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_D5_seguir_workspace
+      rol: consume
+      razon: 'regreso 2026-10-09: el humano redirigio de panel independiente (B) a tab de archivos del cliente vinculado 1:1 a un tab de consola (A1); el tab sigue a su tab de consola por construccion (DEC_siempre_ligado_activo)'
+      campos:
+        enunciado: 'D-5: el panel sigue al workspace enfocado o queda fijo'
+        motiva: PRO_explorar_archivos
+        severidad: media
+    - id: PRG_D6_descubribilidad
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_D6_descubribilidad
+      rol: consume
+      campos:
+        enunciado: 'D-6: afordancia para abrir el tab de archivos de la consola en desktop'
+        motiva: PAN_panel_files
+        severidad: media
+    - id: PRG_D7_layout
+      tipo: pregunta
+      estado: descartado
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_D7_layout
+      rol: consume
+      razon: 'regreso 2026-10-09: el humano redirigio de panel independiente (B) a tab de archivos del cliente vinculado 1:1 a un tab de consola (A1); el tab ocupa la superficie completa'
+      campos:
+        enunciado: 'D-7: layout del panel lateral'
+        motiva: PAN_panel_files
+        severidad: media
+    - id: PRG_D8_subvista_cambios
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_D8_subvista_cambios
+      rol: consume
+      campos:
+        enunciado: 'D-8: sub-vista de cambios del archivo'
+        motiva: CAP_bloque_files
+        severidad: media
+    - id: PRG_D9_mobile
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_D9_mobile
+      rol: consume
+      campos:
+        enunciado: 'D-9: mobile con tab de archivos'
+        motiva: PAN_panel_files
+        severidad: media
+    - id: PRG_D10_estado_panel
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_D10_estado_panel
+      rol: consume
+      campos:
+        enunciado: 'D-10: ubicacion en codigo del estado y preferencias del panel'
+        motiva: CAP_panel_files
+        severidad: media
+    - id: PRG_esc_cierra_panel
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_esc_cierra_panel
+      rol: consume
+      campos:
+        enunciado: Esc en el tab de archivos
+        motiva: PAN_panel_files
+        severidad: baja
+    - id: DEC_freno_operaciones_archivo
+      tipo: decision
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#DEC_freno_operaciones_archivo
+      rol: consume
+      campos:
+        afecta: CAP_contrato_backend_archivos
+        enunciado: Renombrar, mover, crear carpeta y editar archivos quedan fuera; el contrato backend file.* no cambia
+        que_resolvio: freno confirmado
+        razon: el diseño trata el contenedor del file manager, no sus funciones; ya registrado en capas-futuras/file-manager.md
+    - id: DEC_freno_coexistir
+      tipo: decision
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#DEC_freno_coexistir
+      rol: consume
+      campos:
+        afecta: CAP_vista_files_inspector
+        enunciado: 'Files no queda en dos lugares: sale del Inspector (variante mover, no coexistir)'
+        que_resolvio: freno confirmado
+        razon: coexistir deja 5 piezas de estado con dos escritores y ambiguedad en MobileView
+    - id: REG_INV01_gating_seleccion_scope
+      tipo: regla
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REG_INV01_gating_seleccion_scope
+      rol: construye
+      cita:
+        archivo: web/src/App.tsx
+        linea: 1478
+        fragmento: const scope = inspectorStateRef.current?.scope;
+      campos:
+        enunciado: 'INV-PUENTE-01: la seleccion y vista previa activa solo se aceptan para el scope del Inspector; el tab de archivos necesita su propio gating por el scope de su vinculo (N5)'
+        origen: heredada
+    - id: REG_INV02_reset_por_generacion
+      tipo: regla
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REG_INV02_reset_por_generacion
+      rol: construye
+      cita:
+        archivo: web/src/App.tsx
+        linea: 2769
+        fragmento: commitInspectorState(null);
+      campos:
+        enunciado: 'INV-PUENTE-02: al avanzar la generacion de la conexion se resetea el estado del Inspector y la seleccion; el estado de sesion del panel debe invalidarse con la misma generacion'
+        origen: heredada
+    - id: REG_INV03_remontaje_por_scope
+      tipo: regla
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REG_INV03_remontaje_por_scope
+      rol: construye
+      cita:
+        archivo: web/src/App.tsx
+        linea: 4253
+        fragmento: key={`${resourceUiKey}:${resourceOwnerKey(inspectorState.scope)}`}
+      campos:
+        enunciado: 'INV-PUENTE-03: cada superficie se remonta con clave resourceUiKey + owner de SU scope; el tab de archivos monta con key propia del vinculo y puede mostrar un workspace distinto al del Inspector'
+        origen: heredada
+    - id: REG_INV04_raiz_pane_enfocado
+      tipo: regla
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REG_INV04_raiz_pane_enfocado
+      rol: construye
+      cita:
+        archivo: server/src/workspace/files.ts
+        linea: 89
+        fragmento: 'panes.find((p: any) => p?.workspace_id === workspaceId && p?.focused) ??'
+      campos:
+        enunciado: 'INV-PUENTE-04: sin worktree, la raiz del explorador en el backend es el cwd del pane enfocado en Herdr; el directorio inicial del tab se calcula al crear (REG_P1_raiz_al_crear), pero la raiz del backend puede cambiar si cambia el pane enfocado'
+        origen: heredada
+    - id: REG_INV05_guarda_foco_terminal
+      tipo: regla
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REG_INV05_guarda_foco_terminal
+      rol: construye
+      cita:
+        archivo: web/src/terminalFocus.ts
+        linea: 12
+        fragmento: .workspace-inspector, .annotation-panel, .assistant-panel
+      campos:
+        enunciado: 'INV-PUENTE-05: la terminal solo deja de robar el foco a los selectores listados; el tab de archivos debe agregarse (N6)'
+        origen: heredada
+    - id: REG_INV06_popover_anotaciones
+      tipo: regla
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REG_INV06_popover_anotaciones
+      rol: construye
+      cita:
+        archivo: web/src/components/AnnotationComposerPopover.tsx
+        linea: 88
+        fragmento: '"[data-file-preview-tab], .inspector-files-resource .workspace-inspector-navigation",'
+      campos:
+        enunciado: 'INV-PUENTE-06: el popover de anotaciones reconoce la navegacion de archivos por clase dentro del Inspector; la extraccion N1 debe conservar o actualizar ese selector'
+        origen: heredada
+    - id: REG_INV07_foco_compartido
+      tipo: regla
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REG_INV07_foco_compartido
+      rol: construye
+      cita:
+        archivo: web/src/App.tsx
+        linea: 1829
+        fragmento: if (!workspace.focused) void store.focusWorkspace(workspace.workspace_id);
+      campos:
+        enunciado: 'INV-PUENTE-07: en modo shared abrir y cerrar el Inspector emiten RPC de foco a Herdr que mueven a todos los clientes; el tab de archivos no emite foco (INV-11) salvo al enfocar otro workspace (DEC_P1_otro_ws_enfocar)'
+        origen: heredada
+    - id: REG_INV08_subvista_cambios
+      tipo: regla
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REG_INV08_subvista_cambios
+      rol: construye
+      cita:
+        archivo: web/src/components/WorkspaceInspectorHost.tsx
+        linea: 772
+        fragmento: diffViewerRef.current?.selectWorkingEntries(
+      campos:
+        enunciado: 'INV-PUENTE-08: la sub-vista de cambios del preview usa el visor de Changes del mismo host; con el tab, ver cambios abre el Inspector en Changes (DEC_D8_inspector_changes) y N1 no se lleva diffViewerRef'
+        origen: heredada
+    - id: PRG_abrir_desde_changes
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_abrir_desde_changes
+      rol: consume
+      campos:
+        enunciado: Abrir archivo desde Changes
+        motiva: PAN_panel_files
+        severidad: media
+    - id: RSG_tamano_inspector_ignora_panel
+      tipo: riesgo
+      estado: descartado
+      etapa: foco
+      origen: 20261007-file-manager-panel#RSG_tamano_inspector_ignora_panel
+      rol: consume
+      razon: 'regreso 2026-10-09: el humano redirigio de panel independiente (B) a tab de archivos del cliente vinculado 1:1 a un tab de consola (A1); sin panel lateral no se resta ancho al stage'
+      campos:
+        amenaza: PAN_panel_files
+        enunciado: 'inspectorMaximumSize solo descuenta annotationsDocked (App.tsx:3641, :3684; workspaceResource.ts:45-57): con Files anclado y el Inspector abierto la terminal puede quedar bajo su ancho minimo'
+        responsable: anfitrion de la etapa de modelado (Mary) y ejecutor del work consumidor
+    - id: RSG_inspector_overlay_mas_frecuente
+      tipo: riesgo
+      estado: descartado
+      etapa: foco
+      origen: 20261007-file-manager-panel#RSG_inspector_overlay_mas_frecuente
+      rol: consume
+      razon: 'regreso 2026-10-09: el humano redirigio de panel independiente (B) a tab de archivos del cliente vinculado 1:1 a un tab de consola (A1); sin panel lateral no cambia el umbral de overlay'
+      campos:
+        amenaza: PAN_panel_files
+        enunciado: La excepcion de overlay del Inspector solo contempla .has-annotations (app.css:821, :898); el panel resta ancho al stage y el Inspector pasaria a overlay tapando la terminal donde antes cabia
+        responsable: anfitrion de la etapa de modelado (Mary) y ejecutor del work consumidor
+    - id: RSG_pares_estrechos_recorte
+      tipo: riesgo
+      estado: descartado
+      etapa: foco
+      origen: 20261007-file-manager-panel#RSG_pares_estrechos_recorte
+      rol: consume
+      razon: 'regreso 2026-10-09: el humano redirigio de panel independiente (B) a tab de archivos del cliente vinculado 1:1 a un tab de consola (A1); sin panel lateral no hay par adicional'
+      campos:
+        amenaza: PAN_panel_files
+        enunciado: La regla 55/45 de pares bajo 900px (app.css:945-955) supone un solo par; con Files y Annotations anclados las alturas suman 145% y overflow:hidden recorta un panel (hipotesis, verificar renderizado)
+        responsable: anfitrion de la etapa de modelado (Mary) y ejecutor del work consumidor
+    - id: RSG_esc_global_extraido
+      tipo: riesgo
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#RSG_esc_global_extraido
+      rol: consume
+      campos:
+        amenaza: CAP_bloque_files
+        enunciado: FileExplorerDialog registra Escape en window cuando showCloseButton esta activo (FileExplorerDialog.tsx:689-692); si N1 extrae el bloque con esa prop, Esc en la terminal (vim) cerraria el panel
+        responsable: anfitrion de la etapa de modelado (Mary) y ejecutor del work consumidor
+    - id: DEC_migracion_prefs_una_vez
+      tipo: decision
+      estado: resuelto
+      etapa: datos
+      origen: 20261007-file-manager-panel#DEC_migracion_prefs_una_vez
+      rol: consume
+      campos:
+        afecta: ENT_preferencias_inspector
+        enunciado: 'La migracion es una derivacion pura en readFilesPanelState: si no existe la clave filesPanel:{owner}, los ratios se derivan de readInspectorPreferences (filesNavigationRatio; expandedNavigationRatios.files ausente queda null); el registro se crea en la primera escritura del panel con lectura-modificacion-escritura. La existencia de la clave significa migrado. view files se sanea a changes en los dos sitios del read de preferencias (workspaceResource.ts:275 y :294)'
+        que_resolvio: alternativa elegida
+        razon: el usuario conserva su ajuste, el Inspector nunca abre una vista inexistente (RT-4) y la derivacion es idempotente con dos pestanas porque la fuente no se borra
+    - id: DEC_persistencia_panel_por_scope
+      tipo: decision
+      estado: obsoleto
+      etapa: datos
+      origen: 20261007-file-manager-panel#DEC_persistencia_panel_por_scope
+      rol: consume
+      razon: 'regreso 2026-10-09: el humano redirigio de panel independiente (B) a tab de archivos del cliente vinculado 1:1 a un tab de consola (A1); la persistencia del tab la re-modela Dexter'
+      campos:
+        afecta: ENT_estado_panel_files
+        enunciado: El ancho y el maximizado del panel se persisten por scope (workspace/checkout) y por conexion, con la clave filesPanel:{owner}
+        que_resolvio: alternativa elegida
+        razon: consistente con las preferencias del Inspector y con REST_estado_por_conexion; Ranger no persiste ancho y no sirve de precedente de persistencia
+    - id: DEC_estado_panel_modulo_nuevo
+      tipo: decision
+      estado: obsoleto
+      etapa: datos
+      origen: 20261007-file-manager-panel#DEC_estado_panel_modulo_nuevo
+      rol: consume
+      razon: 'regreso 2026-10-09: el humano redirigio de panel independiente (B) a tab de archivos del cliente vinculado 1:1 a un tab de consola (A1); la ubicacion del estado del tab la re-decide Dexter'
+      campos:
+        afecta: ENT_estado_panel_files
+        enunciado: El estado y las preferencias del panel viven en un modulo nuevo filesPanelResource.ts que importa resourceOwnerKey, connectionStorageKey y readInspectorPreferences; finiteSize y finiteNavigationRatio se exportan desde workspaceResource.ts en vez de copiarse
+        que_resolvio: alternativa elegida
+        razon: workspaceResource.ts (472 lineas) ya mezcla identidad de scope, preferencias del Inspector y pestanas; con mover el panel no es el Inspector y la dependencia de migracion panel->Inspector queda explicita
+    - id: DEC_freno_mover_resource_file_tabs
+      tipo: decision
+      estado: resuelto
+      etapa: datos
+      origen: 20261007-file-manager-panel#DEC_freno_mover_resource_file_tabs
+      rol: consume
+      campos:
+        afecta: ENT_resource_file_tabs
+        enunciado: ResourceFileTabs permanece en workspaceResource.ts; no se mueve al modulo nuevo en este diseño
+        que_resolvio: freno confirmado
+        razon: seria lo coherente porque el panel es su unico escritor, pero es un refactor mayor sin beneficio funcional para el intent
+    - id: REG_sync_storage_panel
+      tipo: regla
+      estado: resuelto
+      etapa: datos
+      origen: 20261007-file-manager-panel#REG_sync_storage_panel
+      rol: construye
+      campos:
+        enunciado: El tab de archivos se suscribe con subscribeLocalStorage a filesTabLinks y filesTabFiles:{ownerTabId} para reflejar entre pestanas del mismo navegador la creacion, cierre y pestanas de cada vinculo (el listener de App.tsx:3505-3513 solo filtra preferencias del Inspector)
+        origen: nueva
+    - id: REG_reset_sesion_panel_generacion
+      tipo: regla
+      estado: resuelto
+      etapa: datos
+      origen: 20261007-file-manager-panel#REG_reset_sesion_panel_generacion
+      rol: construye
+      campos:
+        enunciado: El estado de sesion del tab de archivos (superficie activa, transitorios) se anula en el mismo efecto de cambio de generacion que hoy llama commitInspectorState(null) (App.tsx:2763-2771); los vinculos persistidos sobreviven y se revalidan contra el primer snapshot de la nueva generacion
+        origen: nueva
+    - id: DEC_opcion_a1_tab_vinculado
+      tipo: decision
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#DEC_opcion_a1_tab_vinculado
+      rol: consume
+      campos:
+        afecta: CAP_tab_archivos_vinculado
+        enunciado: 'Se implementa la opcion A1 en variante mover: el file manager es un tab virtual del cliente en la TabBar, vinculado 1:1 a un tab de consola de Herdr; Files deja de ser vista del Inspector'
+        que_resolvio: alternativa elegida
+        razon: 'el humano prefiere no restar espacio a la consola: el tab de archivos ocupa la superficie completa al estar activo y parte del directorio de trabajo del tab de consola activo'
+    - id: DEC_raiz_cwd_pane_enfocado
+      tipo: decision
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#DEC_raiz_cwd_pane_enfocado
+      rol: consume
+      campos:
+        afecta: CAP_tab_archivos_vinculado
+        enunciado: El tab de archivos abre en el cwd del pane enfocado de su consola (foreground_cwd o cwd), relativo a la raiz del checkout o workspace; la raiz se calcula solo al crear el tab y no sigue cambios posteriores de pane o de cwd
+        que_resolvio: alternativa elegida
+        razon: el humano quiere que el explorador acompane al trabajo de la consola
+    - id: DEC_cierre_con_consola
+      tipo: decision
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#DEC_cierre_con_consola
+      rol: consume
+      campos:
+        afecta: CAP_tab_archivos_vinculado
+        enunciado: Cerrar un tab de consola cierra su tab de archivos vinculado; no quedan tabs de archivos huerfanos
+        que_resolvio: alternativa elegida
+        razon: el vinculo 1:1 manda
+    - id: DEC_siempre_ligado_activo
+      tipo: decision
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#DEC_siempre_ligado_activo
+      rol: consume
+      campos:
+        afecta: CAP_tab_archivos_vinculado
+        enunciado: Toda entrada a Files (atajo, paleta, boton, nav mobile, arbol, link de terminal, Changes) abre o enfoca el tab de archivos del tab de consola activo; no existen tabs de archivos sueltos y una consola nunca abre N tabs de archivos
+        que_resolvio: alternativa elegida
+        razon: el humano pidio que la consola remita al tab de archivos ya abierto en vez de abrir otro
+    - id: CAP_tab_archivos_vinculado
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_tab_archivos_vinculado
+      rol: consume
+      campos:
+        clasificacion: nueva
+        nombre: Tab de archivos virtual del cliente vinculado 1:1 a un tab de consola
+    - id: CAP_directorio_inicial_pane
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_directorio_inicial_pane
+      rol: consume
+      cita:
+        archivo: web/src/App.tsx
+        linea: 2405
+        fragmento: '? relativePathWithinCheckout(root, pane.foreground_cwd ?? pane.cwd)'
+      campos:
+        clasificacion: se_conserva
+        nombre: Directorio inicial derivado del cwd del pane relativo a la raiz del checkout
+    - id: CAP_strip_tabs
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_strip_tabs
+      rol: consume
+      cita:
+        archivo: web/src/components/TabBar.tsx
+        linea: 69
+        fragmento: export function TabBar({
+      campos:
+        clasificacion: se_modifica
+        nombre: 'TabBar: strip de tabs de Herdr (activo, cierre, drag, menu, pins)'
+    - id: CAP_ciclo_vida_tabs
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_ciclo_vida_tabs
+      rol: consume
+      cita:
+        archivo: web/src/store.ts
+        linea: 2709
+        fragmento: 'closeTab(tabId: string) {'
+      campos:
+        clasificacion: se_modifica
+        nombre: Cierre de tabs en el store (closeTab)
+    - id: CAP_hoja_tabs_mobile
+      tipo: capacidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#CAP_hoja_tabs_mobile
+      rol: consume
+      cita:
+        archivo: web/src/components/MobileTabSheet.tsx
+        linea: 23
+        fragmento: export function MobileTabSheet({
+      campos:
+        clasificacion: se_modifica
+        nombre: 'MobileTabSheet: cambiar, crear, cerrar y desfijar tabs en mobile'
+    - id: REST_strip_tabs_herdr
+      tipo: restriccion
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REST_strip_tabs_herdr
+      rol: consume
+      cita:
+        archivo: web/src/types.ts
+        linea: 66
+        fragmento: export interface Tab {
+      campos:
+        enunciado: 'El modelo Tab y el strip son de Herdr (sin kind ni metadata); el tab de archivos convive en el strip como entrada virtual del cliente sin alterar el contrato Tab ni los RPC tab.* (copia adaptada del patron de FilePreviewTabs: tabs locales del cliente)'
+        tipo: arquitectonica
+    - id: PRG_vinculo_persistencia
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_vinculo_persistencia
+      rol: consume
+      campos:
+        enunciado: Persistencia del vinculo consola -> tab de archivos
+        motiva: CAP_tab_archivos_vinculado
+        severidad: media
+    - id: PRG_cwd_fuera_de_raiz
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_cwd_fuera_de_raiz
+      rol: consume
+      campos:
+        enunciado: cwd fuera de la raiz del checkout
+        motiva: CAP_tab_archivos_vinculado
+        severidad: baja
+    - id: RSG_cerrar_tab_oculto
+      tipo: riesgo
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#RSG_cerrar_tab_oculto
+      rol: consume
+      campos:
+        amenaza: CAP_strip_tabs
+        enunciado: Con el tab de archivos activo, tab.close (Ctrl+Alt+W) calcula el destino con el tab de Herdr enfocado, que esta oculto, y cerraria la consola o un pane no visibles (RT-1; App.tsx:3147, :3153)
+        responsable: anfitrion de la etapa de procesos (Mary) y ejecutor del work consumidor
+    - id: RSG_reorden_indice_cero
+      tipo: riesgo
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#RSG_reorden_indice_cero
+      rol: consume
+      campos:
+        amenaza: CAP_strip_tabs
+        enunciado: Un id virtual en groupOrder hace que tabMoveInsertIndex devuelva null o mueva un tab de Herdr al indice 0 (R4; tabReorder.ts:20)
+        responsable: anfitrion de la etapa de procesos (Mary) y ejecutor del work consumidor
+    - id: RSG_pin_virtual
+      tipo: riesgo
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#RSG_pin_virtual
+      rol: consume
+      campos:
+        amenaza: CAP_strip_tabs
+        enunciado: 'El pin de un tab virtual no cabe en tabPins.v1: forgetClosedTabPins borra ids que Herdr no lista (tabPins.ts:155)'
+        responsable: anfitrion de la etapa de procesos (Mary) y ejecutor del work consumidor
+    - id: RSG_strip_mobile_un_tab
+      tipo: riesgo
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#RSG_strip_mobile_un_tab
+      rol: consume
+      campos:
+        amenaza: CAP_hoja_tabs_mobile
+        enunciado: En mobile la TabBar se oculta con un solo tab (TabBar.tsx:153); si el tab de archivos cuenta, aparece el strip donde hoy no esta
+        responsable: anfitrion de la etapa de procesos (Mary) y ejecutor del work consumidor
+    - id: ENT_vinculo_tab_archivos
+      tipo: entidad
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#ENT_vinculo_tab_archivos
+      rol: construye
+      campos:
+        columnas:
+            - default: null
+              nombre: clave
+              nulo: "no"
+              pk: true
+              tipo: 'connectionStorageKey(connectionId, ''filesTabLinks''): herdr.connection/{id}/filesTabLinks, o filesTabLinks sin prefijo con legacy-default (connectionStorage.ts:41)'
+            - default: 1
+              nombre: version
+              nulo: "no"
+              pk: false
+              tipo: number
+            - default: null
+              nombre: links[].ownerTabId
+              nulo: "no"
+              pk: true
+              tipo: string tab_id de Herdr de la consola duena (llave dentro del registro)
+            - default: null
+              nombre: links[].workspaceId
+              nulo: "no"
+              pk: false
+              tipo: string workspace de la consola al crear
+            - default: null
+              nombre: links[].scopeOwner
+              nulo: "no"
+              pk: false
+              tipo: string resourceOwnerKey del scope al crear (checkout o workspace)
+            - default: null
+              nombre: links[].initialDirectory
+              nulo: si
+              pk: false
+              tipo: string|null relativo a la raiz, calculado solo al crear (DEC_raiz_cwd_pane_enfocado)
+            - default: 0.4
+              nombre: links[].navigationRatio
+              nulo: "no"
+              pk: false
+              tipo: number 0..1 (finiteNavigationRatio)
+            - default: null
+              nombre: links[].expandedNavigationRatio
+              nulo: si
+              pk: false
+              tipo: number 0..1
+        existencia: nueva
+        nombre: Vinculo tab de consola -> tab de archivos y su estado
+    - id: REG_INV09_limpieza_vinculo_refresh
+      tipo: regla
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REG_INV09_limpieza_vinculo_refresh
+      rol: construye
+      cita:
+        archivo: web/src/store.ts
+        linea: 1352
+        fragmento: forgetClosedTabPins(lease.connectionId, liveTabIds);
+      campos:
+        enunciado: 'INV-PUENTE-09: una consola puede desaparecer sin pasar por closeTab local (TUI u otro navegador); la reconciliacion del vinculo corre al aceptar un snapshot vigente de la misma conexion y generacion, elimina el vinculo cuyo ownerTabId no esta vivo junto con su estado local y su pin, y no sobrescribe una accion local mas reciente. La limpieza optimista tras closeTab (store.ts:2715) es valida pero no unica'
+        origen: heredada
+    - id: REG_INV11_foco_virtual_local
+      tipo: regla
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REG_INV11_foco_virtual_local
+      rol: construye
+      cita:
+        archivo: web/src/store.ts
+        linea: 2627
+        fragmento: 'return lease.client.call("tab.focus", { tab_id: tabId });'
+      campos:
+        enunciado: 'INV-PUENTE-11: activar o cerrar el tab de archivos nunca emite RPC de foco ni redefine focused, active_tab_id o el pane activo de Herdr; en shared la consola duena se deriva del foco Herdr observado y el estado virtual local solo decide la superficie que se renderiza'
+        origen: heredada
+    - id: REG_idempotencia_abrir_tab_archivos
+      tipo: regla
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#REG_idempotencia_abrir_tab_archivos
+      rol: construye
+      campos:
+        enunciado: 'Abrir o enfocar el tab de archivos es idempotente por (connectionId, generation, ownerTabId): si el vinculo existe se enfoca, si no se crea; ante conflicto con un refresh prevalece el snapshot vigente'
+        origen: nueva
+    - id: PRG_pin_tab_archivos
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_pin_tab_archivos
+      rol: consume
+      campos:
+        enunciado: Politica de pin del tab de archivos
+        motiva: CAP_tab_archivos_vinculado
+        severidad: media
+    - id: PRG_cambio_workspace_activo
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_cambio_workspace_activo
+      rol: consume
+      campos:
+        enunciado: Tab de archivos activo ante cambio de workspace o foco externo
+        motiva: CAP_tab_archivos_vinculado
+        severidad: media
+    - id: PRG_identidad_orden_virtual
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_identidad_orden_virtual
+      rol: consume
+      campos:
+        enunciado: Orden y numeracion de la entrada virtual en el strip
+        motiva: CAP_tab_archivos_vinculado
+        severidad: media
+    - id: PRG_estado_explorador_remontaje
+      tipo: pregunta
+      estado: resuelto
+      etapa: foco
+      origen: 20261007-file-manager-panel#PRG_estado_explorador_remontaje
+      rol: consume
+      campos:
+        enunciado: Estado del explorador que sobrevive al desmontar el tab inactivo
+        motiva: ENT_vinculo_tab_archivos
+        severidad: media
+    - id: DEC_vinculo_localstorage_validado
+      tipo: decision
+      estado: resuelto
+      etapa: datos
+      origen: 20261007-file-manager-panel#DEC_vinculo_localstorage_validado
+      rol: consume
+      campos:
+        afecta: ENT_vinculo_tab_archivos
+        enunciado: El vinculo se persiste en localStorage por conexion (clave filesTabLinks) indexado por ownerTabId; al cargar o en cada snapshot vigente se conserva solo si el ownerTabId sigue vivo en tab.list, si no se descarta (INV-09). El id virtual del tab se deriva como files:{ownerTabId} y no se persiste
+        que_resolvio: alternativa elegida
+        razon: sobrevive a recargas mientras Herdr conserve el tab_id; un reinicio de Herdr con ids nuevos lo limpia sin suponer que tab_id es estable
+    - id: DEC_estado_por_vinculo_rehidratado
+      tipo: decision
+      estado: resuelto
+      etapa: datos
+      origen: 20261007-file-manager-panel#DEC_estado_por_vinculo_rehidratado
+      rol: consume
+      campos:
+        afecta: ENT_pestanas_por_vinculo
+        enunciado: Cada tab de archivos tiene sus pestanas, seleccion y preview propias con clave que incluye ownerTabId; al remontar se rehidratan ruta, seleccion y preview (el scroll no se garantiza); el host monta con una key propia del vinculo, no la del pane; la cache del arbol en memoria sigue compartida por scope
+        que_resolvio: alternativa elegida
+        razon: dos consolas del mismo workspace no comparten escritor sobre la misma clave y cada una conserva su contexto
+    - id: DEC_estado_tab_modulo_nuevo
+      tipo: decision
+      estado: resuelto
+      etapa: datos
+      origen: 20261007-file-manager-panel#DEC_estado_tab_modulo_nuevo
+      rol: consume
+      campos:
+        afecta: ENT_vinculo_tab_archivos
+        enunciado: El estado persistido del tab de archivos (vinculos y pestanas por vinculo) vive en un modulo nuevo filesTabResource.ts que reutiliza resourceOwnerKey, connectionStorageKey, ResourceFileTabs/openResourceFileTab/closeResourceFileTab y finiteNavigationRatio exportados desde workspaceResource.ts
+        que_resolvio: alternativa elegida
+        razon: 're-adopta para el tab el criterio que el humano acepto para el panel (DEC_estado_panel_modulo_nuevo, ahora obsoleto): workspaceResource.ts ya mezcla tres responsabilidades y el tab no es el Inspector'
+    - id: ENT_pestanas_por_vinculo
+      tipo: entidad
+      estado: resuelto
+      etapa: datos
+      origen: 20261007-file-manager-panel#ENT_pestanas_por_vinculo
+      rol: construye
+      campos:
+        columnas:
+            - default: null
+              nombre: clave
+              nulo: "no"
+              pk: true
+              tipo: 'connectionStorageKey(connectionId, ''filesTabFiles:{ownerTabId}''): herdr.connection/{id}/filesTabFiles:{ownerTabId}, o filesTabFiles:{ownerTabId} sin prefijo con legacy-default (connectionStorage.ts:41)'
+            - default: 2
+              nombre: version
+              nulo: "no"
+              pk: false
+              tipo: number (forma de ResourceFileTabs, version 2)
+            - default: []
+              nombre: paths
+              nulo: "no"
+              pk: false
+              tipo: string[] rutas abiertas
+            - default: null
+              nombre: activePath
+              nulo: si
+              pk: false
+              tipo: string|null
+            - default: null
+              nombre: previewPath
+              nulo: si
+              pk: false
+              tipo: string|null
+        existencia: nueva
+        nombre: Pestanas, seleccion y preview de archivos por vinculo
+    - id: DEC_D6_boton_y_menu
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_D6_boton_y_menu
+      rol: consume
+      campos:
+        afecta: PAN_panel_files
+        enunciado: El tab de archivos se abre o enfoca con un boton Files propio en tabbar-utilities (entre Inspector y Annotations, activo cuando el tab de archivos de la consola activa esta visible) y con la entrada 'Abrir archivos de esta consola' en el menu contextual del tab de consola; atajo, paleta, nav mobile, arbol y links siguen abriendo el de la consola activa
+        que_resolvio: alternativa elegida
+        razon: al quitar Files del Inspector se pierde su puerta mas visible; el boton cubre la consola activa y el menu cubre una consola concreta
+    - id: PRO_P1_abrir_enfocar
+      tipo: proceso
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#PRO_P1_abrir_enfocar
+      rol: construye
+      campos:
+        entradas:
+            - connectionId y generation vigentes
+            - 'ownerTabId: consola activa del workspace o la consola del menu'
+            - workspaceId de la consola
+            - 'destino opcional: archivo o directorio (link, Changes, arbol)'
+        es_inicial: true
+        modulo: web/src
+        nombre: Abrir o enfocar el tab de archivos de la consola activa
+        salidas:
+            - tab de archivos de la consola visible y activo en la superficie principal
+            - vinculo en filesTabLinks[ownerTabId] creado o reutilizado
+            - pestanas del vinculo en filesTabFiles:{ownerTabId} con el destino abierto si lo hubo
+            - Inspector cerrado si la entrada fue Changes
+            - vinculo activo (ownerTabId) y su scope
+            - superficie local activa (consola o tab de archivos de una consola)
+        trigger: 'el usuario usa una entrada a Files: boton Files de la barra, ''Abrir archivos de esta consola'' en el menu del tab, Ctrl+Alt+E, paleta, Files de la nav mobile, arbol de workspaces, boton Files del ciclo de vida de worktrees, link de archivo en la terminal o abrir archivo desde Changes'
+    - id: REG_P1_raiz_al_crear
+      tipo: regla
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#REG_P1_raiz_al_crear
+      rol: construye
+      campos:
+        enunciado: El directorio inicial del vinculo se calcula una sola vez al crearlo, desde el cwd del pane enfocado de la consola relativo a la raiz; reabrir un vinculo existente no lo recalcula
+        origen: nueva
+    - id: REG_cwd_fuera_raiz_abre_raiz
+      tipo: regla
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#REG_cwd_fuera_raiz_abre_raiz
+      rol: construye
+      cita:
+        archivo: web/src/workspaceResource.ts
+        linea: 220
+        fragmento: if (!candidate.startsWith(prefix)) return undefined;
+      campos:
+        enunciado: Si el cwd del pane queda fuera de la raiz del checkout, relativePathWithinCheckout devuelve undefined y el explorador abre en la raiz
+        origen: heredada
+    - id: DEC_P1_otro_ws_enfocar
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_P1_otro_ws_enfocar
+      rol: consume
+      campos:
+        afecta: PRO_P1_abrir_enfocar
+        enunciado: Una entrada sobre un workspace no enfocado (arbol Browse files) enfoca primero ese workspace y su consola activa, como hoy hace el Inspector, y despues abre o enfoca su tab de archivos
+        que_resolvio: alternativa elegida
+        razon: conserva la semantica actual de Browse files; el RPC de foco es sobre la consola y el workspace, no sobre el tab virtual (INV-11 intacto)
+    - id: DEC_P1_changes_cierra_inspector
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_P1_changes_cierra_inspector
+      rol: consume
+      campos:
+        afecta: PRO_P1_abrir_enfocar
+        enunciado: Abrir un archivo desde Changes cierra el Inspector y activa el tab de archivos de la consola activa con ese archivo seleccionado
+        que_resolvio: alternativa elegida
+        razon: el humano prefiere dar todo el espacio al archivo al saltar desde la revision
+    - id: DEC_P1_cwd_fuera_raiz
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_P1_cwd_fuera_raiz
+      rol: consume
+      campos:
+        afecta: REG_cwd_fuera_raiz_abre_raiz
+        enunciado: Si el cwd del pane enfocado esta fuera de la raiz del checkout, el tab de archivos abre en la raiz (comportamiento heredado)
+        que_resolvio: alternativa elegida
+        razon: simple y predecible; el modo filesystem queda como hoy, fuera del tab
+    - id: DEC_D8_inspector_changes
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_D8_inspector_changes
+      rol: consume
+      campos:
+        afecta: CAP_visor_diffs_changes
+        enunciado: Ver los cambios de un archivo desde el tab abre o enfoca el Inspector en Changes al costado con ese archivo seleccionado, reutilizando el DiffViewerPanel existente; el tab de archivos sigue en la superficie central
+        que_resolvio: alternativa elegida
+        razon: A1 deja el Inspector libre al costado; reutiliza el visor sin duplicar su estado
+    - id: REG_rehidratar_al_remontar
+      tipo: regla
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#REG_rehidratar_al_remontar
+      rol: construye
+      campos:
+        enunciado: Al remontar un tab de archivos se rehidratan ruta, seleccion y preview desde filesTabFiles:{ownerTabId} y la cache del arbol; el host monta con una key propia del vinculo, no la del pane; el scroll no se garantiza
+        origen: nueva
+    - id: PRO_P3_navegar_strip
+      tipo: proceso
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#PRO_P3_navegar_strip
+      rol: construye
+      campos:
+        entradas:
+            - strip de tabs de Herdr del workspace y vinculos vivos
+            - superficie local activa (consola o tab de archivos de una consola)
+            - foco de Herdr observado (shared) o navegacion local (browser-local)
+            - accion de navegacion
+        modulo: web/src
+        nombre: Moverse entre consolas y tab de archivos en el strip
+        salidas:
+            - 'superficie visible actualizada: consola o su tab de archivos'
+            - RPC tab.focus solo al ir a otra consola (como hoy)
+            - strip con el tab de archivos inmediatamente a la derecha de su consola, sin numero
+            - vinculo (ownerTabId) y superficie activa
+        trigger: el usuario hace clic en el strip, usa Ctrl+1..9 o siguiente/anterior, cambia de workspace, usa Files/Terminal en la nav mobile, o en shared otro cliente o la TUI cambia el foco
+    - id: DEC_P3_pegado_a_consola
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_P3_pegado_a_consola
+      rol: consume
+      campos:
+        afecta: CAP_strip_tabs
+        enunciado: El tab de archivos aparece siempre inmediatamente a la derecha de su consola, se mueve con ella y no se arrastra por separado; su id virtual nunca se envia a tab.move
+        que_resolvio: alternativa elegida
+        razon: conserva la relacion visual con su consola y evita R4 (tabMoveInsertIndex con id virtual)
+    - id: DEC_P3_atajos_solo_consolas
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_P3_atajos_solo_consolas
+      rol: consume
+      campos:
+        afecta: CAP_strip_tabs
+        enunciado: Ctrl+1..9 numera solo consolas; siguiente/anterior recorre tambien el tab de archivos visible
+        que_resolvio: alternativa elegida
+        razon: no cambia la memoria muscular de la numeracion de consolas
+    - id: DEC_P3_foco_externo_manda
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_P3_foco_externo_manda
+      rol: consume
+      campos:
+        afecta: CAP_tab_archivos_vinculado
+        enunciado: Con el tab de archivos activo, si cambia el workspace o en shared otro cliente o la TUI enfoca otra consola, se muestra la consola enfocada; el tab de archivos sigue en el strip con su vinculo intacto
+        que_resolvio: alternativa elegida
+        razon: en shared manda el foco de Herdr; evita que lo visible se desincronice de la consola activa
+    - id: DEC_P3_sin_pin_propio
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_P3_sin_pin_propio
+      rol: consume
+      campos:
+        afecta: CAP_strip_tabs
+        enunciado: 'El tab de archivos no tiene pin propio: acompana a su consola, fijada o no; desaparece con ella'
+        que_resolvio: alternativa elegida
+        razon: evita el conflicto con tabPins.v1 (forgetClosedTabPins) y con el cierre obligatorio junto a la consola
+    - id: DEC_D9_nav_mobile
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_D9_nav_mobile
+      rol: consume
+      campos:
+        afecta: CAP_hoja_tabs_mobile
+        enunciado: En mobile, Files de la nav abre o enfoca el tab de archivos de la consola activa y Terminal vuelve a la consola; el tab de archivos no cuenta para mostrar el strip ni aparece en MobileTabSheet
+        que_resolvio: alternativa elegida
+        razon: los botones de la nav ya cubren la alternancia y no cambia la regla de strip oculto con una consola
+    - id: DEC_D2_foco_local
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_D2_foco_local
+      rol: consume
+      campos:
+        afecta: CAP_tab_archivos_vinculado
+        enunciado: Activar el tab de archivos o volver a su propia consola es local (sin RPC, el foco de Herdr ya esta en esa consola); ir a otra consola emite focusTab como hoy; el foco externo manda
+        que_resolvio: alternativa elegida
+        razon: deriva de INV-11 y de DEC_P3_foco_externo_manda; confirmado por el humano
+    - id: REG_id_virtual_fuera_de_herdr
+      tipo: regla
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#REG_id_virtual_fuera_de_herdr
+      rol: construye
+      campos:
+        enunciado: El id virtual files:{ownerTabId} nunca llega a operaciones de Herdr (tab.move, tab.close, tab.focus, tab.rename) ni a tabPins.v1; las operaciones del strip sobre el tab de archivos se resuelven localmente o sobre su consola
+        origen: nueva
+    - id: PRO_P4_cerrar
+      tipo: proceso
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#PRO_P4_cerrar
+      rol: construye
+      campos:
+        entradas:
+            - vinculo (ownerTabId) y superficie activa
+            - 'origen del cierre: tab de archivos, Esc, consola local o consola externa (snapshot)'
+            - estado transitorio del explorador (busqueda, menu)
+        es_terminal: true
+        modulo: web/src
+        nombre: Cerrar el tab de archivos o su consola
+        salidas:
+            - 'Esc: transitorio despejado o vuelta a la consola sin cerrar el tab'
+            - 'cierre del tab de archivos: vinculo y sus pestanas eliminados, consola visible'
+            - 'cierre de la consola: su tab de archivos eliminado en el mismo paso o en el snapshot siguiente (INV-09)'
+            - foco de teclado devuelto a la terminal
+        trigger: el usuario cierra el tab de archivos (boton, menu, Ctrl+Alt+W con el tab activo) o pulsa Esc dentro de el, o la consola duena se cierra aqui o desde la TUI u otro cliente
+    - id: PRO_P5_inspector_sin_files
+      tipo: proceso
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#PRO_P5_inspector_sin_files
+      rol: construye
+      campos:
+        entradas:
+            - workspace y scope
+            - vista pedida (changes, commits, history)
+            - preferencias del Inspector persistidas (pueden traer view files)
+        modulo: web/src
+        nombre: Abrir el Inspector sin Files
+        salidas:
+            - Inspector abierto en la vista pedida o en changes si la persistida era files
+            - preferencias saneadas sin view files
+            - efectos de foco del Inspector como hoy (focusWorkspace, focusTab(returnTabId))
+            - 'destino opcional: archivo o directorio (link, Changes, arbol)'
+        trigger: el usuario abre el Inspector (boton Inspector, inspector.toggle, Review changes) para Changes, Commits o History
+    - id: DEC_esc_cascada_vuelve_consola
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_esc_cascada_vuelve_consola
+      rol: consume
+      campos:
+        afecta: PRO_P4_cerrar
+        enunciado: Esc con el foco dentro del tab de archivos despeja primero lo transitorio y el siguiente Esc vuelve a su consola sin cerrar el tab; nunca se escucha Esc en window
+        que_resolvio: alternativa elegida
+        razon: patron de cascada como Ranger, sin perder el tab y sin el bug de Esc global del modal (RSG_esc_global_extraido)
+    - id: DEC_ctrl_alt_w_cierra_tab_archivos
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_ctrl_alt_w_cierra_tab_archivos
+      rol: consume
+      campos:
+        afecta: PRO_P4_cerrar
+        enunciado: Ctrl+Alt+W con el tab de archivos activo cierra solo el tab de archivos y muestra su consola; nunca cierra la consola oculta
+        que_resolvio: alternativa elegida
+        razon: evita RT-1 (el atajo calcula el destino con el tab de Herdr enfocado, oculto)
+    - id: DEC_D3_quitar_files_inspector_view
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_D3_quitar_files_inspector_view
+      rol: consume
+      campos:
+        afecta: CAP_tipo_inspector_view
+        enunciado: InspectorView pierde el miembro files; WorktreeLifecycleRow y WorktreeLifecycleDialog pasan a abrir el tab de archivos del workspace
+        que_resolvio: alternativa elegida
+        razon: el tipo dice la verdad y el compilador encuentra todos los usos; +2 modulos aceptados
+    - id: REG_cierre_consola_cierra_archivos
+      tipo: regla
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#REG_cierre_consola_cierra_archivos
+      rol: construye
+      campos:
+        enunciado: 'Cerrar la consola duena elimina su tab de archivos, su vinculo y sus pestanas: en el mismo paso si el cierre es local (closeTab) y en la reconciliacion del snapshot si es externo (INV-09)'
+        origen: nueva
+    - id: REG_saneo_view_files
+      tipo: regla
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#REG_saneo_view_files
+      rol: construye
+      campos:
+        enunciado: Leer preferencias del Inspector convierte view files en changes en los dos puntos del read (workspaceResource.ts:275 y :294) y nunca abre una vista inexistente
+        origen: nueva
+    - id: PAN_inspector
+      tipo: pantalla
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#PAN_inspector
+      rol: construye
+      campos:
+        cadena_navegacion: TabBar > boton Inspector | inspector.toggle | Review workspace changes -> Inspector en la vista pedida
+        nombre: Inspector (Changes, Commits, History)
+        prerequisitos: conexion activa con un workspace
+    - id: ESC_P1_crear_en_subdir
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P1_crear_en_subdir
+      rol: consume
+      campos:
+        accion: pulsar el boton Files de la barra
+        precondicion: consola '2 web' activa, sin tab de archivos, con el pane en src/web
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; en la consola ejecutar cd src/web
+        resultado: aparece el tab de archivos a la derecha de '2 web', activo, abierto en src/web
+    - id: ESC_P1_reusar_existente
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P1_reusar_existente
+      rol: consume
+      campos:
+        accion: pulsar Ctrl+Alt+E y luego 'Abrir archivos de esta consola' en el menu de '2 web'
+        precondicion: '''2 web'' ya tiene su tab de archivos'
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; abrir antes el tab de archivos de '2 web' y volver a la consola
+        resultado: se enfoca el mismo tab; no se crea un segundo tab de archivos para '2 web'
+    - id: ESC_P1_otro_workspace
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P1_otro_workspace
+      rol: consume
+      campos:
+        accion: en el arbol de workspaces, Browse files sobre el workspace B no enfocado
+        precondicion: workspace A enfocado; workspace B con consola activa
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; crear un segundo workspace B con una consola
+        resultado: B queda enfocado y se abre o enfoca el tab de archivos de su consola activa
+    - id: ESC_P1_desde_changes
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P1_desde_changes
+      rol: consume
+      campos:
+        accion: en el Inspector en Changes, abrir el archivo modificado
+        precondicion: Inspector abierto en Changes con un archivo modificado
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace
+        resultado: el Inspector se cierra y el tab de archivos de la consola activa queda visible con ese archivo seleccionado
+    - id: ESC_P1_cwd_fuera_de_raiz
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P1_cwd_fuera_de_raiz
+      rol: consume
+      campos:
+        accion: pulsar el boton Files
+        precondicion: consola sin tab de archivos con el pane en /tmp (fuera del checkout)
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; en la consola ejecutar cd /tmp
+        resultado: el tab de archivos abre en la raiz del checkout
+    - id: ESC_P2_dos_consolas_aisladas
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P2_dos_consolas_aisladas
+      rol: consume
+      campos:
+        accion: abrir README.md en el tab de archivos de '1 api' y App.tsx en el de '2 web'
+        precondicion: dos consolas del mismo workspace, cada una con su tab de archivos
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace
+        resultado: cada tab conserva sus propias pestanas; ninguno muestra las del otro
+    - id: ESC_P2_rehidratar
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P2_rehidratar
+      rol: consume
+      campos:
+        accion: abrir un archivo en el tab de '2 web', ir a '1 api' y volver
+        precondicion: tab de archivos de '2 web' con un archivo seleccionado
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace
+        resultado: al volver se ven la misma ruta, la misma seleccion y el mismo preview
+    - id: ESC_P2_ver_cambios
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P2_ver_cambios
+      rol: consume
+      campos:
+        accion: en el preview de un archivo modificado pulsar 'Ver cambios'
+        precondicion: tab de archivos activo con un archivo modificado seleccionado
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace
+        resultado: el Inspector se abre en Changes al costado con ese archivo; el tab de archivos sigue en el centro
+    - id: ESC_P3_orden_y_atajos
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P3_orden_y_atajos
+      rol: consume
+      campos:
+        accion: pulsar Ctrl+2 y despues arrastrar '2 web' a la primera posicion
+        precondicion: '''2 web'' con su tab de archivos abierto'
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace
+        resultado: Ctrl+2 activa la consola '2 web' (no el tab de archivos); al arrastrar, el tab de archivos se mueve pegado a su consola y ningun tab de Herdr salta al indice 0
+    - id: ESC_P3_foco_externo_shared
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P3_foco_externo_shared
+      rol: consume
+      campos:
+        accion: desde la TUI de Herdr enfocar '1 api'
+        precondicion: modo shared, tab de archivos de '2 web' activo en el navegador
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; navegacion shared; tener la TUI de Herdr abierta
+        resultado: el navegador muestra '1 api'; el tab de archivos de '2 web' sigue en el strip y se vuelve a el con un clic
+    - id: ESC_P3_mobile_nav
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P3_mobile_nav
+      rol: consume
+      campos:
+        accion: en layout mobile pulsar Files y luego Terminal en la nav
+        precondicion: layout mobile, una sola consola
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; forzar ?layout=mobile y dejar una sola consola
+        resultado: Files muestra su tab de archivos y Terminal vuelve a la consola; el strip sigue oculto y MobileTabSheet no lista el tab de archivos
+    - id: ESC_P4_cierre_externo
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P4_cierre_externo
+      rol: consume
+      campos:
+        accion: cerrar la consola '2 web' desde la TUI de Herdr
+        precondicion: '''2 web'' con su tab de archivos abierto en el navegador'
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; tener la TUI de Herdr abierta
+        resultado: tras el refresh siguiente el tab de archivos de '2 web' desaparece junto con su vinculo y sus pestanas
+    - id: ESC_P4_ctrl_alt_w
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P4_ctrl_alt_w
+      rol: consume
+      campos:
+        accion: con el tab de archivos de '2 web' activo pulsar Ctrl+Alt+W
+        precondicion: tab de archivos de '2 web' activo
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace
+        resultado: se cierra solo el tab de archivos y se muestra '2 web'; ninguna consola se cierra
+    - id: ESC_P4_esc_cascada
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P4_esc_cascada
+      rol: consume
+      campos:
+        accion: con la busqueda del explorador abierta pulsar Esc dos veces; despues, en la consola dentro de vim, pulsar Esc
+        precondicion: tab de archivos activo con la busqueda abierta
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; abrir vim en la consola
+        resultado: el primer Esc cierra la busqueda, el segundo vuelve a la consola sin cerrar el tab; el Esc dentro de vim no afecta al tab de archivos
+    - id: ESC_P4_recarga_y_reinicio
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P4_recarga_y_reinicio
+      rol: consume
+      campos:
+        accion: recargar el navegador; despues reiniciar Herdr de modo que los tab_id cambien y recargar
+        precondicion: '''2 web'' con su tab de archivos y pestanas abiertas'
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace
+        resultado: tras recargar se restaura el tab de archivos; tras reiniciar Herdr con ids nuevos los vinculos se descartan y no aparecen tabs de archivos huerfanos
+    - id: ESC_P5_saneo_view_files
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P5_saneo_view_files
+      rol: consume
+      campos:
+        accion: abrir el Inspector
+        precondicion: preferencias guardadas con view files (escribir en localStorage la clave workspaceInspector:{owner} con view files)
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; antes de abrir, guardar en localStorage las preferencias con view files
+        resultado: el Inspector abre en Changes y no intenta mostrar Files
+    - id: ESC_P5_worktree_files
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P5_worktree_files
+      rol: consume
+      campos:
+        accion: en el ciclo de vida de worktrees pulsar Files de una fila
+        precondicion: workspace con worktree listado
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; crear un worktree adicional
+        resultado: se abre o enfoca el tab de archivos de la consola activa de ese workspace; el Inspector no se abre
+    - id: ESC_P5_toggle_sin_files
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P5_toggle_sin_files
+      rol: consume
+      campos:
+        accion: usar inspector.toggle
+        precondicion: Inspector cerrado
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace
+        resultado: el Inspector abre con solo Changes, Commits e History en su lista de vistas
+    - id: DEC_R1_link_pane_dueno
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_R1_link_pane_dueno
+      rol: consume
+      campos:
+        afecta: PRO_P1_abrir_enfocar
+        enunciado: Un link de archivo emitido por un pane abre o enfoca el tab de archivos de la consola duena de ese pane, aunque no sea la activa
+        que_resolvio: alternativa elegida
+        razon: el paneId de origen ya viaja en el evento; usar la consola activa abriria los archivos de otra consola
+    - id: DEC_R2_drag_hover_strip
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_R2_drag_hover_strip
+      rol: consume
+      campos:
+        afecta: PRO_P3_navegar_strip
+        enunciado: Arrastrar una ruta desde el tab de archivos y mantenerla sobre el tab de una consola en el strip activa esa consola para soltar la ruta en su terminal
+        que_resolvio: alternativa elegida
+        razon: conserva el gesto actual de arrastrar rutas a la terminal sin restar espacio a la consola
+    - id: DEC_R3_files_toggle_real
+      tipo: decision
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#DEC_R3_files_toggle_real
+      rol: consume
+      campos:
+        afecta: PRO_P1_abrir_enfocar
+        enunciado: 'files.toggle (Ctrl+Alt+E) es un toggle: si el tab de archivos de la consola activa esta visible vuelve a la consola; si no, lo abre o lo enfoca'
+        que_resolvio: alternativa elegida
+        razon: conserva el significado de toggle del atajo actual
+    - id: REG_link_resuelve_pane_dueno
+      tipo: regla
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#REG_link_resuelve_pane_dueno
+      rol: construye
+      campos:
+        enunciado: Una entrada desde un link de terminal resuelve ownerTabId desde el paneId de origen (pane -> tab_id) y no desde la consola activa
+        origen: nueva
+    - id: REG_drop_hover_activa_consola
+      tipo: regla
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#REG_drop_hover_activa_consola
+      rol: construye
+      campos:
+        enunciado: Durante un arrastre de ruta, mantener el puntero sobre el tab de una consola en el strip la activa para permitir soltar en su terminal; el tab de archivos de origen no se cierra
+        origen: nueva
+    - id: REG_files_toggle
+      tipo: regla
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#REG_files_toggle
+      rol: construye
+      campos:
+        enunciado: files.toggle con el tab de archivos de la consola activa visible vuelve a la consola; en cualquier otro estado ejecuta abrir o enfocar
+        origen: nueva
+    - id: REG_anotaciones_conservadas
+      tipo: regla
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#REG_anotaciones_conservadas
+      rol: construye
+      campos:
+        enunciado: La extraccion N1 conserva las dependencias de anotaciones del preview (lectura, creacion, reanclaje y suspension al cambiar de pestana) y su scope; AnnotationComposerPopover y AnnotationPanel siguen funcionando desde el tab de archivos
+        origen: nueva
+    - id: REG_merge_por_owner
+      tipo: regla
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#REG_merge_por_owner
+      rol: construye
+      campos:
+        enunciado: 'Escribir filesTabLinks es lectura-merge-escritura por ownerTabId: una pestana del navegador solo agrega o modifica la entrada de su consola; las bajas solo ocurren por cierre del tab o de su consola o por reconciliacion con el snapshot'
+        origen: nueva
+    - id: REG_barrera_primer_snapshot
+      tipo: regla
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#REG_barrera_primer_snapshot
+      rol: construye
+      campos:
+        enunciado: Hasta recibir el primer snapshot vigente de la conexion y generacion, los vinculos persistidos no se muestran ni se eliminan
+        origen: nueva
+    - id: REG_cuota_y_barrido
+      tipo: regla
+      estado: resuelto
+      etapa: procesos
+      origen: 20261007-file-manager-panel#REG_cuota_y_barrido
+      rol: construye
+      campos:
+        enunciado: Cada vinculo guarda como maximo 20 pestanas de archivo (se descartan las mas antiguas); una escritura que falla por QuotaExceededError no rompe la UI y se reintenta tras podar; al reconciliar se barren las claves filesTabFiles:{ownerTabId} sin vinculo
+        origen: nueva
+    - id: ESC_P1_link_consola_no_activa
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P1_link_consola_no_activa
+      rol: consume
+      campos:
+        accion: en la consola '1 api' (no activa, con dos panes) pulsar un link de archivo emitido por su segundo pane
+        precondicion: consola activa '2 web'; '1 api' con dos panes
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; dividir '1 api' en dos panes y hacer que el segundo imprima una ruta de archivo
+        resultado: se activa '1 api' y se abre o enfoca su tab de archivos con el archivo del link; no se abre el de '2 web'
+    - id: ESC_P1_files_toggle_doble
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P1_files_toggle_doble
+      rol: consume
+      campos:
+        accion: pulsar Ctrl+Alt+E dos veces seguidas
+        precondicion: consola '2 web' activa
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace
+        resultado: la primera vez aparece su tab de archivos, la segunda vuelve a '2 web'
+    - id: ESC_P1_dos_pestanas_navegador
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P1_dos_pestanas_navegador
+      rol: consume
+      campos:
+        accion: en dos pestanas del navegador abrir a la vez el tab de archivos de '1 api' en una y de '2 web' en la otra
+        precondicion: dos pestanas del navegador con la misma conexion
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; abrir Roamgate en dos pestanas del navegador
+        resultado: ambos vinculos quedan en filesTabLinks; ninguna pestana borra el de la otra
+    - id: ESC_P2_anotacion_sobrevive
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P2_anotacion_sobrevive
+      rol: consume
+      campos:
+        accion: en el preview de un archivo crear una anotacion, cambiar a otra consola, volver y abrir el panel de anotaciones
+        precondicion: tab de archivos con un archivo abierto
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace
+        resultado: la anotacion existe, se ve en el panel y el preview la muestra al volver
+    - id: ESC_P3_drag_ruta_a_terminal
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P3_drag_ruta_a_terminal
+      rol: consume
+      campos:
+        accion: arrastrar App.tsx desde el arbol y mantenerlo sobre el tab '2 web' del strip; soltar en la terminal
+        precondicion: tab de archivos de '2 web' activo
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace
+        resultado: se activa '2 web' y la ruta se inserta en su terminal; el tab de archivos sigue en el strip
+    - id: ESC_P4_snapshot_retrasado
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P4_snapshot_retrasado
+      rol: consume
+      campos:
+        accion: recargar el navegador con la red lenta
+        precondicion: vinculos persistidos de '1 api' y '2 web'
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; throttling de red en devtools antes de recargar
+        resultado: mientras no llega el primer snapshot no se muestran ni se borran tabs de archivos; al llegar se restauran los vivos
+    - id: ESC_P4_barrido_huerfanos
+      tipo: escenario
+      estado: resuelto
+      etapa: modelado
+      origen: 20261007-file-manager-panel#ESC_P4_barrido_huerfanos
+      rol: consume
+      campos:
+        accion: recargar tras dejar en localStorage una clave filesTabFiles de una consola inexistente
+        precondicion: clave filesTabFiles:{id inexistente} escrita a mano
+        receta_dato_prueba: Herdr corriendo; workspace demo con checkout git (repo con src/ y un archivo modificado sin commitear); al menos dos consolas en el workspace; escribir en localStorage una clave filesTabFiles con un ownerTabId que Herdr no lista
+        resultado: tras la reconciliacion la clave huerfana se elimina
+aristas:
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_explorador_archivos
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_pestanas_preview
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_contrato_backend_archivos
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_visor_diffs_changes
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_bloque_files
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_panel_files
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_abrir_file_explorer
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_atajo_files_toggle
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_nav_mobile_files
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_activar_superficie_terminal
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_guarda_foco_terminal
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_preferencias_inspector
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_tipo_inspector_view
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_abrir_inspector
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_foco_compartido_inspector
+    - tipo: DERIVA_DE
+      de: PRO_explorar_archivos
+      a: CAP_vista_files_inspector
+    - tipo: INICIA
+      de: ACT_usuario
+      a: PRO_explorar_archivos
+    - tipo: LLEGA_POR
+      de: PRO_explorar_archivos
+      a: PAN_panel_files
+    - tipo: ACCEDE
+      de: PRO_explorar_archivos
+      a: ENT_preferencias_inspector
+    - tipo: ACCEDE
+      de: PRO_explorar_archivos
+      a: ENT_resource_file_tabs
+    - tipo: ACCEDE
+      de: PRO_explorar_archivos
+      a: ENT_estado_panel_files
+    - tipo: LIMITA
+      de: REST_panel_hermano_superficies
+      a: CAP_panel_files
+    - tipo: LIMITA
+      de: REST_estado_por_conexion
+      a: ENT_estado_panel_files
+    - tipo: LIMITA
+      de: REST_foco_rpc_herdr
+      a: PRO_explorar_archivos
+    - tipo: LIMITA
+      de: REST_mobile_view_cerrada
+      a: PAN_panel_files
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_INV01_gating_seleccion_scope
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_INV02_reset_por_generacion
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_INV03_remontaje_por_scope
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_INV04_raiz_pane_enfocado
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_INV05_guarda_foco_terminal
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_INV06_popover_anotaciones
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_INV07_foco_compartido
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_INV08_subvista_cambios
+    - tipo: RELACIONA
+      de: ENT_estado_panel_files
+      a: ENT_preferencias_inspector
+    - tipo: RELACIONA
+      de: ENT_estado_panel_files
+      a: ENT_resource_file_tabs
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_sync_storage_panel
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_reset_sesion_panel_generacion
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_tab_archivos_vinculado
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_directorio_inicial_pane
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_strip_tabs
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_ciclo_vida_tabs
+    - tipo: USA
+      de: PRO_explorar_archivos
+      a: CAP_hoja_tabs_mobile
+    - tipo: LIMITA
+      de: REST_strip_tabs_herdr
+      a: CAP_tab_archivos_vinculado
+    - tipo: ACCEDE
+      de: PRO_explorar_archivos
+      a: ENT_vinculo_tab_archivos
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_INV09_limpieza_vinculo_refresh
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_INV11_foco_virtual_local
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_idempotencia_abrir_tab_archivos
+    - tipo: RELACIONA
+      de: ENT_vinculo_tab_archivos
+      a: ENT_pestanas_por_vinculo
+    - tipo: RELACIONA
+      de: ENT_pestanas_por_vinculo
+      a: ENT_resource_file_tabs
+    - tipo: RELACIONA
+      de: ENT_vinculo_tab_archivos
+      a: ENT_preferencias_inspector
+    - tipo: INICIA
+      de: ACT_usuario
+      a: PRO_P1_abrir_enfocar
+    - tipo: DERIVA_DE
+      de: PRO_P1_abrir_enfocar
+      a: CAP_tab_archivos_vinculado
+    - tipo: DERIVA_DE
+      de: PRO_P1_abrir_enfocar
+      a: CAP_abrir_file_explorer
+    - tipo: DERIVA_DE
+      de: PRO_P1_abrir_enfocar
+      a: CAP_atajo_files_toggle
+    - tipo: DERIVA_DE
+      de: PRO_P1_abrir_enfocar
+      a: CAP_nav_mobile_files
+    - tipo: DERIVA_DE
+      de: PRO_P1_abrir_enfocar
+      a: CAP_directorio_inicial_pane
+    - tipo: DERIVA_DE
+      de: PRO_P1_abrir_enfocar
+      a: CAP_strip_tabs
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_INV01_gating_seleccion_scope
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_INV02_reset_por_generacion
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_INV03_remontaje_por_scope
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_INV04_raiz_pane_enfocado
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_INV05_guarda_foco_terminal
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_INV07_foco_compartido
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_INV11_foco_virtual_local
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_P1_raiz_al_crear
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_idempotencia_abrir_tab_archivos
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_cwd_fuera_raiz_abre_raiz
+    - tipo: ACCEDE
+      de: PRO_P1_abrir_enfocar
+      a: ENT_vinculo_tab_archivos
+    - tipo: ACCEDE
+      de: PRO_P1_abrir_enfocar
+      a: ENT_pestanas_por_vinculo
+    - tipo: ACCEDE
+      de: PRO_P1_abrir_enfocar
+      a: ENT_preferencias_inspector
+    - tipo: ACCEDE
+      de: PRO_P1_abrir_enfocar
+      a: ENT_resource_file_tabs
+    - tipo: LLEGA_POR
+      de: PRO_P1_abrir_enfocar
+      a: PAN_panel_files
+    - tipo: DERIVA_DE
+      de: PRO_explorar_archivos
+      a: CAP_bloque_files
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_rehidratar_al_remontar
+    - tipo: ACCEDE
+      de: PRO_explorar_archivos
+      a: ENT_pestanas_por_vinculo
+    - tipo: INICIA
+      de: ACT_usuario
+      a: PRO_P3_navegar_strip
+    - tipo: DERIVA_DE
+      de: PRO_P3_navegar_strip
+      a: CAP_strip_tabs
+    - tipo: DERIVA_DE
+      de: PRO_P3_navegar_strip
+      a: CAP_hoja_tabs_mobile
+    - tipo: DERIVA_DE
+      de: PRO_P3_navegar_strip
+      a: CAP_activar_superficie_terminal
+    - tipo: DERIVA_DE
+      de: PRO_P3_navegar_strip
+      a: CAP_nav_mobile_files
+    - tipo: DERIVA_DE
+      de: PRO_P3_navegar_strip
+      a: CAP_tab_archivos_vinculado
+    - tipo: APLICA
+      de: PRO_P3_navegar_strip
+      a: REG_INV11_foco_virtual_local
+    - tipo: APLICA
+      de: PRO_P3_navegar_strip
+      a: REG_INV07_foco_compartido
+    - tipo: APLICA
+      de: PRO_P3_navegar_strip
+      a: REG_INV09_limpieza_vinculo_refresh
+    - tipo: APLICA
+      de: PRO_P3_navegar_strip
+      a: REG_id_virtual_fuera_de_herdr
+    - tipo: APLICA
+      de: PRO_P3_navegar_strip
+      a: REG_INV05_guarda_foco_terminal
+    - tipo: ACCEDE
+      de: PRO_P3_navegar_strip
+      a: ENT_vinculo_tab_archivos
+    - tipo: INICIA
+      de: ACT_usuario
+      a: PRO_P4_cerrar
+    - tipo: INICIA
+      de: ACT_usuario
+      a: PRO_P5_inspector_sin_files
+    - tipo: DERIVA_DE
+      de: PRO_P4_cerrar
+      a: CAP_ciclo_vida_tabs
+    - tipo: DERIVA_DE
+      de: PRO_P4_cerrar
+      a: CAP_guarda_foco_terminal
+    - tipo: DERIVA_DE
+      de: PRO_P4_cerrar
+      a: CAP_activar_superficie_terminal
+    - tipo: DERIVA_DE
+      de: PRO_P5_inspector_sin_files
+      a: CAP_abrir_inspector
+    - tipo: DERIVA_DE
+      de: PRO_P5_inspector_sin_files
+      a: CAP_preferencias_inspector
+    - tipo: DERIVA_DE
+      de: PRO_P5_inspector_sin_files
+      a: CAP_tipo_inspector_view
+    - tipo: DERIVA_DE
+      de: PRO_P5_inspector_sin_files
+      a: CAP_foco_compartido_inspector
+    - tipo: APLICA
+      de: PRO_P4_cerrar
+      a: REG_INV09_limpieza_vinculo_refresh
+    - tipo: APLICA
+      de: PRO_P4_cerrar
+      a: REG_INV11_foco_virtual_local
+    - tipo: APLICA
+      de: PRO_P4_cerrar
+      a: REG_id_virtual_fuera_de_herdr
+    - tipo: APLICA
+      de: PRO_P4_cerrar
+      a: REG_cierre_consola_cierra_archivos
+    - tipo: APLICA
+      de: PRO_P4_cerrar
+      a: REG_INV05_guarda_foco_terminal
+    - tipo: APLICA
+      de: PRO_P5_inspector_sin_files
+      a: REG_INV07_foco_compartido
+    - tipo: APLICA
+      de: PRO_P5_inspector_sin_files
+      a: REG_INV02_reset_por_generacion
+    - tipo: APLICA
+      de: PRO_P5_inspector_sin_files
+      a: REG_saneo_view_files
+    - tipo: ACCEDE
+      de: PRO_P4_cerrar
+      a: ENT_vinculo_tab_archivos
+    - tipo: ACCEDE
+      de: PRO_P4_cerrar
+      a: ENT_pestanas_por_vinculo
+    - tipo: ACCEDE
+      de: PRO_P5_inspector_sin_files
+      a: ENT_preferencias_inspector
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_sync_storage_panel
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_reset_sesion_panel_generacion
+    - tipo: APLICA
+      de: PRO_P4_cerrar
+      a: REG_sync_storage_panel
+    - tipo: TRANSICION
+      de: PRO_P1_abrir_enfocar
+      a: PRO_explorar_archivos
+      campos:
+        dato: vinculo activo (ownerTabId) y su scope
+    - tipo: TRANSICION
+      de: PRO_P1_abrir_enfocar
+      a: PRO_P3_navegar_strip
+      campos:
+        dato: superficie local activa (consola o tab de archivos de una consola)
+    - tipo: TRANSICION
+      de: PRO_explorar_archivos
+      a: PRO_P5_inspector_sin_files
+      campos:
+        dato: vista pedida (changes, commits, history)
+    - tipo: TRANSICION
+      de: PRO_P5_inspector_sin_files
+      a: PRO_P1_abrir_enfocar
+      campos:
+        dato: 'destino opcional: archivo o directorio (link, Changes, arbol)'
+    - tipo: TRANSICION
+      de: PRO_P3_navegar_strip
+      a: PRO_P4_cerrar
+      campos:
+        dato: vinculo (ownerTabId) y superficie activa
+    - tipo: VERIFICA
+      de: ESC_P1_crear_en_subdir
+      a: PRO_P1_abrir_enfocar
+    - tipo: VERIFICA
+      de: ESC_P1_reusar_existente
+      a: PRO_P1_abrir_enfocar
+    - tipo: VERIFICA
+      de: ESC_P1_otro_workspace
+      a: PRO_P1_abrir_enfocar
+    - tipo: VERIFICA
+      de: ESC_P1_desde_changes
+      a: PRO_P1_abrir_enfocar
+    - tipo: VERIFICA
+      de: ESC_P1_cwd_fuera_de_raiz
+      a: PRO_P1_abrir_enfocar
+    - tipo: VERIFICA
+      de: ESC_P2_dos_consolas_aisladas
+      a: PRO_explorar_archivos
+    - tipo: VERIFICA
+      de: ESC_P2_rehidratar
+      a: PRO_explorar_archivos
+    - tipo: VERIFICA
+      de: ESC_P2_ver_cambios
+      a: PRO_explorar_archivos
+    - tipo: VERIFICA
+      de: ESC_P3_orden_y_atajos
+      a: PRO_P3_navegar_strip
+    - tipo: VERIFICA
+      de: ESC_P3_foco_externo_shared
+      a: PRO_P3_navegar_strip
+    - tipo: VERIFICA
+      de: ESC_P3_mobile_nav
+      a: PRO_P3_navegar_strip
+    - tipo: VERIFICA
+      de: ESC_P4_cierre_externo
+      a: PRO_P4_cerrar
+    - tipo: VERIFICA
+      de: ESC_P4_ctrl_alt_w
+      a: PRO_P4_cerrar
+    - tipo: VERIFICA
+      de: ESC_P4_esc_cascada
+      a: PRO_P4_cerrar
+    - tipo: VERIFICA
+      de: ESC_P4_recarga_y_reinicio
+      a: PRO_P4_cerrar
+    - tipo: VERIFICA
+      de: ESC_P5_saneo_view_files
+      a: PRO_P5_inspector_sin_files
+    - tipo: VERIFICA
+      de: ESC_P5_worktree_files
+      a: PRO_P5_inspector_sin_files
+    - tipo: VERIFICA
+      de: ESC_P5_toggle_sin_files
+      a: PRO_P5_inspector_sin_files
+    - tipo: LLEGA_POR
+      de: PRO_P3_navegar_strip
+      a: PAN_panel_files
+    - tipo: LLEGA_POR
+      de: PRO_P4_cerrar
+      a: PAN_panel_files
+    - tipo: LLEGA_POR
+      de: PRO_P5_inspector_sin_files
+      a: PAN_inspector
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_link_resuelve_pane_dueno
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_files_toggle
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_merge_por_owner
+    - tipo: APLICA
+      de: PRO_P1_abrir_enfocar
+      a: REG_barrera_primer_snapshot
+    - tipo: APLICA
+      de: PRO_P3_navegar_strip
+      a: REG_drop_hover_activa_consola
+    - tipo: APLICA
+      de: PRO_explorar_archivos
+      a: REG_anotaciones_conservadas
+    - tipo: APLICA
+      de: PRO_P4_cerrar
+      a: REG_merge_por_owner
+    - tipo: APLICA
+      de: PRO_P4_cerrar
+      a: REG_cuota_y_barrido
+    - tipo: APLICA
+      de: PRO_P4_cerrar
+      a: REG_barrera_primer_snapshot
+    - tipo: VERIFICA
+      de: ESC_P1_link_consola_no_activa
+      a: PRO_P1_abrir_enfocar
+    - tipo: VERIFICA
+      de: ESC_P1_files_toggle_doble
+      a: PRO_P1_abrir_enfocar
+    - tipo: VERIFICA
+      de: ESC_P1_dos_pestanas_navegador
+      a: PRO_P1_abrir_enfocar
+    - tipo: VERIFICA
+      de: ESC_P2_anotacion_sobrevive
+      a: PRO_explorar_archivos
+    - tipo: VERIFICA
+      de: ESC_P3_drag_ruta_a_terminal
+      a: PRO_P3_navegar_strip
+    - tipo: VERIFICA
+      de: ESC_P4_snapshot_retrasado
+      a: PRO_P4_cerrar
+    - tipo: VERIFICA
+      de: ESC_P4_barrido_huerfanos
+      a: PRO_P4_cerrar
