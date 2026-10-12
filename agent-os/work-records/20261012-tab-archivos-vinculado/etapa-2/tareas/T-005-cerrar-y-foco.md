@@ -14,7 +14,7 @@ cas:
   - CA-20
 depende_de:
   - T-003
-ejecutor: null
+ejecutor: amelia
 evidencia_requerida:
   api: false
   bd: false
@@ -23,7 +23,7 @@ evidencia_requerida:
 fase: 4
 file_type: tarea-etapa-2
 standards_cargados: []
-status: pending
+status: done
 tipo_tarea: codigo
 verificador: null
 ---
@@ -57,3 +57,22 @@ El tab de archivos se cierra solo o con su consola, Esc vuelve a la consola en c
 | CA-18 | ESC_P4_ctrl_alt_w: Ctrl+Alt+W con el tab activo cierra solo el tab de archivos | DEC_ctrl_alt_w_cierra_tab_archivos |
 | CA-19 | ESC_P4_esc_cascada: Esc despeja lo transitorio y luego vuelve a la consola sin cerrar el tab | DEC_esc_cascada_vuelve_consola |
 | CA-20 | ESC_P3_foco_externo_shared: ante foco externo o cambio de workspace se muestra la consola enfocada | DEC_P3_foco_externo_manda, INV-PUENTE-07 |
+
+## Ejecutor: amelia
+
+### Que hizo
+
+- Ctrl+Alt+W: closeShortcutTarget recibe filesTabActive y con el tab de archivos activo cierra solo ese tab; con la consola activa, como antes.
+- Cierre local de la consola: store.closeTab llama forgetClosedConsoleFilesTab tras un tab.close exitoso; el externo lo cubre acceptSnapshot.
+- Esc en cascada: filesTabEscapeStep (pura) y onKeyDown en la section de FilesTabSurface, nunca en window; respeta overlays y handlers previos.
+- Busqueda del explorador: Esc con texto la limpia; foco devuelto a la terminal al desmontar la superficie con foco dentro, sin tab.focus.
+- Pruebas: tabShortcuts, filesTabEscape (3 casos) y store (cierre exitoso/fallido); suite 1258 pass, 9 fail previas.
+- Navegador (anfitriona): Esc limpia busqueda y luego vuelve a la terminal con el tab en el strip; Ctrl+Alt+W cierra solo el tab, sin dialogo y con 5 consolas intactas.
+
+### Hallazgos
+
+| # | Hallazgo | Solucion | Decidio |
+|---|----------|----------|---------|
+| 1 | El Esc de la busqueda vive en FileExplorerContent compartido (FileExplorerDialog.tsx:1803): en el modal y en el Inspector, Esc con texto limpia la busqueda en vez de cerrar | Aceptado como cambio menor y coherente con DiffContentView.tsx:1783; se reporta al usuario y se revisa en E4 | amelia |
+| 2 | closePane del ultimo pane (store.ts:3963) no limpia el vinculo de forma optimista | Lo cubre la reconciliacion del siguiente snapshot; se acepta | amelia |
+| 3 | CA-06, CA-17 y CA-20 no se ejercitaron en navegador: requieren reiniciar Herdr, cerrar consolas o cambiar el foco del Herdr real | Verificacion manual de E4 en workspace de prueba | amelia |

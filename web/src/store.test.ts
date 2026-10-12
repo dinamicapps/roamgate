@@ -30,6 +30,13 @@ import {
   worktreeRemovalCompletionNotice,
 } from "./store";
 import type { Pane } from "./types";
+import { roamgateLocalStorage } from "./browserStorage";
+import {
+  obtainFilesTabLink,
+  readFilesTabFiles,
+  readFilesTabLinks,
+  writeFilesTabFiles,
+} from "./filesTabResource";
 import { __resetTabPinsForTests, setTabPinned } from "./tabPins";
 import {
   activateTerminalComposerDraftScope,
@@ -125,6 +132,81 @@ describe("pinned close draft protection", () => {
       }
     },
   );
+});
+
+describe("local console close", () => {
+  test("drops the console's files tab only once Herdr closes it", async () => {
+    const previousState = store.get();
+    const previousConnection = bridge.connection;
+    const previousStorage = globalThis.localStorage;
+    const values = new Map<string, string>();
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: {
+        get length() {
+          return values.size;
+        },
+        key: (index: number) => [...values.keys()][index] ?? null,
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => void values.set(key, value),
+        removeItem: (key: string) => void values.delete(key),
+        clear: () => values.clear(),
+      },
+    });
+    const snapshot = partitionState();
+    snapshot.connectionGeneration = 2953;
+    const target = snapshot.panes[0];
+    let failClose = true;
+    bridge.connection = (connectionId = "alpha") => ({
+      connectionId,
+      generation: snapshot.connectionGeneration,
+      serverRuntimeGeneration: 1,
+      isCurrent: () => true,
+      acceptsServerGeneration: () => true,
+      call: async () => {
+        if (failClose) throw new Error("Close failed");
+        return {};
+      },
+    });
+    const link = () => ({
+      workspaceId: target.workspace_id,
+      scopeOwner: "owner",
+      initialDirectory: null,
+    });
+    try {
+      __resetTabPinsForTests();
+      __storeTesting.replaceState(snapshot);
+      obtainFilesTabLink(roamgateLocalStorage, "alpha", target.tab_id, link);
+      obtainFilesTabLink(roamgateLocalStorage, "alpha", "other-tab", link);
+      writeFilesTabFiles(roamgateLocalStorage, "alpha", target.tab_id, {
+        paths: ["src/App.tsx"],
+        activePath: "src/App.tsx",
+        previewPath: null,
+      });
+
+      await store.closeTab(target.tab_id);
+      expect(
+        readFilesTabLinks(roamgateLocalStorage, "alpha")[target.tab_id],
+      ).toBeDefined();
+
+      failClose = false;
+      await store.closeTab(target.tab_id);
+      expect(
+        Object.keys(readFilesTabLinks(roamgateLocalStorage, "alpha")),
+      ).toEqual(["other-tab"]);
+      expect(
+        readFilesTabFiles(roamgateLocalStorage, "alpha", target.tab_id).paths,
+      ).toEqual([]);
+    } finally {
+      bridge.connection = previousConnection;
+      __storeTesting.replaceState(previousState);
+      Object.defineProperty(globalThis, "localStorage", {
+        configurable: true,
+        value: previousStorage,
+      });
+      __resetTabPinsForTests();
+    }
+  });
 });
 
 describe("automatic update check preference", () => {

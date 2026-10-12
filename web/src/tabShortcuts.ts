@@ -21,13 +21,18 @@ export function tabShortcutAction(
   return null;
 }
 
-/** Closes only the active pane in split tabs, otherwise the tab itself. */
+/**
+ * Closes only the active pane in split tabs, otherwise the tab itself. A
+ * visible files tab hides its console, so only the files tab closes then.
+ */
 export function closeShortcutTarget(
   tabId: string | undefined,
   panes: Pick<Pane, "pane_id" | "tab_id" | "focused">[],
   activePaneId: string | undefined,
-): { type: "pane" | "tab"; id: string } | null {
+  filesTabActive = false,
+): { type: "pane" | "tab" | "files"; id: string } | null {
   if (!tabId) return null;
+  if (filesTabActive) return { type: "files", id: tabId };
   const tabPanes = panes.filter((pane) => pane.tab_id === tabId);
   if (tabPanes.length <= 1) return { type: "tab", id: tabId };
   const pane =

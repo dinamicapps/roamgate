@@ -21,6 +21,7 @@ export {
 } from "./taskNotifications";
 import { withAgentActivity } from "./agentOrder";
 import { clearTerminalComposerDrafts } from "./terminalComposer";
+import { readFilesTabLinks, removeFilesTabLink } from "./filesTabResource";
 import {
   forgetClosedTabPins,
   paneCloseBlockReason,
@@ -2366,6 +2367,16 @@ function adoptBrowserTarget(lease: StoreConnectionLease, result: unknown) {
   });
 }
 
+// The snapshot reconciliation would drop it too; a local close does not wait.
+function forgetClosedConsoleFilesTab(connectionId: string, tabId: string) {
+  try {
+    if (readFilesTabLinks(roamgateLocalStorage, connectionId)[tabId])
+      removeFilesTabLink(roamgateLocalStorage, connectionId, tabId);
+  } catch {
+    /* Unavailable storage is left to that reconciliation. */
+  }
+}
+
 function notifyPinnedTabClose(reason: string) {
   set({
     notice: {
@@ -2718,6 +2729,7 @@ export const store = {
         lease.generation,
         paneIds,
       );
+      forgetClosedConsoleFilesTab(lease.connectionId, tabId);
       return result;
     });
   },

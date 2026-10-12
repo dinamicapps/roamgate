@@ -1799,6 +1799,12 @@ function FileExplorerContent({
                     onChange={(e) =>
                       updateCache({ search: e.currentTarget.value })
                     }
+                    onKeyDown={(e) => {
+                      if (e.key !== "Escape" || !search) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      updateCache({ search: "" });
+                    }}
                     placeholder="Search checkout"
                     aria-label="Search checkout"
                     maxLength={512}

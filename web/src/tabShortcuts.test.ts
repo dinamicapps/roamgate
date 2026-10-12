@@ -91,6 +91,18 @@ describe("close shortcut target", () => {
     ).toEqual({ type: "pane", id: "one" });
   });
 
+  test("closes only the files tab while it hides its console", () => {
+    expect(closeShortcutTarget("split", panes, "two", true)).toEqual({
+      type: "files",
+      id: "split",
+    });
+    expect(closeShortcutTarget("single", panes, "other", true)).toEqual({
+      type: "files",
+      id: "single",
+    });
+    expect(closeShortcutTarget(undefined, panes, undefined, true)).toBeNull();
+  });
+
   test("closes the tab when it has at most one pane", () => {
     expect(closeShortcutTarget("single", panes, "other")).toEqual({
       type: "tab",

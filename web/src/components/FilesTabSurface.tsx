@@ -14,6 +14,7 @@ import {
   writeFilesTabFiles,
   type FilesTabLink,
 } from "../filesTabResource";
+import { filesTabEscapeStep } from "../filesTabEscape";
 import type { FileExplorerEntry } from "../types";
 import {
   DEFAULT_INSPECTOR_NAVIGATION_RATIO,
@@ -161,6 +162,27 @@ export function FilesTabSurface({
       }`}
       aria-label={`Files of ${ownerLabel}`}
       tabIndex={-1}
+      // Scoped to the tab, never window: Esc in the terminal (vim) is not ours.
+      onKeyDown={(event) => {
+        if (event.key !== "Escape") return;
+        const step = filesTabEscapeStep({
+          handled: event.defaultPrevented || event.nativeEvent.isComposing,
+          overlayOpen: !!document.querySelector(
+            ".context-menu, .command-popover, .modal-backdrop",
+          ),
+          compactDetailOpen: compact && drillIn && !!selection.entry,
+        });
+        if (step === "ignore") return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (step === "show-console") {
+          onShowConsole();
+          return;
+        }
+        setDrillIn(false);
+        // The detail that held focus is hidden; the next Esc must still land here.
+        rootRef.current?.focus({ preventScroll: true });
+      }}
     >
       <WorkspaceFilesView
         workspaceId={workspaceId}

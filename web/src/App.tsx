@@ -2407,10 +2407,15 @@ export default function App() {
     if (previousActiveConsoleTabIdRef.current === activeConsoleTabId) return;
     previousActiveConsoleTabIdRef.current = activeConsoleTabId;
     // Herdr's focus decides the visible console (including focus changed
-    // elsewhere); a files surface of another console gives way to it.
-    if (filesSurfaceOwnerTabIdRef.current !== activeConsoleTabId)
-      commitFilesSurfaceOwner(null);
-  }, [activeConsoleTabId, commitFilesSurfaceOwner]);
+    // elsewhere or another workspace); a files surface of another console
+    // gives way to it.
+    const surfaceOwnerTabId = filesSurfaceOwnerTabIdRef.current;
+    if (surfaceOwnerTabId === activeConsoleTabId) return;
+    commitFilesSurfaceOwner(null);
+    // The surface unmounted with keyboard focus inside; hand it to the terminal.
+    if (surfaceOwnerTabId !== null && document.activeElement === document.body)
+      focusActiveTerminal();
+  }, [activeConsoleTabId, commitFilesSurfaceOwner, focusActiveTerminal]);
   const showConsoleSurface = useCallback(() => {
     commitFilesSurfaceOwner(null);
     focusActiveTerminal();
@@ -3374,19 +3379,23 @@ export default function App() {
           (tab) => tab.workspace_id === focusedWorkspace.workspace_id,
         );
         const activeTabId = activeTabIdForSnapshot(current);
+        const filesTabActive =
+          !!activeTabId &&
+          filesSurfaceOwnerTabIdRef.current === activeTabId &&
+          !!filesTabLinkSession.session.links()[activeTabId];
         if (tabAction === "close") {
           const target = closeShortcutTarget(
             activeTabId,
             current.panes,
             activePaneIdForSnapshot(current),
+            filesTabActive,
           );
-          if (target?.type === "pane") requestClosePane(target.id);
+          if (target?.type === "files") closeFilesTab(target.id);
+          else if (target?.type === "pane") requestClosePane(target.id);
           else if (target?.type === "tab") requestCloseTab(target.id);
           return;
         }
 
-        const filesTabActive =
-          !!activeTabId && filesSurfaceOwnerTabIdRef.current === activeTabId;
         const target = adjacentStripEntry(
           tabs,
           activeTabId
@@ -3583,6 +3592,7 @@ export default function App() {
       window.removeEventListener("blur", onBlur);
     };
   }, [
+    closeFilesTab,
     closePaneJump,
     commitPaneJump,
     defaultPaneJumpIndex,
