@@ -1,0 +1,6 @@
+# Publicado por scripts/publicar-dist.ts del repo fuente (dinamicapps/roamgate). No se edita aqui.
+# El fin de linea no depende de core.autocrlf de quien clona: cmd.exe rompe con LF y bash con CRLF.
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.sh  text eol=lf
+*.zip binary

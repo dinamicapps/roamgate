@@ -1,0 +1,10 @@
+# Publicado por scripts/publicar-dist.ts del repo fuente (dinamicapps/roamgate). No se edita aqui.
+
+# El binario se extrae de bin/roamgate-windows-x64.zip con install.ps1 / install.sh: pesa mas de
+# 100 MB (limite de GitHub por archivo) y es local de cada maquina.
+roamgate.exe
+
+# Carpeta temporal del instalador mientras extrae y verifica el zip.
+.roamgate-extraccion/
+
+*.log
