@@ -35,6 +35,12 @@ Usar `/post-works status` para ver conteos y antiguedad agregada.
 | FM-03 | Modal `FileExplorerDialog` sin importadores (codigo muerto, `web/src/components/FileExplorerDialog.tsx:108`) | 20261007-investigacion-filemanager-tabs | 2026-10-07 | baja | pendiente |
 | FM-04 | Al remover un worktree quedan claves huerfanas de cache de previews (por workspaceId) y de preferencias del Inspector en localStorage | 20261007-investigacion-filemanager-tabs | 2026-10-07 | baja | pendiente |
 | FM-05 | Hipotesis no probada en navegador: el menu contextual del explorador (`position:fixed`, sin portal) bajo `.workspace-stage` con `container-type: size` podria posicionarse o recortarse mal | 20261007-investigacion-filemanager-tabs | 2026-10-07 | media | pendiente |
+| FM-06 | `git.diff_file` falla con "invalid Git patch size" en Windows (`server/src/workspace/git-diff.ts:408`): el script sh del diff no devuelve el tamano esperado; Changes no muestra diffs en este host | 20261012-tab-archivos-vinculado | 2026-10-12 | alta | pendiente |
+| FM-07 | Los links de archivo de la terminal (`file.resolve`, `web/src/components/TerminalView.tsx:375`) resuelven contra el pane enfocado del workspace y no contra la consola duena; deberian enviar `tab_id` como el tab de archivos | 20261012-tab-archivos-vinculado | 2026-10-12 | media | pendiente |
+| FM-08 | `relativePathWithinCheckout` distingue mayusculas (`web/src/workspaceResource.ts:131-137`): en Windows una capitalizacion distinta entre Herdr y git deja el directorio inicial en la raiz | 20261012-tab-archivos-vinculado | 2026-10-12 | baja | pendiente |
+| FM-09 | Tab de archivos: en mobile el strip no se desplaza hasta el tab activo, y al abrir el foco de teclado queda en la primera fila y no en el directorio inicial | 20261012-tab-archivos-vinculado | 2026-10-12 | baja | pendiente |
+| FM-10 | Codigo muerto tras sacar Files del Inspector: prop `embedded` de DiffContentView sin llamador (`DiffContentView.tsx:826`, `diffContentState.ts:39-50`) y escritura legada de `workspaceInspectorFile:{owner}` al borrar un worktree (`web/src/App.tsx:2848`) | 20261012-tab-archivos-vinculado | 2026-10-12 | baja | pendiente |
+| FM-11 | La captura `roamgate-desktop-files` (`docs/SCREENSHOTS.md:281`) muestra Files dentro del Inspector; regenerarla con el tab de archivos | 20261012-tab-archivos-vinculado | 2026-10-12 | baja | pendiente |
 
 ## Items archivados
 

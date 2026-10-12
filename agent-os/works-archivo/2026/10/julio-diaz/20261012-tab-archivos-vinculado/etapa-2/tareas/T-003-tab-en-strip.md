@@ -31,7 +31,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 003: Tab de archivos en el strip y su superficie
 
@@ -85,3 +85,15 @@ Mostrar el tab de archivos en la barra de tabs pegado a la derecha de su consola
 | 4 | expandedNavigationRatio del vinculo queda sin uso en el tab a ancho completo | Se acepta; el vinculo conserva el campo por compatibilidad con datos.md | amelia |
 | 5 | CA-10 (anotacion sobrevive) no ejercitado en navegador; ver Annotations requiere crear una anotacion real | Queda para la verificacion manual de E4 | amelia |
 | 6 | Ctrl+Alt+W con el tab activo aun cierra la consola; Esc en cascada y limpieza tras closeTab pendientes | Alcance de T-005 | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-07, CA-08, CA-09: tab pegado a su consola sin numero, estado separado por consola y rehidratacion al reabrir y recargar (CA-09-despues.png).
+
+### Hallazgos de verificacion
+
+| # | Hallazgo | Severidad | Estado |
+|---|----------|-----------|--------|
+| 1 | CA-10 (anotacion) no ejercitable con seleccion sintetica | menor | diferido |

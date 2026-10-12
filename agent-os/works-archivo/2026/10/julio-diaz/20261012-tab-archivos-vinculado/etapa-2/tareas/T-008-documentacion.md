@@ -19,7 +19,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 008: Actualizar FEATURES.md y ARCHITECTURE.md
 
@@ -56,3 +56,13 @@ Documentar el tab de archivos y el Inspector sin Files.
 |---|----------|----------|---------|
 | 1 | La captura roamgate-desktop-files sigue mostrando Files en el Inspector | Regenerar la captura es trabajo aparte; se registra en post-works | paige |
 | 2 | Archivo no declarado: docs/SCREENSHOTS.md (referencia directa obsoleta) | Aceptado: una linea de receta | paige |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-27: FEATURES.md y ARCHITECTURE.md contrastados con shortcutBindings.ts y el codigo final.
+
+### Hallazgos de verificacion
+
+(ninguno)

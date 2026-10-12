@@ -3,8 +3,8 @@ slug: 20261012-tab-archivos-vinculado
 autor: julio-diaz
 autor_kebab: julio-diaz
 fecha_inicio: "2026-10-12"
-fecha_fin: null
-estado: EN_PROGRESO
+fecha_fin: "2026-10-12"
+estado: COMPLETADO_VERIFICACION_DIFERIDA
 modo: normal
 nivel: normal
 tipo: feature
@@ -21,6 +21,35 @@ abordaje:
 meta: "Desde cualquier consola, Ctrl+Alt+E, el boton Files o el menu del tab abren (o enfocan, sin duplicar) un tab de archivos pegado a su consola, en el cwd del pane enfocado; el tab se cierra con su consola, rehidrata su estado y el Inspector ya no ofrece la vista Files."
 meta_definida_en: "2026-10-12"
 work_paraguas: W1_tab_archivos_vinculado
+verificacion_diferida:
+  alcance:
+    - CA-10
+    - CA-14
+    - CA-16
+    - CA-20
+    - CA-21
+    - CA-25
+  causa: integracion-externa-no-disponible
+  confirmado_por_usuario: true
+  evidencia_sustituta:
+    - web/src/filesTabOwner.test.ts:63
+    - web/src/tabDragHover.test.ts:40
+    - 20261012-tab-archivos-vinculado/T-003
+    - 20261012-tab-archivos-vinculado/T-007
+  id: VD-01
+  plan_confirmacion:
+    como: Recorrer en Roamgate los escenarios de CA-10, CA-14, CA-16, CA-20, CA-21 y CA-25 con la receta del acta de E4 (perfil shared y un worktree de prueba; CA-16 tras corregir el diff del servidor)
+    cuando: proxima sesion de uso del tab de archivos en el perfil shared
+    responsable: Julio Diaz
+    revisar_el: "2026-10-19"
+  razon: 'Seis CAs requieren interaccion real con Herdr que la sesion automatizada no reproduce: puntero/arrastre sobre xterm y el editor, un perfil shared, un worktree y el diff del servidor (falla en este Windows).'
+cosecha:
+  memoria_expertos:
+    ejecutado: true
+    fecha: "2026-10-12"
+    por: julio-diaz
+    reflexion_depositada: true
+    reflexiones_por_agente: 5
 ---
 # Work: Tab de archivos vinculado a su consola
 
@@ -520,7 +549,61 @@ _(ninguna: este work no intercambia datos con otros)_
 
 ## Archivos modificados
 
-<!-- Se llena al cierre del work con git diff. -->
+- `FEATURES.md`
+- `docs/ARCHITECTURE.md`
+- `docs/SCREENSHOTS.md`
+- `server/src/index.ts`
+- `server/src/workspace/files.test.ts`
+- `server/src/workspace/files.ts`
+- `web/src/App.tsx`
+- `web/src/components/DiffContentView.css`
+- `web/src/components/FileExplorerDialog.test.ts`
+- `web/src/components/FileExplorerDialog.tsx`
+- `web/src/components/FilePreviewContent.css`
+- `web/src/components/FilePreviewContent.tsx`
+- `web/src/components/FilePreviewTabs.test.ts`
+- `web/src/components/FilesTabSurface.css`
+- `web/src/components/FilesTabSurface.tsx`
+- `web/src/components/InspectorSplitResizer.css`
+- `web/src/components/InspectorSplitResizer.tsx`
+- `web/src/components/TabBar.css`
+- `web/src/components/TabBar.tsx`
+- `web/src/components/WorkspaceFilesView.tsx`
+- `web/src/components/WorkspaceInspectorHost.css`
+- `web/src/components/WorkspaceInspectorHost.tsx`
+- `web/src/components/WorktreeLifecycleDialog.tsx`
+- `web/src/components/WorktreeLifecycleRow.tsx`
+- `web/src/components/fileExplorerResources.ts`
+- `web/src/fileManager.ts`
+- `web/src/filesTabEscape.test.ts`
+- `web/src/filesTabEscape.ts`
+- `web/src/filesTabOwner.test.ts`
+- `web/src/filesTabOwner.ts`
+- `web/src/filesTabResource.test.ts`
+- `web/src/filesTabResource.ts`
+- `web/src/filesTabStrip.test.ts`
+- `web/src/filesTabStrip.ts`
+- `web/src/shortcutCatalog.ts`
+- `web/src/store.test.ts`
+- `web/src/store.ts`
+- `web/src/styles/layout/app.css`
+- `web/src/tabDragHover.test.ts`
+- `web/src/tabDragHover.ts`
+- `web/src/tabShortcuts.test.ts`
+- `web/src/tabShortcuts.ts`
+- `web/src/terminalFocus.test.ts`
+- `web/src/terminalFocus.ts`
+- `web/src/types.ts`
+- `web/src/workspaceFileUrl.ts`
+- `web/src/workspaceResource.test.ts`
+- `web/src/workspaceResource.ts`
+- `web/vite.config.ts`
 
 ## Cierre
 
+Cerrado el 2026-10-12. Meta cumplida: cada consola tiene un tab de archivos vinculado 1:1, pegado a su derecha en el strip, que abre en el cwd del pane enfocado de su consola (raiz git propia por consola tras T-010), se reusa sin duplicar, rehidrata pestanas y preview, sobrevive a recargas y se cierra con su consola; el Inspector ya no ofrece Files.
+
+- Tareas: T-001..T-010 en done. T-009 (presupuesto de assets) y T-010 (raiz por consola, [OVERRIDE] sobre el freno del contrato file.*) nacieron de hallazgos de E4.
+- Verificacion: 22 CAs en PASS y 6 pendientes declarados como verificacion diferida VD-01 (CA-10, CA-14, CA-16, CA-20, CA-21, CA-25), revisar el 2026-10-19.
+- Calidad: build web 160/160 archivos, typecheck limpio, suite web sin fallas nuevas (9 previas en terminalComposer.test.ts), files.test 10/10.
+- Hallazgos fuera de alcance volcados a post-works (FM-06..FM-11).

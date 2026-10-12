@@ -39,7 +39,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 007: P5: el Inspector sin Files
 
@@ -92,3 +92,15 @@ Retirar la vista Files del Inspector una vez que el tab de archivos ya cubre tod
 | 3 | Al borrar un worktree se escribe aun workspaceInspectorFile:{owner} (App.tsx:2848), clave ya legada | Inocuo; se registra en post-works junto con read/writeResourceFileSelection | amelia |
 | 4 | Archivos reales 17 vs 6 declarados (CSS consolidado, FilePreviewContent, worktrees) | Derivados del mandato (puntos 5 y 6) y de quitar codigo sin uso; sin lote paralelo | amelia |
 | 5 | CA-23 y CA-25 no ejercitados en navegador | CA-23 cubierto por prueba unitaria; CA-25 en verificacion manual de E4 | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-23, CA-24, CA-26: saneo files a changes por prueba unitaria; Inspector con 3 vistas (CA-24-antes/despues.png); Changes del preview selecciona el archivo.
+
+### Hallazgos de verificacion
+
+| # | Hallazgo | Severidad | Estado |
+|---|----------|-----------|--------|
+| 1 | CA-25 requiere un worktree | menor | diferido |

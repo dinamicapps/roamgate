@@ -25,7 +25,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 005: P4: cierre, Esc, Ctrl+Alt+W y foco externo
 
@@ -76,3 +76,15 @@ El tab de archivos se cierra solo o con su consola, Esc vuelve a la consola en c
 | 1 | El Esc de la busqueda vive en FileExplorerContent compartido (FileExplorerDialog.tsx:1803): en el modal y en el Inspector, Esc con texto limpia la busqueda en vez de cerrar | Aceptado como cambio menor y coherente con DiffContentView.tsx:1783; se reporta al usuario y se revisa en E4 | amelia |
 | 2 | closePane del ultimo pane (store.ts:3963) no limpia el vinculo de forma optimista | Lo cubre la reconciliacion del siguiente snapshot; se acepta | amelia |
 | 3 | CA-06, CA-17 y CA-20 no se ejercitaron en navegador: requieren reiniciar Herdr, cerrar consolas o cambiar el foco del Herdr real | Verificacion manual de E4 en workspace de prueba | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-17, CA-18, CA-19: cierre externo y local eliminan tab y vinculo; Ctrl+Alt+W cierra solo el tab; Esc en cascada vuelve a la terminal.
+
+### Hallazgos de verificacion
+
+| # | Hallazgo | Severidad | Estado |
+|---|----------|-----------|--------|
+| 1 | CA-20 requiere perfil shared | menor | diferido |

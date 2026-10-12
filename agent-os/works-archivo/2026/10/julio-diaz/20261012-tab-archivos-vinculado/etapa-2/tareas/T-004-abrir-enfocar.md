@@ -25,7 +25,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 004: P1: abrir o enfocar el tab desde todas las entradas
 
@@ -79,3 +79,15 @@ Un unico punto de entrada abre o enfoca el tab de archivos de una consola, y tod
 | 2 | Con owner en otra consola, si Herdr manda primero un snapshot con otra consola activa, el efecto de activeConsoleTabId puede limpiar la superficie | Riesgo a confirmar en la verificacion manual de CA-14/CA-15 en E4 (no se ejercita en el Herdr real del usuario) | amelia |
 | 3 | Sin tocar a proposito: nav mobile (T-006), ciclo de worktrees y vista Files interna del Inspector (T-007) | Asignados a sus tareas | amelia |
 | 4 | CA-11, CA-12, CA-14, CA-15 y CA-16 no se ejercitaron en navegador: requieren crear panes/consolas o cambiar el foco del Herdr real | Quedan para la verificacion manual de E4 en un workspace de prueba | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-02, CA-13, CA-15: boton Files y Ctrl+Alt+E alternan, el menu de consola reusa el tab y Browse files de otro workspace lo enfoca (CA-13-despues.png).
+
+### Hallazgos de verificacion
+
+| # | Hallazgo | Severidad | Estado |
+|---|----------|-----------|--------|
+| 1 | CA-14 y CA-16 diferidos (link de xterm; diff del servidor en Windows) | menor | diferido |

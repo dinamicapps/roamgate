@@ -13,3 +13,19 @@
     detalle: 07-verificacion.md reporta conteo de congruencia y no solo el resultado mecanico
     tipo: humana
   work: "20261007-investigacion-filemanager-tabs"
+- arte: verificar
+  categoria: acierto-repetible
+  causa_atribuida: El presupuesto vive en un postbuild que ninguna prueba unitaria ejercita.
+  disparador: cuando un work agrega o mueve imports dinamicos (lazy) en el cliente web
+  evidencia:
+    - ancla: 20261012-tab-archivos-vinculado/T-009
+      tipo: work-record
+    - ancla: scripts/check-web-assets.mjs:7
+      tipo: codebase
+  fecha: "2026-10-12"
+  leccion_candidata: Correr siempre el build de produccion completo en Fase 1 y comparar contra la base, no solo typecheck y suite.
+  observacion: La Fase 1 con build de produccion detecto que el work subio el conteo de assets de 160 a 165 sobre un presupuesto de 160, cuando typecheck y suite estaban verdes.
+  verificacion:
+    detalle: regresiones de presupuesto de build detectadas antes del cierre
+    tipo: outcome
+  work: "20261012-tab-archivos-vinculado"

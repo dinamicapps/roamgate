@@ -31,7 +31,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 010: Raiz del tab de archivos por consola
 
@@ -76,3 +76,15 @@ H-E4-01: en workspaces sin worktree, el servidor resuelve la raiz del explorador
 | 2 | relativePathWithinCheckout distingue mayusculas (workspaceResource.ts:131-137); en Windows una capitalizacion distinta cae a la raiz | No se reprodujo en la prueba; se registra en post-works | amelia |
 | 3 | file.resolve de links de terminal (TerminalView.tsx:375) sigue resolviendo contra el pane enfocado del workspace | Fuera de la superficie del tab; se registra en post-works | amelia |
 | 4 | Al abrir, el foco de teclado queda en la primera fila y no en el directorio inicial expandido | Cosmetico; se registra en post-works | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-08, CA-11, CA-12: en fm-prueba2 cada consola conserva su raiz git al mover el foco, web abre con web/src expandido y una consola fuera de repo abre en su cwd (CA-11-despues.png).
+
+### Hallazgos de verificacion
+
+| # | Hallazgo | Severidad | Estado |
+|---|----------|-----------|--------|
+| 1 | Foco de teclado no va al directorio inicial (FM-09) | menor | post-works |

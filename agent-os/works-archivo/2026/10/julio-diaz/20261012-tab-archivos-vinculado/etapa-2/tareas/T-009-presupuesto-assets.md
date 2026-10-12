@@ -17,7 +17,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 009: Volver al presupuesto de assets del build web
 
@@ -56,3 +56,13 @@ Hallazgo bloqueante de la Fase 1 de E4: `bun run build:web` falla en postbuild c
 | 2 | Costo: abrir el tab descarga tambien el Inspector (~16 KB gz) y viceversa (~27 KB gz) | Aceptado por la anfitriona: equivale a la base, donde el Inspector incluia Files | amelia |
 | 3 | Archivos no declarados: App.tsx y WorkspaceInspectorHost.tsx (re-export) | Aceptado; sin lote paralelo | amelia |
 | 4 | Advertencia INEFFECTIVE_DYNAMIC_IMPORT FileExplorerDialog -> FilePreviewContent, previa | Fuera de alcance; relacionado con FM-03 (modal sin importadores) | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-28: postbuild 160/160 archivos e initial JS 776.4/800 KiB; tab de archivos carga con el boundary compartido.
+
+### Hallazgos de verificacion
+
+(ninguno)

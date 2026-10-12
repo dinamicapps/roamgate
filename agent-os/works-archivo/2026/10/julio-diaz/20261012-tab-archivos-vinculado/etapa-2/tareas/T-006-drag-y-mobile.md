@@ -20,7 +20,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 006: Arrastre al strip y navegacion mobile
 
@@ -62,3 +62,15 @@ Conservar el gesto de arrastrar rutas a la terminal y adaptar la navegacion mobi
 | 2 | En mobile el strip no se desplaza hasta el tab de archivos activo, que queda fuera de pantalla | Cosmetico; se registra para E4 sin bloquear | amelia |
 | 3 | FilesTabSurface.css conserva borde y radio de 10px en mobile, a diferencia de las demas vistas mobile | Cosmetico; se consolida con los estilos en T-007 | amelia |
 | 4 | CA-21 (hover de arrastre) no se ejercito en navegador: el arrastre HTML5 no se reproduce con eventos sinteticos de forma fiable y activaria otra consola del Herdr real | Cubierto por pruebas unitarias; verificacion manual en E4 | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-22: nav mobile 390x844 alterna Files/Terminal con active correcto y el tab no cuenta en el badge (CA-22-despues.png).
+
+### Hallazgos de verificacion
+
+| # | Hallazgo | Severidad | Estado |
+|---|----------|-----------|--------|
+| 1 | CA-21 (arrastre HTML5) diferido; cubierto por tabDragHover.test.ts | menor | diferido |

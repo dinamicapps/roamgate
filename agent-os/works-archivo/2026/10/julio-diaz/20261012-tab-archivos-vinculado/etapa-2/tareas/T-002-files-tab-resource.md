@@ -36,7 +36,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 002: Modulo filesTabResource: vinculos y pestanas por vinculo
 
@@ -93,3 +93,13 @@ Crear web/src/filesTabResource.ts con la logica pura de persistencia del tab de 
 | 2 | session.close() no pasa por la barrera del primer snapshot (baja explicita del usuario) | Coherente con REG_barrera_primer_snapshot, que restringe exponer y podar; se verifica en T-005 | amelia |
 | 3 | La reconciliacion no usa marcas de tiempo: borra solo owners ausentes del snapshot | Suficiente para INV-PUENTE-09 con la barrera por generacion; se revisa en E4 con ESC_P4_snapshot_retrasado | amelia |
 | 4 | Pendientes de integracion: pin de la consola (forgetClosedTabPins) y derivacion inicial desde workspaceInspectorFile legado | Se asignan a T-005 y T-003 respectivamente | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-03, CA-04, CA-05: pruebas unitarias de merge, barrera y barrido en verde; CA-06: recarga restaura vinculo y pestanas en navegador.
+
+### Hallazgos de verificacion
+
+(ninguno)

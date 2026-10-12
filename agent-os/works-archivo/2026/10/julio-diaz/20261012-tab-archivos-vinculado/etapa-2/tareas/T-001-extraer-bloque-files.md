@@ -17,7 +17,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 001: Extraer el bloque Files del Inspector (N1)
 
@@ -67,3 +67,13 @@ Sacar de WorkspaceInspectorHost el bloque Files (arbol FileExplorerPanel, FilePr
 | 2 | Estilos de Files dependen del ancestro .workspace-inspector.is-compact.has-detail (WorkspaceInspectorHost.css:329,333,360-363) | T-003 debe co-locar o reproducir esas clases en el contenedor del tab | amelia |
 | 3 | AnnotationComposerPopover.tsx:88 ubica la navegacion por .inspector-files-resource .workspace-inspector-navigation | T-003 conserva esas clases en el tab o actualiza el selector (INV-PUENTE-06) | amelia |
 | 4 | Anotaciones no se ejercitaron en navegador en esta tarea (solo paso de props sin cambios) | Se verifican manualmente con CA-10 en T-003 | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-01: arbol de accesibilidad del Inspector identico al baseline; preview con pestana y modo compacto funcionando (CA-01-antes/despues.png).
+
+### Hallazgos de verificacion
+
+(ninguno)
