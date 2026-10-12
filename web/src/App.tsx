@@ -118,6 +118,7 @@ import {
   tabName,
 } from "./components/TabBar";
 import type { TerminalWorkspaceFileRequest } from "./components/TerminalView";
+import type { FilesTabFileRequest } from "./components/FilesTabSurface";
 import { WorkspaceTree } from "./components/WorkspaceTree";
 import { isIosDevice } from "./downloadFile";
 import { lazyWithReload } from "./lazyWithReload";
@@ -154,7 +155,6 @@ import {
   type Notice,
   noticeAutoDismissDelay,
   shallowEqual,
-  type State,
   store,
   TASK_NOTIFICATION_ACTIVATE_EVENT,
   taskNotificationTargetFromNotice,
@@ -172,10 +172,17 @@ import {
 } from "./tabShortcuts";
 import {
   createFilesTabLinkSession,
+  readFilesTabFiles,
   subscribeFilesTabStorage,
   updateFilesTabLinkRatios,
+  writeFilesTabFiles,
   type FilesTabLinks,
 } from "./filesTabResource";
+import {
+  activeTabIdForSnapshot,
+  activeTabIdForWorkspace,
+  filesTabOwnerForPane,
+} from "./filesTabOwner";
 import { filesTabId } from "./filesTabStrip";
 import { orderTabsForDisplay, tabPinsFor } from "./tabPins";
 import { copyTextFromUserGesture } from "./terminalClipboard";
@@ -200,6 +207,7 @@ import {
   type InspectorView,
   inspectorMaximumSize,
   isWorkspaceInspectorShortcut,
+  openResourceFileTab,
   preferencesStorageKey,
   readInspectorPreferences,
   readResourceFileSelection,
@@ -463,24 +471,15 @@ function loadMobileTerminalSideShortcuts(): MobileTerminalSideShortcuts {
   );
 }
 
-function activeTabIdForSnapshot(
-  snapshot: Pick<State, "workspaces" | "tabs" | "layout">,
-): string | undefined {
-  const workspace = snapshot.workspaces.find((candidate) => candidate.focused);
-  if (!workspace) return undefined;
-  const tabIds = new Set(
-    snapshot.tabs
-      .filter((tab) => tab.workspace_id === workspace.workspace_id)
-      .map((tab) => tab.tab_id),
-  );
-  return [
-    workspace.active_tab_id,
-    snapshot.layout?.tab_id,
-    snapshot.tabs.find(
-      (tab) => tab.workspace_id === workspace.workspace_id && tab.focused,
-    )?.tab_id,
-  ].find((tabId): tabId is string => !!tabId && tabIds.has(tabId));
+interface FilesTabTarget {
+  /** Workspace-relative file to select in the files tab. */
+  path?: string;
+  fragment?: string;
+  /** Pane whose cwd seeds the initial directory if the link is created now. */
+  originPaneId?: string;
 }
+
+type FilesTabOpenRequest = FilesTabFileRequest & { ownerTabId: string };
 
 function emptyActiveDiffSelection(): ActiveDiffSelection {
   return {
@@ -2344,46 +2343,15 @@ export default function App() {
     },
     [setActiveFilePreview],
   );
-  const openDiffFileInExplorer = useCallback(
-    (entry: ActiveDiffSelection["entry"]) => {
-      const current = inspectorStateRef.current;
-      if (!entry || !current) return;
-      const workspace = resolveWorkspaceForScope(
-        current.scope,
-        store.get().workspaces,
-      );
-      if (!workspace) return;
-      openFileExplorerFile(
-        workspace.workspace_id,
-        fileEntryForPath(entry.path),
-      );
-    },
-    [openFileExplorerFile],
-  );
-  const browseFilesForPane = useCallback(
-    (pane: Pane) => {
-      const workspace = store
-        .get()
-        .workspaces.find(
-          (candidate) => candidate.workspace_id === pane.workspace_id,
-        );
-      if (!workspace) return;
-      const root = workspace.worktree?.checkout_path ?? workspace.cwd;
-      const initialDirectory = root
-        ? relativePathWithinCheckout(root, pane.foreground_cwd ?? pane.cwd)
-        : undefined;
-      openInspector("files", workspace.workspace_id, {
-        originPaneId: pane.pane_id,
-        initialDirectory,
-      });
-    },
-    [openInspector],
-  );
   const [filesTabLinks, setFilesTabLinks] = useState<FilesTabLinks>({});
   const [filesSurfaceOwnerTabId, setFilesSurfaceOwnerTabId] = useState<
     string | null
   >(null);
   const filesSurfaceOwnerTabIdRef = useRef<string | null>(null);
+  const [filesTabOpenRequest, setFilesTabOpenRequest] =
+    useState<FilesTabOpenRequest | null>(null);
+  const filesTabOpenRequestIdRef = useRef(0);
+  const [filesTabFilesRevision, setFilesTabFilesRevision] = useState(0);
   const commitFilesSurfaceOwner = useCallback((ownerTabId: string | null) => {
     filesSurfaceOwnerTabIdRef.current = ownerTabId;
     setFilesSurfaceOwnerTabId(ownerTabId);
@@ -2419,6 +2387,12 @@ export default function App() {
     const { session } = filesTabLinkSession;
     return subscribeFilesTabStorage(session.connectionId, (change) => {
       if (change.kind !== "files") setFilesTabLinks(session.links());
+      if (
+        change.kind !== "links" &&
+        (change.kind === "cleared" ||
+          change.ownerTabId === filesSurfaceOwnerTabIdRef.current)
+      )
+        setFilesTabFilesRevision((revision) => revision + 1);
     });
   }, [filesTabLinkSession]);
   const activeConsoleTabId = activeTabIdForSnapshot(s) ?? null;
@@ -2447,7 +2421,7 @@ export default function App() {
    * focuses that console in Herdr.
    */
   const openOrFocusFilesTab = useCallback(
-    (ownerTabId: string) => {
+    (ownerTabId: string, target: FilesTabTarget = {}) => {
       const snapshot = store.get();
       const tab = snapshot.tabs.find(
         (candidate) => candidate.tab_id === ownerTabId,
@@ -2462,6 +2436,11 @@ export default function App() {
       const scope = resourceScopeForWorkspace(session.connectionId, workspace);
       const obtained = session.obtain(ownerTabId, () => {
         const pane =
+          snapshot.panes.find(
+            (candidate) =>
+              candidate.pane_id === target.originPaneId &&
+              candidate.tab_id === ownerTabId,
+          ) ??
           snapshot.panes.find(
             (candidate) => candidate.tab_id === ownerTabId && candidate.focused,
           ) ??
@@ -2489,6 +2468,30 @@ export default function App() {
         });
         return;
       }
+      if (target.path) {
+        // Stored first so a surface that mounts now restores this file
+        // instead of flashing the previously active one.
+        writeFilesTabFiles(
+          roamgateLocalStorage,
+          session.connectionId,
+          ownerTabId,
+          openResourceFileTab(
+            readFilesTabFiles(
+              roamgateLocalStorage,
+              session.connectionId,
+              ownerTabId,
+            ),
+            target.path,
+          ),
+        );
+        filesTabOpenRequestIdRef.current += 1;
+        setFilesTabOpenRequest({
+          ownerTabId,
+          path: target.path,
+          fragment: target.fragment,
+          id: filesTabOpenRequestIdRef.current,
+        });
+      } else setFilesTabOpenRequest(null);
       setFilesTabLinks(session.links());
       commitFilesSurfaceOwner(ownerTabId);
       setMobileView("session");
@@ -2496,6 +2499,56 @@ export default function App() {
         void store.focusTab(ownerTabId);
     },
     [commitFilesSurfaceOwner, filesTabLinkSession],
+  );
+  const openFilesTabForWorkspace = useCallback(
+    (workspaceId?: string, target?: FilesTabTarget) => {
+      const snapshot = store.get();
+      const ownerTabId = workspaceId
+        ? activeTabIdForWorkspace(snapshot, workspaceId)
+        : activeTabIdForSnapshot(snapshot);
+      if (!ownerTabId) {
+        store.notify({
+          kind: "error",
+          message: "Cannot open Files",
+          detail: "The target workspace has no open console.",
+        });
+        return;
+      }
+      openOrFocusFilesTab(ownerTabId, target);
+    },
+    [openOrFocusFilesTab],
+  );
+  const openFileInFilesTab = useCallback(
+    (workspaceId: string, entry: FileExplorerEntry) =>
+      openFilesTabForWorkspace(workspaceId, { path: entry.path }),
+    [openFilesTabForWorkspace],
+  );
+  const handleFilesTabOpenRequestHandled = useCallback((id: number) => {
+    setFilesTabOpenRequest((current) => (current?.id === id ? null : current));
+  }, []);
+  // The file gets the whole surface: the Inspector closes locally, without
+  // the return-tab focus RPC that closeInspector would emit.
+  const openDiffFileInExplorer = useCallback(
+    (entry: ActiveDiffSelection["entry"]) => {
+      const current = inspectorStateRef.current;
+      if (!entry || !current) return;
+      const workspace = resolveWorkspaceForScope(
+        current.scope,
+        store.get().workspaces,
+      );
+      if (!workspace) return;
+      inspectorReturnFocusRef.current = null;
+      updateInspectorState((state) =>
+        state ? { ...state, open: false } : state,
+      );
+      openFilesTabForWorkspace(workspace.workspace_id, { path: entry.path });
+    },
+    [openFilesTabForWorkspace, updateInspectorState],
+  );
+  const browseFilesForPane = useCallback(
+    (pane: Pane) =>
+      openOrFocusFilesTab(pane.tab_id, { originPaneId: pane.pane_id }),
+    [openOrFocusFilesTab],
   );
   const closeFilesTab = useCallback(
     (ownerTabId: string) => {
@@ -2591,13 +2644,18 @@ export default function App() {
       ) {
         return;
       }
-      openFileExplorerFile(
+      const ownerTabId = filesTabOwnerForPane(
+        store.get(),
         request.workspaceId,
-        fileEntryForPath(request.path),
         request.paneId,
       );
+      if (!ownerTabId) return;
+      openOrFocusFilesTab(ownerTabId, {
+        path: request.path,
+        originPaneId: request.paneId,
+      });
     },
-    [connectionClient, openFileExplorerFile],
+    [connectionClient, openOrFocusFilesTab],
   );
   const openNotificationTarget = useCallback(
     (target: NotificationTarget) => {
@@ -2932,6 +2990,7 @@ export default function App() {
     inspectorReturnFocusRef.current = null;
     commitInspectorState(null);
     commitFilesSurfaceOwner(null);
+    setFilesTabOpenRequest(null);
     setFilesTabLinks({});
     setActiveDiff(emptyActiveDiffSelection());
     setActiveFilePreview(emptyFilePreviewSelection());
@@ -3978,8 +4037,8 @@ export default function App() {
             {!mobile ? assistantEntry : null}
             <CommandCombobox
               key={`${resourceUiKey}:commands`}
-              onOpenFileExplorer={openFileExplorer}
-              onOpenFile={openFileExplorerFile}
+              onOpenFileExplorer={openFilesTabForWorkspace}
+              onOpenFile={openFileInFilesTab}
               onOpenDiffViewer={openDiffViewer}
             />
             <ConfigMenu
@@ -4340,7 +4399,7 @@ export default function App() {
                 keepInspectorForWorkspace(workspace.workspace_id)
               }
               onBrowseFiles={(workspace) =>
-                openFileExplorer(workspace.workspace_id)
+                openFilesTabForWorkspace(workspace.workspace_id)
               }
               onReviewChanges={(workspace) =>
                 openDiffViewer(workspace.workspace_id)
@@ -4375,6 +4434,7 @@ export default function App() {
               activeOwnerTabId: filesSurfaceVisibleOwnerTabId,
               onSelectConsole: selectConsoleTab,
               onOpen: openOrFocusFilesTab,
+              onToggle: toggleFilesTab,
               onClose: closeFilesTab,
             }}
           />
@@ -4425,6 +4485,14 @@ export default function App() {
                       onReanchorAnnotations={reanchorFilesTabAnnotations}
                       onNavigationRatioCommit={commitFilesTabNavigationRatio}
                       onShowConsole={showConsoleSurface}
+                      filesRevision={filesTabFilesRevision}
+                      openRequest={
+                        filesTabOpenRequest?.ownerTabId ===
+                        filesSurfaceVisibleOwnerTabId
+                          ? filesTabOpenRequest
+                          : null
+                      }
+                      onOpenRequestHandled={handleFilesTabOpenRequestHandled}
                     />
                   </Suspense>
                 ) : null}

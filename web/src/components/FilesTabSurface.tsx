@@ -1,4 +1,11 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { ConnectionClient } from "../api";
 import type { NewReviewAnnotation, ReviewAnnotation } from "../annotations";
 import { roamgateLocalStorage } from "../browserStorage";
@@ -23,6 +30,13 @@ import { type FileTabsStore, WorkspaceFilesView } from "./WorkspaceFilesView";
 import { workspaceInspectorLayout } from "./workspaceInspectorLayout";
 import "./FilesTabSurface.css";
 
+/** A file to select once in the surface; `id` tells repeated requests apart. */
+export interface FilesTabFileRequest {
+  id: number;
+  path: string;
+  fragment?: string;
+}
+
 /**
  * A console's files tab: the Files block on the terminal surface. It is
  * mounted per link and unmounted while hidden, so file tabs, selection and
@@ -40,6 +54,9 @@ export function FilesTabSurface({
   onReanchorAnnotations,
   onNavigationRatioCommit,
   onShowConsole,
+  filesRevision,
+  openRequest,
+  onOpenRequestHandled,
 }: {
   connectionClient: ConnectionClient;
   ownerTabId: string;
@@ -52,6 +69,10 @@ export function FilesTabSurface({
   onReanchorAnnotations: (path: string, text: string) => void;
   onNavigationRatioCommit: (ratio: number) => void;
   onShowConsole: () => void;
+  /** Bumped when another browser tab rewrote this link's file tabs. */
+  filesRevision: number;
+  openRequest: FilesTabFileRequest | null;
+  onOpenRequestHandled: (id: number) => void;
 }) {
   const rootRef = useRef<HTMLElement | null>(null);
   const previewRequestRef = useRef(0);
@@ -69,7 +90,9 @@ export function FilesTabSurface({
         );
       },
     }),
-    [connectionId, ownerTabId],
+    // A new store identity makes WorkspaceFilesView re-read the tabs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [connectionId, ownerTabId, filesRevision],
   );
   const [selection, setSelection] = useState<ActiveFilePreviewSelection>(
     emptyFilePreviewSelection,
@@ -103,6 +126,15 @@ export function FilesTabSurface({
     (path: string) => loadPreview(fileEntryForPath(path)),
     [loadPreview],
   );
+
+  useEffect(() => {
+    if (!openRequest) return;
+    loadPreview(fileEntryForPath(openRequest.path), openRequest.fragment);
+    setDrillIn(true);
+    onOpenRequestHandled(openRequest.id);
+    // Only a new request id triggers; callbacks change with the selection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRequest?.id]);
 
   useLayoutEffect(() => {
     const root = rootRef.current;

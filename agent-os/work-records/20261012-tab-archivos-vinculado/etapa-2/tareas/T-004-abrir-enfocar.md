@@ -14,7 +14,7 @@ cas:
   - CA-16
 depende_de:
   - T-003
-ejecutor: null
+ejecutor: amelia
 evidencia_requerida:
   api: false
   bd: false
@@ -23,7 +23,7 @@ evidencia_requerida:
 fase: 3
 file_type: tarea-etapa-2
 standards_cargados: []
-status: pending
+status: done
 tipo_tarea: codigo
 verificador: null
 ---
@@ -59,3 +59,23 @@ Un unico punto de entrada abre o enfoca el tab de archivos de una consola, y tod
 | CA-14 | ESC_P1_link_consola_no_activa: un link de archivo resuelve la consola duena desde su pane | REG_link_resuelve_pane_dueno |
 | CA-15 | ESC_P1_otro_workspace: una entrada sobre otro workspace lo enfoca antes de abrir | DEC_P1_otro_ws_enfocar |
 | CA-16 | ESC_P1_desde_changes: abrir un archivo desde Changes cierra el Inspector y abre el tab | DEC_P1_changes_cierra_inspector |
+
+## Ejecutor: amelia
+
+### Que hizo
+
+- openOrFocusFilesTab acepta {path, fragment, originPaneId}: escribe la pestana en filesTabFiles antes de montar y emite una peticion que la superficie consume una vez.
+- openFilesTabForWorkspace enfoca el workspace y su consola activa cuando no lo estan, como hoy (CA-15).
+- filesTabOwner.ts: activeTabIdForSnapshot, activeTabIdForWorkspace y filesTabOwnerForPane (link resuelve la consola duena del pane, CA-14), con 5 pruebas.
+- Entradas cableadas: boton Files del strip (toggle), opcion del menu de la consola, paleta, links de terminal, Browse files del arbol y abrir desde Changes cerrando el Inspector (CA-16).
+- Sync entre pestanas del navegador: evento files del owner montado re-lee las pestanas sin remontar ni reescribir.
+- Suite 1253 pass, 9 fail previas; navegador (anfitriona): boton Files toggle, menu sin duplicar tab y pestana restaurada tras recargar; captura CA-13-despues.png.
+
+### Hallazgos
+
+| # | Hallazgo | Solucion | Decidio |
+|---|----------|----------|---------|
+| 1 | Desde Changes el dueno es la consola activa del workspace del Inspector, no returnTabId | Conforme al contrato P1 (consola activa); se acepta | amelia |
+| 2 | Con owner en otra consola, si Herdr manda primero un snapshot con otra consola activa, el efecto de activeConsoleTabId puede limpiar la superficie | Riesgo a confirmar en la verificacion manual de CA-14/CA-15 en E4 (no se ejercita en el Herdr real del usuario) | amelia |
+| 3 | Sin tocar a proposito: nav mobile (T-006), ciclo de worktrees y vista Files interna del Inspector (T-007) | Asignados a sus tareas | amelia |
+| 4 | CA-11, CA-12, CA-14, CA-15 y CA-16 no se ejercitaron en navegador: requieren crear panes/consolas o cambiar el foco del Herdr real | Quedan para la verificacion manual de E4 en un workspace de prueba | amelia |

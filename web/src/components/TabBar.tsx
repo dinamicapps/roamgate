@@ -42,6 +42,8 @@ export interface TabBarFilesTabs {
   activeOwnerTabId: string | null;
   onSelectConsole: (tabId: string) => void;
   onOpen: (ownerTabId: string) => void;
+  /** Files of the active console, or back to it when they are visible. */
+  onToggle: () => void;
   onClose: (ownerTabId: string) => void;
 }
 
@@ -220,6 +222,9 @@ export function TabBar({
           setTabPinned(s.activeConnectionId, tab.tab_id, pinned)
         }
         onCloseTab={(tab) => setPendingCloseTabId(tab.tab_id)}
+        onOpenFiles={
+          filesTabs ? (tab) => filesTabs.onOpen(tab.tab_id) : undefined
+        }
         createReason={createReason}
         onCreateTab={() => {
           store.createTab(focusedWs.workspace_id);
@@ -423,6 +428,23 @@ export function TabBar({
             </button>
           </div>
           <div className="tabbar-utilities">
+            {filesTabs ? (
+              <button
+                type="button"
+                className={filesTabs.activeOwnerTabId ? "is-active" : ""}
+                aria-pressed={!!filesTabs.activeOwnerTabId}
+                title={shortcutTitle(
+                  filesTabs.activeOwnerTabId
+                    ? "Back to console"
+                    : "Open files of this console",
+                  "files.toggle",
+                )}
+                onClick={filesTabs.onToggle}
+              >
+                <FolderTree size={14} />
+                <span>Files</span>
+              </button>
+            ) : null}
             <button
               type="button"
               className={inspectorOpen ? "is-active" : ""}
@@ -534,6 +556,7 @@ function TabContextMenu({
   onRename,
   onTogglePin,
   onCloseTab,
+  onOpenFiles,
   onCreateTab,
   createReason,
 }: {
@@ -544,6 +567,7 @@ function TabContextMenu({
   onRename: (tab: Tab) => void;
   onTogglePin: (tab: Tab, pinned: boolean) => void;
   onCloseTab: (tab: Tab) => void;
+  onOpenFiles?: (tab: Tab) => void;
   onCreateTab: () => void;
   createReason: string | null;
 }) {
@@ -580,6 +604,14 @@ function TabContextMenu({
       label: pinned ? "Unpin tab" : "Pin tab",
       action: () => onTogglePin(state.tab, !pinned),
     },
+    ...(onOpenFiles
+      ? [
+          {
+            label: "Open files of this console",
+            action: () => onOpenFiles(state.tab),
+          },
+        ]
+      : []),
     { label: "Create tab", action: onCreateTab, reason: createReason },
     {
       label: "Close tab",
