@@ -521,7 +521,8 @@ export function createUpdateHandlers({
 
       const command = `
 set -eu
-tmp="$(mktemp -d "\${TMPDIR:-/tmp}/roamgate-update.XXXXXX")"
+tmp="$(mktemp -d "\${TMPDIR:-/tmp}/roamgate-update.XXXXXX" 2>/dev/null ||
+  mktemp -d "\${TMP:-\${TEMP:-/tmp}}/roamgate-update.XXXXXX")"
 target=${shQuote(capability.targetPath)}
 target_tmp=""
 backup_tmp=""

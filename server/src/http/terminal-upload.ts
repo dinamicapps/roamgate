@@ -49,12 +49,25 @@ export function sanitizeTerminalUploadName(
 }
 
 export function remoteTerminalCleanupScript(retentionMinutes: number) {
+  // Git for Windows without etc/fstab maps /tmp to its read-only install dir
+  // and may carry no TMPDIR, so fall back to TMP/TEMP before failing.
   return `set -eu
 umask 077
-case "\${TMPDIR:-/tmp}" in /*) temp_root="\${TMPDIR:-/tmp}" ;; *) temp_root=/tmp ;; esac
-root="$temp_root/roamgate-uploads-$(id -u)"
-[ ! -L "$root" ] || exit 1
-mkdir -m 700 -p "$root"
+root=""
+mkdir_error=""
+for temp_root in "\${TMPDIR:-/tmp}" "\${TMP:-\${TEMP:-/tmp}}"; do
+  case "$temp_root" in /*) ;; *) temp_root=/tmp ;; esac
+  candidate="$temp_root/roamgate-uploads-$(id -u)"
+  [ ! -L "$candidate" ] || exit 1
+  if mkdir_error=$(mkdir -m 700 -p "$candidate" 2>&1); then
+    root="$candidate"
+    break
+  fi
+done
+if [ -z "$root" ]; then
+  printf '%s\\n' "$mkdir_error" >&2
+  exit 1
+fi
 [ -d "$root" ] && [ ! -L "$root" ] || exit 1
 owner=$(stat -c %u "$root" 2>/dev/null || stat -f %u "$root")
 mode=$(stat -c %a "$root" 2>/dev/null || stat -f %Lp "$root")

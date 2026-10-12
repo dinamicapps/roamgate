@@ -368,6 +368,9 @@ function runGitShellCommand({
 
 // Keep full patches out of bridge/SSH memory, including explicitly opened
 // oversized files. mktemp creates a private file and the trap removes it.
+// Git for Windows without etc/fstab maps /tmp to its read-only install dir and
+// a GUI launch has no TMPDIR, so fall back to TMP/TEMP. A failed mktemp exits 2:
+// exit 1 means "patch present" to the caller and would hide the error.
 export async function readGitPatch({
   root,
   command,
@@ -377,9 +380,10 @@ export async function readGitPatch({
   automatic = false,
 }: { root: string; command: string; automatic?: boolean } & GitCommandContext) {
   const script = `
-patch_file=$(mktemp "\${TMPDIR:-/tmp}/roamgate-diff.XXXXXX") || exit 1
+patch_file=$(mktemp "\${TMPDIR:-/tmp}/roamgate-diff.XXXXXX" 2>/dev/null ||
+  mktemp "\${TMP:-\${TEMP:-/tmp}}/roamgate-diff.XXXXXX") || exit 2
 trap 'rm -f "$patch_file"' 0
-trap 'exit 1' HUP INT TERM
+trap 'exit 129' HUP INT TERM
 git -C ${shQuote(root)} -c core.quotepath=false ${command} >"$patch_file"
 git_code=$?
 case "$git_code" in 0|1) ;; *) exit "$git_code" ;; esac

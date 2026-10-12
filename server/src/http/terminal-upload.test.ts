@@ -227,6 +227,35 @@ test.skipIf(process.platform === "win32")(
   },
 );
 
+test("remote scripts fall back to TMP when TMPDIR is not writable", async () => {
+  const temp = await root();
+  // A regular file in the path makes mkdir -p fail even when run as root.
+  const missing = join(temp, "not-a-directory");
+  await writeFile(missing, "");
+  const run = async (env: Record<string, string>) => {
+    const proc = Bun.spawn(["sh", "-c", remoteTerminalCleanupScript(60)], {
+      env: { ...process.env, ...env },
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const [code, stderr] = await Promise.all([
+      proc.exited,
+      new Response(proc.stderr).text(),
+    ]);
+    return { code, stderr };
+  };
+  expect(await run({ TMPDIR: missing, TMP: temp })).toEqual({
+    code: 0,
+    stderr: "",
+  });
+  expect(
+    (await readdir(temp)).filter((name) => name.startsWith("roamgate-uploads-")),
+  ).toHaveLength(1);
+  const failed = await run({ TMPDIR: missing, TMP: missing, TEMP: missing });
+  expect(failed.code).not.toBe(0);
+  expect(failed.stderr).toContain("not-a-directory");
+});
+
 test("a failed request stream removes the partial upload", async () => {
   const temp = await root();
   const handle = createTerminalUploadHandler({

@@ -1,4 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   compareVersion,
   createUpdateHandlers,
@@ -608,6 +611,51 @@ describe("update helpers", () => {
       }).exitCode,
     ).toBe(0);
     expect(exitScheduled).toBe(true);
+  });
+
+  test("stages the update in TMP when TMPDIR is not writable", async () => {
+    const commands: string[][] = [];
+    const handlers = createUpdateHandlers({
+      appVersion: "0.2.16",
+      runProcessWithCodeTimeout: async (argv) => {
+        commands.push(argv);
+        return commands.length === 1
+          ? {
+              code: 0,
+              stdout: updateManifest("0.2.17", "darwin-arm64"),
+              stderr: "",
+            }
+          : { code: 0, stdout: "", stderr: "" };
+      },
+      shQuote,
+      runtime: darwinRuntime,
+      environment: launchdEnvironment,
+      scheduleProcessExit: () => {},
+    });
+    await handlers.handleUpdateInstall(updateInstallRequest());
+    const stage = commands[1][2].match(/^tmp="\$\(mktemp[\s\S]*?\)"$/m)?.[0];
+    expect(stage).toBeDefined();
+
+    const temp = mkdtempSync(join(tmpdir(), "roamgate-update-stage-"));
+    // A regular file in the path makes mktemp fail even when run as root.
+    const blocked = join(temp, "not-a-directory");
+    writeFileSync(blocked, "");
+    const run = (env: Record<string, string>) =>
+      Bun.spawnSync(["sh", "-c", `set -eu\n${stage}`], {
+        env: { ...process.env, ...env },
+        stderr: "pipe",
+      });
+    try {
+      expect(run({ TMPDIR: blocked, TMP: temp }).exitCode).toBe(0);
+      expect(
+        readdirSync(temp).filter((name) => name.startsWith("roamgate-update.")),
+      ).toHaveLength(1);
+      const failed = run({ TMPDIR: blocked, TMP: blocked, TEMP: blocked });
+      expect(failed.exitCode).not.toBe(0);
+      expect(failed.stderr.toString()).toContain("roamgate-update.");
+    } finally {
+      rmSync(temp, { recursive: true, force: true });
+    }
   });
 
   test("serializes update installs across connected clients", async () => {

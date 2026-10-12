@@ -3,8 +3,8 @@ slug: 20261012-tab-archivos-vinculado
 autor: julio-diaz
 autor_kebab: julio-diaz
 fecha_inicio: "2026-10-12"
-fecha_fin: "2026-10-12"
-estado: COMPLETADO_VERIFICACION_DIFERIDA
+fecha_fin: ""
+estado: EN_PROGRESO
 modo: normal
 nivel: normal
 tipo: feature

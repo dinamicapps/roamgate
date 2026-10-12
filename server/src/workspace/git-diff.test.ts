@@ -447,6 +447,61 @@ describe("git diff summary parsing", () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+
+  // Git for Windows without etc/fstab maps /tmp to its read-only install dir
+  // and a GUI launch carries no TMPDIR; the patch must still be read.
+  test("reads patches through TMP when the TMPDIR fallback is not writable", async () => {
+    const root = await initRepository();
+    const missing = "/nonexistent-roamgate-tmp";
+    const runnerWithEnv =
+      (env: Record<string, string>): RunProcessWithCodeTimeout =>
+      async (argv) => {
+        const process = Bun.spawn(argv, {
+          env: { ...Bun.env, ...env },
+          stdout: "pipe",
+          stderr: "pipe",
+        });
+        const [code, stdout, stderr] = await Promise.all([
+          process.exited,
+          new Response(process.stdout).text(),
+          new Response(process.stderr).text(),
+        ]);
+        return { code, stdout, stderr };
+      };
+    try {
+      await writeFile(join(root, "note.txt"), "before\n");
+      await git(root, "add", ".");
+      await git(root, "commit", "-m", "initial");
+      await writeFile(join(root, "note.txt"), "after\n");
+      const file = await readDiffFile({
+        workspaceId: "workspace",
+        root,
+        params: { path: "note.txt" },
+        shQuote,
+        runProcessWithCodeTimeout: runnerWithEnv({
+          TMPDIR: missing,
+          TMP: tmpdir(),
+        }),
+      });
+      expect(file.diff).toContain("+after");
+      expect(file.patch_size).toBe(Buffer.byteLength(file.diff));
+      await expect(
+        readDiffFile({
+          workspaceId: "workspace",
+          root,
+          params: { path: "note.txt" },
+          shQuote,
+          runProcessWithCodeTimeout: runnerWithEnv({
+            TMPDIR: missing,
+            TMP: missing,
+            TEMP: missing,
+          }),
+        }),
+      ).rejects.toThrow(/mktemp/);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("last-step worktree snapshots", () => {
