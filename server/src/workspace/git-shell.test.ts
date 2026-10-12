@@ -169,6 +169,36 @@ describe("Windows Git shell discovery", () => {
     ).toEqual([shell, "-lc", script]);
   });
 
+  test("splits long scripts into pieces MSYS does not truncate", () => {
+    const shell = "C:\\Program Files\\Git\\bin\\bash.exe";
+    const script = `printf '%s' '${"x".repeat(15000)}'`;
+    const argv = gitShellCommandArgv(
+      script,
+      undefined,
+      windowsOptions({ files: [shell] }),
+    );
+    expect(argv.slice(0, 4)).toEqual([
+      shell,
+      "-lc",
+      'IFS=; script="$*"; set --; unset IFS; eval "$script"',
+      "bash",
+    ]);
+    const pieces = argv.slice(4);
+    expect(pieces.length).toBeGreaterThan(1);
+    expect(pieces.every((piece) => piece.length <= 7000)).toBe(true);
+    expect(pieces.join("")).toBe(script);
+  });
+
+  test.skipIf(process.platform !== "win32")(
+    "runs a long script through the real Git Bash",
+    () => {
+      const body = "x".repeat(20000);
+      const script = `a='q"u ot'; set -- stale; printf '%s %s %s' "\${#1}" "$a" "$(printf '%s' '${body}' | wc -c)"`;
+      const result = Bun.spawnSync(gitShellCommandArgv(script));
+      expect(result.stdout.toString().trim()).toBe(`5 q"u ot 20000`);
+    },
+  );
+
   test("explains how to recover when Git Bash and sh are missing", () => {
     const lookedUp: string[] = [];
     expect(() =>

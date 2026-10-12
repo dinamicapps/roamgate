@@ -17,6 +17,7 @@ import { join } from "node:path";
 import { runProcessWithCodeTimeout, shQuote } from "../utils/process-utils";
 import type { RunProcessWithCodeTimeout } from "./file-types";
 import { snapshotWorktreeTree } from "./git-diff";
+import { gitShellCommandArgv } from "./git-shell";
 
 // Budget the complete integration scenario, not one capture. The production
 // 9s publication deadline and 10s caller timeout remain independently enforced.
@@ -46,12 +47,17 @@ function capture(root: string, run = runProcessWithCodeTimeout) {
   });
 }
 
+// A long script reaches the shell in pieces after the rejoining command.
+function scriptOf(argv: string[]) {
+  return argv.length > 3 ? argv.slice(4).join("") : argv[2]!;
+}
+
 function instrument(
   transform: (script: string) => string,
 ): RunProcessWithCodeTimeout {
   return (argv, timeout) =>
     runProcessWithCodeTimeout(
-      [...argv.slice(0, -1), transform(argv.at(-1)!)],
+      gitShellCommandArgv(transform(scriptOf(argv))),
       timeout,
     );
 }
@@ -342,15 +348,12 @@ describe("bounded worktree snapshot transaction", () => {
       await writeFile(join(root, "file"), "small");
       const runner: RunProcessWithCodeTimeout = (argv, timeout) =>
         tinyBudgets(
-          [
-            ...argv.slice(0, -1),
-            argv
-              .at(-1)!
-              .replace(
-                '    ln -P "$file"',
-                '    printf "%040d" 0 >> "$file"\n    ln -P "$file"',
-              ),
-          ],
+          gitShellCommandArgv(
+            scriptOf(argv).replace(
+              '    ln -P "$file"',
+              '    printf "%040d" 0 >> "$file"\n    ln -P "$file"',
+            ),
+          ),
           timeout,
         );
       const before = await objectFiles(root);
@@ -688,6 +691,87 @@ describe("bounded worktree snapshot transaction", () => {
         "capture deadline exceeded",
       );
       expect(await objectFiles(root)).toEqual(before);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  // Shell functions shadow the uname/ulimit builtins to simulate each platform.
+  const failingUlimitOn = (system: string) =>
+    instrument(
+      (script) =>
+        `uname() { echo ${system}; }\nulimit() { return 1; }\n${script}`,
+    );
+
+  test("refuses capture without file size limits outside MSYS/Cygwin", async () => {
+    const root = await repository();
+    try {
+      await writeFile(join(root, "file"), "small");
+      const before = await objectFiles(root);
+      await expect(capture(root, failingUlimitOn("Linux"))).rejects.toThrow(
+        "file size limits unavailable",
+      );
+      expect(await objectFiles(root)).toEqual(before);
+      expect(await readdir(join(root, ".git"))).not.toContain(
+        "roamgate-last-step-capture",
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test.each(["MINGW64_NT-10.0", "MSYS_NT-10.0", "CYGWIN_NT-10.0"])(
+    "continues without file size limits on %s",
+    async (system) => {
+      const root = await repository();
+      try {
+        await writeFile(join(root, "file"), "small");
+        const tree = await capture(root, failingUlimitOn(system));
+        expect(await git(root, "ls-tree", "--name-only", tree)).toBe("file");
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
+
+  test("writes an alternates path the host Git resolves", async () => {
+    const root = await repository();
+    const copy = join(root, "alternates-copy");
+    try {
+      await writeFile(join(root, "file"), "committed\n");
+      await git(root, "add", "file");
+      await git(
+        root,
+        "-c",
+        "user.name=Test",
+        "-c",
+        "user.email=test@example.com",
+        "commit",
+        "-m",
+        "initial",
+      );
+      const runner = instrument((script) =>
+        script.replace(
+          'export GIT_OBJECT_DIRECTORY="$quarantine/objects"',
+          'cp "$quarantine/objects/info/alternates" "$snapshot_root/alternates-copy"\n$&',
+        ),
+      );
+      await capture(root, runner);
+      // An empty object store that only borrows through the captured
+      // alternates must still find the repository's commit.
+      const objects = join(root, "borrowed-objects");
+      await mkdir(join(objects, "info"), { recursive: true });
+      await writeFile(
+        join(objects, "info", "alternates"),
+        await readFile(copy),
+      );
+      const result = await runProcessWithCodeTimeout(
+        ["git", "-C", root, "cat-file", "-t", "HEAD"],
+        5000,
+        { env: { ...process.env, GIT_OBJECT_DIRECTORY: objects } },
+      );
+      expect(result.stderr).toBe("");
+      expect(result.stdout.trim()).toBe("commit");
     } finally {
       await rm(root, { recursive: true, force: true });
     }

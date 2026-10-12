@@ -309,7 +309,7 @@ capture refuses enabled or unrecognized effective `core.sharedRepository` values
 (including inherited configuration) before creating quarantine storage or
 publishing objects. Only an unset value, `false`, `0`, or `umask` is supported;
 manual object publication does not implement Git's shared permission handling.
-A capture also fails if required shell file-size limits, hard links, or the GNU/BSD `dd` byte-count report are unavailable;
+A capture also fails if required shell file-size limits, hard links, or the GNU/BSD `dd` byte-count report are unavailable (exception: MSYS/Cygwin, e.g. Git for Windows, cannot set a finite per-file limit, so there capture relies on the `dd` per-file cap, the aggregate cap, and the timeout);
 files on another filesystem from the Git directory cannot be pinned by hard link.
 The command has a ten-second caller timeout and refuses to begin publication
 once nine seconds have elapsed on the executing host. A refusal is logged and

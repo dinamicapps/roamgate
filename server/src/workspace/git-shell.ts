@@ -88,5 +88,23 @@ export function gitShellCommandArgv(
       : "sh";
   // Login startup initializes Git for Windows' Git/coreutils PATH. Keep the
   // executable and script as separate argv entries, including paths with spaces.
-  return [shell, "-lc", command];
+  if (shell === "sh" || command.length <= MSYS_ARGUMENT_LIMIT) {
+    return [shell, "-lc", command];
+  }
+  // MSYS silently truncates any single argument beyond ~8 KiB, so a long
+  // script travels in pieces and is rejoined (and its arguments cleared)
+  // before running.
+  const pieces: string[] = [];
+  for (let i = 0; i < command.length; i += MSYS_ARGUMENT_LIMIT) {
+    pieces.push(command.slice(i, i + MSYS_ARGUMENT_LIMIT));
+  }
+  return [
+    shell,
+    "-lc",
+    'IFS=; script="$*"; set --; unset IFS; eval "$script"',
+    "bash",
+    ...pieces,
+  ];
 }
+
+const MSYS_ARGUMENT_LIMIT = 7000;

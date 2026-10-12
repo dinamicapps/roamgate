@@ -1,0 +1,36 @@
+nodos:
+    - id: CAP_last_step_snapshot
+      tipo: capacidad
+      estado: resuelto
+      origen: work:20261012-bugfix-last-step-ulimit#abordaje
+      rol: construye
+      campos:
+        citas:
+            - server/src/workspace/git-snapshot.ts:44
+            - server/src/workspace/git-diff.ts:441
+        clasificacion: se_modifica
+        nombre: Snapshots del worktree para Last step
+    - id: REG_limite_tamano_snapshot
+      tipo: regla
+      estado: resuelto
+      origen: work:20261012-bugfix-last-step-ulimit#abordaje
+      rol: consume
+      campos:
+        citas:
+            - server/src/workspace/git-snapshot.ts:44
+        enunciado: La captura limita el tamano de archivo escrito (ulimit -f 65536) para no generar snapshots gigantes
+        origen: heredada
+    - id: RSG_perder_limite_posix
+      tipo: riesgo
+      estado: resuelto
+      origen: work:20261012-bugfix-last-step-ulimit#abordaje
+      rol: consume
+      campos:
+        amenaza: REG_limite_tamano_snapshot
+        enunciado: Un arreglo que retire el limite en Linux/macOS/SSH deja la captura sin proteccion de tamano
+        responsable: Atlas
+aristas: []
+reconstruido:
+    desde: abordaje
+    fecha: "2026-10-12"
+    cobertura_declarada: solo la capacidad de snapshot, su regla de limite y el riesgo; sin procesos

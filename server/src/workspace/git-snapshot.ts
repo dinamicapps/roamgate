@@ -1,5 +1,11 @@
 // All writes before publication belong to one fixed, exclusively created directory.
 // In particular, a killed shell must not unlink storage still used by its child.
+// MSYS/Cygwin (Git for Windows): setrlimit only accepts an unlimited
+// RLIMIT_FSIZE, so there a failing `ulimit -f` is tolerated and capture relies
+// on the dd, aggregate and deadline bounds; elsewhere it still fails closed.
+// Native git.exe cannot resolve MSYS paths (/cygdrive/c/... without fstab), so
+// the alternates entry is written in mixed form via cygpath.
+// Keep the script compact: MSYS truncates `bash -c` arguments beyond ~8 KiB.
 export function worktreeSnapshotCommand(
   root: string,
   quote: (value: string) => string,
@@ -25,6 +31,9 @@ esac
 git_dir=$(git rev-parse --absolute-git-dir)
 objects=$(git rev-parse --git-path objects)
 objects=$(cd "$objects" && pwd -P)
+case $(uname -s) in MINGW*|MSYS*|CYGWIN*) msys=1;; *) msys=;; esac
+alternate=$objects
+[ -z "$msys" ] || ! command -v cygpath >/dev/null || alternate=$(cygpath -m "$objects")
 # Nonstandard Git directories are not implicitly ignored like .git. Exclude
 # their actual subtrees, including shared metadata for linked worktrees.
 set -- .
@@ -41,11 +50,11 @@ trap cleanup EXIT
 trap 'trap - EXIT; exit 1' HUP INT TERM
 printf '%s\\n' "$$" > "$quarantine/owner-pid"
 # Fail closed if this shell cannot enforce the per-file disk bound.
-ulimit -f 65536 || fail 'file size limits unavailable'
-case "$objects$git_dir" in *'
+ulimit -f 65536 2>/dev/null || [ -n "$msys" ] || fail 'file size limits unavailable'
+case "$objects$alternate$git_dir" in *'
 '*) fail 'object directory contains a newline';; esac
 mkdir "$quarantine/objects" "$quarantine/objects/info" "$quarantine/files" "$quarantine/sources"
-printf '%s\\n' "$objects" > "$quarantine/objects/info/alternates"
+printf '%s\\n' "$alternate" > "$quarantine/objects/info/alternates"
 index=$(git rev-parse --git-path index)
 export GIT_OBJECT_DIRECTORY="$quarantine/objects"
 export GIT_INDEX_FILE="$quarantine/index"
