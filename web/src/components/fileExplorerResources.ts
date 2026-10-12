@@ -5,6 +5,7 @@ import { connectionStorageKey } from "../connectionStorage";
 import { gitDiffCode, type GitDiffCode } from "../gitDiffStatus";
 import { retireGitDiffSummaryResource } from "../gitDiffSummaryStore";
 import { connectionClientScopeKey } from "../useConnectionClient";
+import type { ActiveFilePreviewSelection } from "./FilePreviewContent";
 import type {
   FileExplorerEntry,
   FileExplorerList,
@@ -561,6 +562,57 @@ export function requestFilePreview(
     });
   previewRequests.set(key, scopedTask);
   return scopedTask;
+}
+
+export function fileEntryForPath(path: string): FileExplorerEntry {
+  const name = path.split("/").filter(Boolean).pop() ?? path;
+  return {
+    name,
+    path,
+    type: "file",
+    size: 0,
+    mtime_ms: 0,
+    hidden: name.startsWith("."),
+  };
+}
+
+export function emptyFilePreviewSelection(): ActiveFilePreviewSelection {
+  return {
+    entry: null,
+    preview: null,
+    loading: false,
+    error: null,
+  };
+}
+
+/**
+ * Shows `entry` as loading, then its fresh preview or error. A newer request
+ * on the same `requestRef` supersedes this one.
+ */
+export function loadFilePreviewSelection(
+  client: ConnectionClient,
+  workspaceId: string,
+  entry: FileExplorerEntry,
+  fragment: string | undefined,
+  requestRef: { current: number },
+  apply: (selection: ActiveFilePreviewSelection) => void,
+): void {
+  const requestId = requestRef.current + 1;
+  requestRef.current = requestId;
+  apply({ entry, fragment, preview: null, loading: true, error: null });
+  const settle = (selection: Omit<ActiveFilePreviewSelection, "entry">) => {
+    if (!client.isCurrent() || requestRef.current !== requestId) return;
+    apply({ ...selection, entry, fragment });
+  };
+  void requestFilePreview(workspaceId, entry.path, { client, refresh: true })
+    .then((preview) => settle({ preview, loading: false, error: null }))
+    .catch((error) =>
+      settle({
+        preview: null,
+        loading: false,
+        error: error instanceof Error ? error.message : String(error),
+      }),
+    );
 }
 
 export async function uploadExplorerFile(

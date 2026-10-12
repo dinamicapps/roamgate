@@ -88,6 +88,17 @@
   flex: 1 1 auto;
 }
 
+/* A console's files tab covers its terminal without changing the terminal's
+   size, so Herdr sees no resize when the user switches between them. */
+.workspace-terminal-surface.has-files-tab {
+  position: relative;
+}
+
+.workspace-terminal-surface.has-files-tab > :not(.files-tab-surface) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .workspace-stage.is-inspector-expanded .workspace-terminal-surface {
   position: absolute;
   inset: 0;

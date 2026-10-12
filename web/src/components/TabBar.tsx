@@ -7,7 +7,7 @@ import {
 } from "../store";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { MessageSquareText, PanelRight, Pin } from "lucide-react";
+import { FolderTree, MessageSquareText, PanelRight, Pin } from "lucide-react";
 import type { Tab } from "../types";
 import {
   orderTabsForDisplay,
@@ -22,6 +22,7 @@ import {
   terminalComposerDraftPaneIds,
 } from "../terminalComposer";
 import { summarizeTabAgents } from "./agentSession";
+import { filesTabId } from "../filesTabStrip";
 import { tabMoveInsertIndex } from "../tabReorder";
 import { useTabReorderDrag } from "./useTabReorderDrag";
 import "./TabBar.css";
@@ -30,6 +31,19 @@ const LONG_PRESS_MS = 550;
 const LONG_PRESS_MOVE_PX = 10;
 const REQUEST_CLOSE_TAB_EVENT = "roamgate:request-close-tab";
 const REQUEST_CLOSE_PANE_EVENT = "roamgate:request-close-pane";
+
+/**
+ * Client-only files tabs, each drawn right after its console. They never
+ * reach Herdr: the strip resolves their actions locally or on the console.
+ */
+export interface TabBarFilesTabs {
+  linkedOwnerTabIds: ReadonlySet<string>;
+  /** Owner whose files tab is the visible surface, if any. */
+  activeOwnerTabId: string | null;
+  onSelectConsole: (tabId: string) => void;
+  onOpen: (ownerTabId: string) => void;
+  onClose: (ownerTabId: string) => void;
+}
 
 interface TabMenuState {
   tab: Tab;
@@ -73,6 +87,7 @@ export function TabBar({
   annotationCount = 0,
   onToggleInspector,
   onToggleAnnotations,
+  filesTabs,
 }: {
   mobile?: boolean;
   inspectorOpen?: boolean;
@@ -80,6 +95,7 @@ export function TabBar({
   annotationCount?: number;
   onToggleInspector?: () => void;
   onToggleAnnotations?: () => void;
+  filesTabs?: TabBarFilesTabs;
 }) {
   useShortcutPreferences();
   const s = useStoreSelector(
@@ -187,15 +203,18 @@ export function TabBar({
 
   if (!focusedWs) return null;
 
+  const selectConsole = (tabId: string) => {
+    if (filesTabs) filesTabs.onSelectConsole(tabId);
+    else void store.focusTab(tabId);
+  };
+
   const overlays = (
     <>
       <TabContextMenu
         state={menu}
         pinned={!!menu && pinnedTabIds.has(menu.tab.tab_id)}
         onClose={() => setMenu(null)}
-        onFocus={(tab) => {
-          store.focusTab(tab.tab_id);
-        }}
+        onFocus={(tab) => selectConsole(tab.tab_id)}
         onRename={(tab) => setPendingRenameTab(tab)}
         onTogglePin={(tab, pinned) =>
           setTabPinned(s.activeConnectionId, tab.tab_id, pinned)
@@ -266,22 +285,29 @@ export function TabBar({
               const agentSummary = summarizeTabAgents(s.panes, t.tab_id);
               const pinned = pinnedTabIds.has(t.tab_id);
               const reorderHandlers = reorder.handlers(t.tab_id);
-              return (
+              const hasFilesTab = !!filesTabs?.linkedOwnerTabIds.has(t.tab_id);
+              const filesTabActive = filesTabs?.activeOwnerTabId === t.tab_id;
+              // A linked files tab is dragged together with its console, so
+              // the pair registers as one element under the console's id.
+              const dragTarget = {
+                ref: reorder.register(t.tab_id),
+                ...reorderHandlers,
+                onPointerDown: s.tabMoveSupported
+                  ? (e: React.PointerEvent<HTMLElement>) => {
+                      if ((e.target as Element).closest(".tabbar-files-tab"))
+                        return;
+                      reorderHandlers.onPointerDown(e);
+                    }
+                  : undefined,
+              };
+              const consoleTab = (
                 <div
                   key={t.tab_id}
-                  ref={reorder.register(t.tab_id)}
-                  {...reorderHandlers}
-                  onPointerDown={
-                    s.tabMoveSupported
-                      ? reorderHandlers.onPointerDown
-                      : undefined
-                  }
-                  className={`tabbar-tab ${t.focused ? "is-active" : ""} ${
-                    pinned ? "is-pinned" : ""
-                  }`}
-                  onClick={() => {
-                    store.focusTab(t.tab_id);
-                  }}
+                  {...(hasFilesTab ? {} : dragTarget)}
+                  className={`tabbar-tab ${
+                    t.focused && !filesTabActive ? "is-active" : ""
+                  } ${pinned ? "is-pinned" : ""}`}
+                  onClick={() => selectConsole(t.tab_id)}
                   onDoubleClick={(e) => {
                     if (
                       (e.target as Element).closest("button") ||
@@ -345,6 +371,43 @@ export function TabBar({
                       ×
                     </button>
                   )}
+                </div>
+              );
+              if (!filesTabs || !hasFilesTab) return consoleTab;
+              return (
+                <div
+                  key={t.tab_id}
+                  {...dragTarget}
+                  className="tabbar-tab-group"
+                >
+                  {consoleTab}
+                  <div
+                    key={filesTabId(t.tab_id)}
+                    className={`tabbar-tab tabbar-files-tab ${
+                      filesTabActive ? "is-active" : ""
+                    }`}
+                    onClick={() => filesTabs.onOpen(t.tab_id)}
+                    onContextMenu={(e) => e.preventDefault()}
+                    title={shortcutTitle(`Files of ${name}`, "files.toggle")}
+                  >
+                    <FolderTree
+                      className="tabbar-files-icon"
+                      size={13}
+                      aria-hidden="true"
+                    />
+                    <span className="tabbar-name">{name}</span>
+                    <button
+                      className="tabbar-close"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        filesTabs.onClose(t.tab_id);
+                      }}
+                      title="Close files tab"
+                      aria-label={`Close files of ${name}`}
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               );
             })}

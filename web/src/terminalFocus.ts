@@ -3,13 +3,13 @@
  * xterm textarea so keyboard input keeps working, but doing so while an
  * overlay owns focus dismisses it: Radix's DismissableLayer treats focusin
  * outside its content as an outside interaction and closes the popover. The
- * Workspace Inspector likewise owns keyboard focus while browsing resources,
- * as does Ranger while reviewing actions, the pane switcher while its search
- * field is open and the pane drag handle during keyboard moves. Streaming
- * output must not steal their focus.
+ * Workspace Inspector and a console's files tab likewise own keyboard focus
+ * while browsing resources, as does Ranger while reviewing actions, the pane
+ * switcher while its search field is open and the pane drag handle during
+ * keyboard moves. Streaming output must not steal their focus.
  */
 const TERMINAL_FOCUS_OVERLAY_SELECTOR =
-  '[data-radix-popper-content-wrapper], .modal-backdrop, .workspace-tree-panel, .workspace-inspector, .annotation-panel, .assistant-panel, .tabbar-utilities, .mobile-nav, .pane-jump-backdrop, .popup-overlay-backdrop, .pane-drag-handle, [role="dialog"], [role="menu"]';
+  '[data-radix-popper-content-wrapper], .modal-backdrop, .workspace-tree-panel, .workspace-inspector, .files-tab-surface, .annotation-panel, .assistant-panel, .tabbar-utilities, .mobile-nav, .pane-jump-backdrop, .popup-overlay-backdrop, .pane-drag-handle, [role="dialog"], [role="menu"]';
 const RADIX_POPPER_CONTENT_WRAPPER = "[data-radix-popper-content-wrapper]";
 
 type FocusableLike = Pick<Element, "closest">;

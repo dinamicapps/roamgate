@@ -1,0 +1,124 @@
+/* The Files block was styled under `.workspace-inspector`; these rules give it
+   the same layout on the terminal surface, where that ancestor is absent. */
+.workspace-terminal-surface > .files-tab-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--viewer-border);
+  border-radius: 10px;
+  background: var(--viewer-panel-bg);
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.files-tab-surface:focus {
+  outline: none;
+}
+
+.files-tab-surface .workspace-inspector-resource {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(300px, 1.2fr);
+  gap: 8px;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.files-tab-surface .workspace-inspector-resource.has-split-resizer {
+  grid-template-columns:
+    clamp(
+      240px,
+      var(--workspace-inspector-navigation-width, 40%),
+      calc(100% - 308px)
+    )
+    8px minmax(300px, 1fr);
+  gap: 0;
+}
+
+.files-tab-surface .workspace-inspector-split-resizer {
+  position: relative;
+  z-index: 2;
+  width: 8px;
+  min-width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.files-tab-surface .workspace-inspector-split-resizer::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--viewer-border);
+  content: "";
+  transition: background 120ms ease;
+}
+
+.files-tab-surface .workspace-inspector-split-resizer:hover::before,
+.files-tab-surface .workspace-inspector-split-resizer:focus-visible::before {
+  background: var(--accent);
+}
+
+.files-tab-surface .workspace-inspector-split-resizer:focus-visible {
+  outline: none;
+}
+
+.files-tab-surface .workspace-inspector-navigation,
+.files-tab-surface .workspace-inspector-detail {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.files-tab-surface .workspace-inspector-navigation > *,
+.files-tab-surface .workspace-inspector-detail > * {
+  flex: 1 1 auto;
+}
+
+.files-tab-surface .workspace-inspector-file-detail {
+  flex-direction: column;
+}
+
+.files-tab-surface .workspace-inspector-file-detail > .file-preview-tabs {
+  flex: 0 0 auto;
+}
+
+.files-tab-surface.is-compact .workspace-inspector-resource {
+  display: flex;
+  padding: 0;
+}
+
+.files-tab-surface.is-compact .workspace-inspector-navigation,
+.files-tab-surface.is-compact .workspace-inspector-detail {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.files-tab-surface.is-compact .workspace-inspector-detail {
+  display: none;
+}
+
+.files-tab-surface.is-compact.has-detail .workspace-inspector-navigation {
+  display: none;
+}
+
+.files-tab-surface.is-compact.has-detail .workspace-inspector-detail {
+  display: flex;
+}
+
+@container workspace-stage (max-width: 699px) {
+  .workspace-terminal-surface > .files-tab-surface {
+    border: 0;
+    border-radius: 0;
+  }
+}

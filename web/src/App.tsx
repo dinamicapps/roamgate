@@ -100,8 +100,10 @@ import {
 import { clearDiffContentResourceState } from "./components/diffContentState";
 import {
   clearFileExplorerResourceCache,
+  emptyFilePreviewSelection,
+  fileEntryForPath,
+  loadFilePreviewSelection,
   prefetchFileExplorerWorkspace,
-  requestFilePreview,
 } from "./components/fileExplorerResources";
 import { type ActiveFilePreviewSelection } from "./components/FilePreviewContent";
 import { AnnotationPanel } from "./components/AnnotationPanel";
@@ -109,7 +111,12 @@ import { assistantActionExecuting, useAssistantState } from "./assistant";
 import type { AssistantSource } from "../../shared/assistant";
 import { GlobalTooltip } from "./components/GlobalTooltip";
 import { MobileTabSheet } from "./components/MobileTabSheet";
-import { requestClosePane, requestCloseTab, TabBar } from "./components/TabBar";
+import {
+  requestClosePane,
+  requestCloseTab,
+  TabBar,
+  tabName,
+} from "./components/TabBar";
 import type { TerminalWorkspaceFileRequest } from "./components/TerminalView";
 import { WorkspaceTree } from "./components/WorkspaceTree";
 import { isIosDevice } from "./downloadFile";
@@ -147,6 +154,7 @@ import {
   type Notice,
   noticeAutoDismissDelay,
   shallowEqual,
+  type State,
   store,
   TASK_NOTIFICATION_ACTIVATE_EVENT,
   taskNotificationTargetFromNotice,
@@ -158,10 +166,17 @@ import {
 import { paneShortcutAction } from "./paneShortcuts";
 import { pluginActionShortcut } from "./pluginActionShortcuts";
 import {
-  adjacentTabId,
+  adjacentStripEntry,
   closeShortcutTarget,
   tabShortcutAction,
 } from "./tabShortcuts";
+import {
+  createFilesTabLinkSession,
+  subscribeFilesTabStorage,
+  updateFilesTabLinkRatios,
+  type FilesTabLinks,
+} from "./filesTabResource";
+import { filesTabId } from "./filesTabStrip";
 import { orderTabsForDisplay, tabPinsFor } from "./tabPins";
 import { copyTextFromUserGesture } from "./terminalClipboard";
 import { terminalPasteRequest } from "./terminalPaste";
@@ -214,6 +229,12 @@ import "./components/markdown.css";
 const AssistantPanel = lazyWithReload("assistant", () =>
   import("./components/AssistantPanel").then((module) => ({
     default: module.AssistantPanel,
+  })),
+);
+
+const FilesTabSurface = lazyWithReload("files-tab", () =>
+  import("./components/FilesTabSurface").then((module) => ({
+    default: module.FilesTabSurface,
   })),
 );
 
@@ -442,6 +463,25 @@ function loadMobileTerminalSideShortcuts(): MobileTerminalSideShortcuts {
   );
 }
 
+function activeTabIdForSnapshot(
+  snapshot: Pick<State, "workspaces" | "tabs" | "layout">,
+): string | undefined {
+  const workspace = snapshot.workspaces.find((candidate) => candidate.focused);
+  if (!workspace) return undefined;
+  const tabIds = new Set(
+    snapshot.tabs
+      .filter((tab) => tab.workspace_id === workspace.workspace_id)
+      .map((tab) => tab.tab_id),
+  );
+  return [
+    workspace.active_tab_id,
+    snapshot.layout?.tab_id,
+    snapshot.tabs.find(
+      (tab) => tab.workspace_id === workspace.workspace_id && tab.focused,
+    )?.tab_id,
+  ].find((tabId): tabId is string => !!tabId && tabIds.has(tabId));
+}
+
 function emptyActiveDiffSelection(): ActiveDiffSelection {
   return {
     entry: null,
@@ -452,27 +492,6 @@ function emptyActiveDiffSelection(): ActiveDiffSelection {
     files: {},
     fileErrors: {},
     summaryLoading: false,
-  };
-}
-
-function inspectorFileEntry(path: string): FileExplorerEntry {
-  const name = path.split("/").filter(Boolean).pop() ?? path;
-  return {
-    name,
-    path,
-    type: "file",
-    size: 0,
-    mtime_ms: 0,
-    hidden: name.startsWith("."),
-  };
-}
-
-function emptyActiveFilePreviewSelection(): ActiveFilePreviewSelection {
-  return {
-    entry: null,
-    preview: null,
-    loading: false,
-    error: null,
   };
 }
 
@@ -1472,7 +1491,7 @@ export default function App() {
     emptyActiveDiffSelection,
   );
   const [activeFilePreview, setActiveFilePreviewState] =
-    useState<ActiveFilePreviewSelection>(emptyActiveFilePreviewSelection);
+    useState<ActiveFilePreviewSelection>(emptyFilePreviewSelection);
   const setActiveFilePreview = useCallback(
     (selection: ActiveFilePreviewSelection) => {
       const scope = inspectorStateRef.current?.scope;
@@ -1642,22 +1661,24 @@ export default function App() {
     },
     [],
   );
+  const focusActiveTerminal = useCallback(() => {
+    if (mobile) return;
+    requestAnimationFrame(() => {
+      document
+        .querySelector<HTMLElement>(
+          ".pane-layout-cell.is-active .xterm-helper-textarea, .pane-switcher-layout .xterm-helper-textarea, .workspace-terminal-surface > .terminal-shell .xterm-helper-textarea",
+        )
+        ?.focus();
+    });
+  }, [mobile]);
   const activateTerminalSurface = useCallback(() => {
     updateInspectorState((current) =>
       current ? { ...current, open: false } : current,
     );
     setAnnotationsOpen(false);
     setMobileView("session");
-    if (!mobile) {
-      requestAnimationFrame(() => {
-        document
-          .querySelector<HTMLElement>(
-            ".pane-layout-cell.is-active .xterm-helper-textarea, .pane-switcher-layout .xterm-helper-textarea, .workspace-terminal-surface > .terminal-shell .xterm-helper-textarea",
-          )
-          ?.focus();
-      });
-    }
-  }, [mobile, updateInspectorState]);
+    focusActiveTerminal();
+  }, [focusActiveTerminal, updateInspectorState]);
   const toggleSidebar = useCallback(() => {
     setMobileView("session");
     setSidebarHidden((value) => !value);
@@ -1688,51 +1709,15 @@ export default function App() {
     });
   }, [mobile]);
   const loadInspectorFilePreview = useCallback(
-    (workspaceId: string, entry: FileExplorerEntry, fragment?: string) => {
-      const requestId = fileQuickOpenRequestRef.current + 1;
-      fileQuickOpenRequestRef.current = requestId;
-      setActiveFilePreview({
+    (workspaceId: string, entry: FileExplorerEntry, fragment?: string) =>
+      loadFilePreviewSelection(
+        connectionClient,
+        workspaceId,
         entry,
         fragment,
-        preview: null,
-        loading: true,
-        error: null,
-      });
-      void requestFilePreview(workspaceId, entry.path, {
-        client: connectionClient,
-        refresh: true,
-      })
-        .then((preview) => {
-          if (
-            !connectionClient.isCurrent() ||
-            fileQuickOpenRequestRef.current !== requestId
-          ) {
-            return;
-          }
-          setActiveFilePreview({
-            entry,
-            fragment,
-            preview,
-            loading: false,
-            error: null,
-          });
-        })
-        .catch((error) => {
-          if (
-            !connectionClient.isCurrent() ||
-            fileQuickOpenRequestRef.current !== requestId
-          ) {
-            return;
-          }
-          setActiveFilePreview({
-            entry,
-            fragment,
-            preview: null,
-            loading: false,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        });
-    },
+        fileQuickOpenRequestRef,
+        setActiveFilePreview,
+      ),
     [connectionClient, setActiveFilePreview],
   );
   const openInspector = useCallback(
@@ -1830,7 +1815,7 @@ export default function App() {
       if (!sameOwner) {
         fileQuickOpenRequestRef.current += 1;
         setActiveDiff(emptyActiveDiffSelection());
-        setActiveFilePreview(emptyActiveFilePreviewSelection());
+        setActiveFilePreview(emptyFilePreviewSelection());
       }
       inspectorFocusRequestRef.current = focusInspector
         ? { state: nextState, source: document.activeElement }
@@ -1847,10 +1832,10 @@ export default function App() {
           : undefined);
       if (view === "files" && !selectedPath) {
         fileQuickOpenRequestRef.current += 1;
-        setActiveFilePreview(emptyActiveFilePreviewSelection());
+        setActiveFilePreview(emptyFilePreviewSelection());
       }
       if (view !== "files" || !selectedPath) return;
-      const entry = options.entry ?? inspectorFileEntry(selectedPath);
+      const entry = options.entry ?? fileEntryForPath(selectedPath);
       loadInspectorFilePreview(workspace.workspace_id, entry, options.fragment);
     },
     [
@@ -1981,14 +1966,21 @@ export default function App() {
       });
     }
   };
-  const reanchorFileAnnotations = useCallback(
-    (path: string, text: string) => {
-      if (!inspectorState || !connectionClient.isCurrent()) return;
-      updateAnnotationDraft(inspectorState.scope, (current) =>
+  const reanchorScopedFileAnnotations = useCallback(
+    (scope: ResourceScope, path: string, text: string) => {
+      if (!connectionClient.isCurrent()) return;
+      updateAnnotationDraft(scope, (current) =>
         reanchorFileReviewAnnotations(current, path, text),
       );
     },
-    [connectionClient, inspectorState, updateAnnotationDraft],
+    [connectionClient, updateAnnotationDraft],
+  );
+  const reanchorFileAnnotations = useCallback(
+    (path: string, text: string) => {
+      if (inspectorState)
+        reanchorScopedFileAnnotations(inspectorState.scope, path, text);
+    },
+    [inspectorState, reanchorScopedFileAnnotations],
   );
   const reanchorDiffAnnotations = useCallback(
     (path: string, kind: GitDiffEntry["kind"], patch: string) => {
@@ -1999,26 +1991,23 @@ export default function App() {
     },
     [connectionClient, inspectorState, updateAnnotationDraft],
   );
-  const addAnnotation = useCallback(
-    (input: NewReviewAnnotation) => {
-      if (!inspectorState || !connectionClient.isCurrent()) return;
+  const addScopedAnnotation = useCallback(
+    (scope: ResourceScope, input: NewReviewAnnotation) => {
+      if (!connectionClient.isCurrent()) return;
       const annotation = createReviewAnnotation(input);
-      setAnnotationDraftScope(inspectorState.scope, true);
-      updateAnnotationDraft(inspectorState.scope, (current) => [
-        ...current,
-        annotation,
-      ]);
+      setAnnotationDraftScope(scope, true);
+      updateAnnotationDraft(scope, (current) => [...current, annotation]);
       setFocusedAnnotationId(annotation.id);
       setAnnotationsOpen(true);
       if (mobile) setMobileView("annotations");
     },
-    [
-      connectionClient,
-      inspectorState,
-      mobile,
-      setAnnotationDraftScope,
-      updateAnnotationDraft,
-    ],
+    [connectionClient, mobile, setAnnotationDraftScope, updateAnnotationDraft],
+  );
+  const addAnnotation = useCallback(
+    (input: NewReviewAnnotation) => {
+      if (inspectorState) addScopedAnnotation(inspectorState.scope, input);
+    },
+    [addScopedAnnotation, inspectorState],
   );
   const closeAnnotations = useCallback(() => {
     setAnnotationsOpen(false);
@@ -2318,27 +2307,6 @@ export default function App() {
     },
     [activateTerminalSurface, openInspector],
   );
-  const toggleFileExplorer = useCallback(() => {
-    const snapshot = store.get();
-    const workspace = snapshot.workspaces.find(
-      (candidate) => candidate.focused,
-    );
-    if (!workspace) return;
-    const scope = resourceScopeForWorkspace(
-      connectionClient.connectionId,
-      workspace,
-    );
-    const current = inspectorStateRef.current;
-    if (
-      current?.open &&
-      current.view === "files" &&
-      sameResourceOwner(current.scope, scope)
-    ) {
-      closeInspector();
-      return;
-    }
-    openFileExplorer(workspace.workspace_id, false);
-  }, [closeInspector, connectionClient.connectionId, openFileExplorer]);
   const toggleDiffViewer = useCallback(() => {
     const snapshot = store.get();
     const workspace = snapshot.workspaces.find(
@@ -2387,7 +2355,7 @@ export default function App() {
       if (!workspace) return;
       openFileExplorerFile(
         workspace.workspace_id,
-        inspectorFileEntry(entry.path),
+        fileEntryForPath(entry.path),
       );
     },
     [openFileExplorerFile],
@@ -2411,6 +2379,202 @@ export default function App() {
     },
     [openInspector],
   );
+  const [filesTabLinks, setFilesTabLinks] = useState<FilesTabLinks>({});
+  const [filesSurfaceOwnerTabId, setFilesSurfaceOwnerTabId] = useState<
+    string | null
+  >(null);
+  const filesSurfaceOwnerTabIdRef = useRef<string | null>(null);
+  const commitFilesSurfaceOwner = useCallback((ownerTabId: string | null) => {
+    filesSurfaceOwnerTabIdRef.current = ownerTabId;
+    setFilesSurfaceOwnerTabId(ownerTabId);
+  }, []);
+  // A snapshot restored from the connection cache may predate tabs closed
+  // elsewhere, so links are validated only against a refresh newer than it.
+  const filesTabLinkSession = useMemo(
+    () => ({
+      session: createFilesTabLinkSession(
+        roamgateLocalStorage,
+        s.activeConnectionId,
+        s.connectionGeneration,
+      ),
+      baselineRefresh: store.get().lastRefresh,
+    }),
+    [s.activeConnectionId, s.connectionGeneration],
+  );
+  useEffect(() => {
+    const { session, baselineRefresh } = filesTabLinkSession;
+    if (s.status !== "connected" || s.lastRefresh === baselineRefresh) return;
+    const liveTabIds = s.tabs.map((tab) => tab.tab_id);
+    if (session.acceptSnapshot(s.connectionGeneration, liveTabIds) === null)
+      return;
+    setFilesTabLinks(session.links());
+  }, [
+    filesTabLinkSession,
+    s.connectionGeneration,
+    s.lastRefresh,
+    s.status,
+    s.tabs,
+  ]);
+  useEffect(() => {
+    const { session } = filesTabLinkSession;
+    return subscribeFilesTabStorage(session.connectionId, (change) => {
+      if (change.kind !== "files") setFilesTabLinks(session.links());
+    });
+  }, [filesTabLinkSession]);
+  const activeConsoleTabId = activeTabIdForSnapshot(s) ?? null;
+  const filesSurfaceVisibleOwnerTabId =
+    filesSurfaceOwnerTabId !== null &&
+    filesSurfaceOwnerTabId === activeConsoleTabId &&
+    filesTabLinks[filesSurfaceOwnerTabId]
+      ? filesSurfaceOwnerTabId
+      : null;
+  const previousActiveConsoleTabIdRef = useRef(activeConsoleTabId);
+  useEffect(() => {
+    if (previousActiveConsoleTabIdRef.current === activeConsoleTabId) return;
+    previousActiveConsoleTabIdRef.current = activeConsoleTabId;
+    // Herdr's focus decides the visible console (including focus changed
+    // elsewhere); a files surface of another console gives way to it.
+    if (filesSurfaceOwnerTabIdRef.current !== activeConsoleTabId)
+      commitFilesSurfaceOwner(null);
+  }, [activeConsoleTabId, commitFilesSurfaceOwner]);
+  const showConsoleSurface = useCallback(() => {
+    commitFilesSurfaceOwner(null);
+    focusActiveTerminal();
+  }, [commitFilesSurfaceOwner, focusActiveTerminal]);
+  /**
+   * Single entry to a console's files tab: focuses its link or creates it,
+   * then shows it. Activating it is local; only reaching another console
+   * focuses that console in Herdr.
+   */
+  const openOrFocusFilesTab = useCallback(
+    (ownerTabId: string) => {
+      const snapshot = store.get();
+      const tab = snapshot.tabs.find(
+        (candidate) => candidate.tab_id === ownerTabId,
+      );
+      const workspace = tab
+        ? snapshot.workspaces.find(
+            (candidate) => candidate.workspace_id === tab.workspace_id,
+          )
+        : undefined;
+      if (!workspace) return;
+      const { session } = filesTabLinkSession;
+      const scope = resourceScopeForWorkspace(session.connectionId, workspace);
+      const obtained = session.obtain(ownerTabId, () => {
+        const pane =
+          snapshot.panes.find(
+            (candidate) => candidate.tab_id === ownerTabId && candidate.focused,
+          ) ??
+          snapshot.panes.find((candidate) => candidate.tab_id === ownerTabId);
+        const root = workspace.worktree?.checkout_path ?? workspace.cwd;
+        return {
+          workspaceId: workspace.workspace_id,
+          scopeOwner: resourceOwnerKey(scope),
+          initialDirectory:
+            (root && pane
+              ? relativePathWithinCheckout(
+                  root,
+                  pane.foreground_cwd ?? pane.cwd,
+                )
+              : undefined) ?? null,
+          navigationRatio: readInspectorPreferences(roamgateLocalStorage, scope)
+            .filesNavigationRatio,
+        };
+      });
+      if (!obtained) {
+        store.notify({
+          kind: "error",
+          message: "Cannot open Files yet",
+          detail: "The tab list of this connection is still loading.",
+        });
+        return;
+      }
+      setFilesTabLinks(session.links());
+      commitFilesSurfaceOwner(ownerTabId);
+      setMobileView("session");
+      if (activeTabIdForSnapshot(snapshot) !== ownerTabId)
+        void store.focusTab(ownerTabId);
+    },
+    [commitFilesSurfaceOwner, filesTabLinkSession],
+  );
+  const closeFilesTab = useCallback(
+    (ownerTabId: string) => {
+      const { session } = filesTabLinkSession;
+      session.close(ownerTabId);
+      setFilesTabLinks(session.links());
+      if (filesSurfaceOwnerTabIdRef.current === ownerTabId)
+        showConsoleSurface();
+    },
+    [filesTabLinkSession, showConsoleSurface],
+  );
+  const selectConsoleTab = useCallback(
+    (tabId: string) => {
+      if (filesSurfaceOwnerTabIdRef.current === tabId) {
+        showConsoleSurface();
+        if (activeTabIdForSnapshot(store.get()) === tabId) return;
+      }
+      void store.focusTab(tabId);
+    },
+    [showConsoleSurface],
+  );
+  const toggleFilesTab = useCallback(() => {
+    const activeTabId = activeTabIdForSnapshot(store.get());
+    if (!activeTabId) return;
+    if (filesSurfaceOwnerTabIdRef.current === activeTabId) showConsoleSurface();
+    else openOrFocusFilesTab(activeTabId);
+  }, [openOrFocusFilesTab, showConsoleSurface]);
+  const commitFilesTabNavigationRatio = useCallback(
+    (ratio: number) => {
+      const ownerTabId = filesSurfaceOwnerTabIdRef.current;
+      if (!ownerTabId) return;
+      const { session } = filesTabLinkSession;
+      updateFilesTabLinkRatios(
+        roamgateLocalStorage,
+        session.connectionId,
+        ownerTabId,
+        { navigationRatio: ratio },
+      );
+      setFilesTabLinks(session.links());
+    },
+    [filesTabLinkSession],
+  );
+  const filesTabOwner = filesSurfaceVisibleOwnerTabId
+    ? s.tabs.find((tab) => tab.tab_id === filesSurfaceVisibleOwnerTabId)
+    : undefined;
+  const filesTabWorkspace = filesTabOwner
+    ? s.workspaces.find(
+        (workspace) => workspace.workspace_id === filesTabOwner.workspace_id,
+      )
+    : undefined;
+  const filesTabScopeCandidate = filesTabWorkspace
+    ? resourceScopeForWorkspace(
+        connectionClient.connectionId,
+        filesTabWorkspace,
+      )
+    : null;
+  const filesTabScopeIdentity = filesTabScopeCandidate
+    ? `${resourceStateKey(filesTabScopeCandidate)}:${filesTabScopeCandidate.workspaceId}`
+    : null;
+  // Snapshots rebuild workspace objects on every refresh; the scope keeps its
+  // identity so the preview's annotation callbacks stay stable.
+  const filesTabScope = useMemo(
+    () => filesTabScopeCandidate,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filesTabScopeIdentity],
+  );
+  const addFilesTabAnnotation = useCallback(
+    (input: NewReviewAnnotation) => {
+      if (filesTabScope) addScopedAnnotation(filesTabScope, input);
+    },
+    [addScopedAnnotation, filesTabScope],
+  );
+  const reanchorFilesTabAnnotations = useCallback(
+    (path: string, text: string) => {
+      if (filesTabScope)
+        reanchorScopedFileAnnotations(filesTabScope, path, text);
+    },
+    [filesTabScope, reanchorScopedFileAnnotations],
+  );
   const reviewChangesForPane = useCallback(
     (pane: Pane) =>
       openInspector("changes", pane.workspace_id, {
@@ -2429,7 +2593,7 @@ export default function App() {
       }
       openFileExplorerFile(
         request.workspaceId,
-        inspectorFileEntry(request.path),
+        fileEntryForPath(request.path),
         request.paneId,
       );
     },
@@ -2688,7 +2852,7 @@ export default function App() {
       inspectorReturnFocusRef.current = null;
       commitInspectorState(null);
       setActiveDiff(emptyActiveDiffSelection());
-      setActiveFilePreview(emptyActiveFilePreviewSelection());
+      setActiveFilePreview(emptyFilePreviewSelection());
       setMobileView("session");
     };
     window.addEventListener(WORKTREE_REMOVED_EVENT, handleWorktreeRemoved);
@@ -2767,8 +2931,10 @@ export default function App() {
     pendingInspectorRequestRef.current = null;
     inspectorReturnFocusRef.current = null;
     commitInspectorState(null);
+    commitFilesSurfaceOwner(null);
+    setFilesTabLinks({});
     setActiveDiff(emptyActiveDiffSelection());
-    setActiveFilePreview(emptyActiveFilePreviewSelection());
+    setActiveFilePreview(emptyFilePreviewSelection());
     annotationAwaitingFocusRef.current = null;
     setAnnotationPreferredPaneId(undefined);
     setAnnotationDeliveryBusy(false);
@@ -2780,7 +2946,12 @@ export default function App() {
     setPaneJumpIndex(0);
     setPaneJumpSearch(null);
     setMobileView((current) => (current === "assistant" ? current : "session"));
-  }, [commitInspectorState, resourceUiKey, setActiveFilePreview]);
+  }, [
+    commitFilesSurfaceOwner,
+    commitInspectorState,
+    resourceUiKey,
+    setActiveFilePreview,
+  ]);
 
   useEffect(() => {
     store.init();
@@ -2939,7 +3110,7 @@ export default function App() {
         inspectorReturnFocusRef.current = null;
         commitInspectorState(null);
         setActiveDiff(emptyActiveDiffSelection());
-        setActiveFilePreview(emptyActiveFilePreviewSelection());
+        setActiveFilePreview(emptyFilePreviewSelection());
         setMobileView("session");
       }
       return;
@@ -3143,12 +3314,7 @@ export default function App() {
         const tabs = current.tabs.filter(
           (tab) => tab.workspace_id === focusedWorkspace.workspace_id,
         );
-        const tabIds = new Set(tabs.map((tab) => tab.tab_id));
-        const activeTabId = [
-          focusedWorkspace.active_tab_id,
-          current.layout?.tab_id,
-          tabs.find((tab) => tab.focused)?.tab_id,
-        ].find((tabId): tabId is string => !!tabId && tabIds.has(tabId));
+        const activeTabId = activeTabIdForSnapshot(current);
         if (tabAction === "close") {
           const target = closeShortcutTarget(
             activeTabId,
@@ -3160,14 +3326,24 @@ export default function App() {
           return;
         }
 
-        const targetTabId = adjacentTabId(
+        const filesTabActive =
+          !!activeTabId && filesSurfaceOwnerTabIdRef.current === activeTabId;
+        const target = adjacentStripEntry(
           tabs,
-          activeTabId,
+          activeTabId
+            ? filesTabActive
+              ? { kind: "files", ownerTabId: activeTabId }
+              : { kind: "console", tabId: activeTabId }
+            : null,
           tabAction,
           tabPinsFor(current.activeConnectionId),
+          new Set(Object.keys(filesTabLinkSession.session.links())),
         );
-        if (!targetTabId || targetTabId === activeTabId) return;
-        store.focusTab(targetTabId);
+        if (!target) return;
+        if (target.kind === "files") openOrFocusFilesTab(target.ownerTabId);
+        else if (target.tabId === activeTabId) {
+          if (filesTabActive) showConsoleSurface();
+        } else store.focusTab(target.tabId);
         return;
       }
       const pluginAction = pluginActionShortcut(e);
@@ -3258,7 +3434,7 @@ export default function App() {
         if (!targetTab) return;
         e.preventDefault();
         e.stopPropagation();
-        store.focusTab(targetTab.tab_id);
+        selectConsoleTab(targetTab.tab_id);
         return;
       }
       if (isWorkspaceInspectorShortcut(e)) {
@@ -3297,7 +3473,7 @@ export default function App() {
         if (isEditableElement(e.target)) return;
         e.preventDefault();
         e.stopPropagation();
-        toggleFileExplorer();
+        toggleFilesTab();
         return;
       }
       const workspacesShortcut = shortcutMatches(e, "workspaces.open");
@@ -3351,19 +3527,23 @@ export default function App() {
     closePaneJump,
     commitPaneJump,
     defaultPaneJumpIndex,
+    filesTabLinkSession,
     movePaneJumpSelection,
     mobile,
+    openOrFocusFilesTab,
     openPaneJumpSearch,
     openWorkspaces,
     paneJumpOpen,
     paneJumpOptions.length,
     paneJumpSearch,
+    selectConsoleTab,
     selectPaneJumpIndex,
     setInspectorExpanded,
+    showConsoleSurface,
     toggleAnnotations,
     toggleAssistant,
     toggleDiffViewer,
-    toggleFileExplorer,
+    toggleFilesTab,
     toggleSidebar,
     toggleWorkspaceInspector,
     toggleZenMode,
@@ -4190,6 +4370,13 @@ export default function App() {
             annotationCount={annotations.length}
             onToggleInspector={toggleWorkspaceInspector}
             onToggleAnnotations={toggleAnnotations}
+            filesTabs={{
+              linkedOwnerTabIds: new Set(Object.keys(filesTabLinks)),
+              activeOwnerTabId: filesSurfaceVisibleOwnerTabId,
+              onSelectConsole: selectConsoleTab,
+              onOpen: openOrFocusFilesTab,
+              onClose: closeFilesTab,
+            }}
           />
           <div
             className={`workspace-surfaces ${annotationsDocked ? "has-annotations" : ""} ${assistantDocked ? "has-assistant" : ""}`}
@@ -4202,7 +4389,11 @@ export default function App() {
                   : ""
               } ${inspectorState?.open && inspectorState.expanded ? "is-inspector-expanded" : ""}`}
             >
-              <div className="workspace-terminal-surface">
+              <div
+                className={`workspace-terminal-surface ${
+                  filesSurfaceVisibleOwnerTabId ? "has-files-tab" : ""
+                }`}
+              >
                 <TerminalPaneLayout
                   terminalTheme={terminalTheme}
                   terminalFontFamily={terminalFontFamily}
@@ -4217,6 +4408,26 @@ export default function App() {
                   zenMode={zenMode && !mobile}
                   onExitZenMode={() => applyZenMode(false)}
                 />
+                {filesSurfaceVisibleOwnerTabId &&
+                filesTabWorkspace &&
+                filesTabScope ? (
+                  <Suspense fallback={null}>
+                    <FilesTabSurface
+                      key={`${resourceUiKey}:${filesTabId(filesSurfaceVisibleOwnerTabId)}`}
+                      connectionClient={connectionClient}
+                      ownerTabId={filesSurfaceVisibleOwnerTabId}
+                      ownerLabel={tabName(filesTabOwner)}
+                      link={filesTabLinks[filesSurfaceVisibleOwnerTabId]}
+                      workspaceId={filesTabWorkspace.workspace_id}
+                      scope={filesTabScope}
+                      annotations={readAnnotationDraft(filesTabScope)}
+                      onCreateAnnotation={addFilesTabAnnotation}
+                      onReanchorAnnotations={reanchorFilesTabAnnotations}
+                      onNavigationRatioCommit={commitFilesTabNavigationRatio}
+                      onShowConsole={showConsoleSurface}
+                    />
+                  </Suspense>
+                ) : null}
               </div>
               {inspectorState?.open && !inspectorState.expanded ? (
                 <div
@@ -4272,7 +4483,7 @@ export default function App() {
                         if (inspectorWorkspace)
                           loadInspectorFilePreview(
                             inspectorWorkspace.workspace_id,
-                            inspectorFileEntry(path),
+                            fileEntryForPath(path),
                           );
                       }}
                       previewRequestRef={fileQuickOpenRequestRef}
@@ -4303,7 +4514,7 @@ export default function App() {
                         if (inspectorWorkspace)
                           openFileExplorerFile(
                             inspectorWorkspace.workspace_id,
-                            inspectorFileEntry(path),
+                            fileEntryForPath(path),
                             undefined,
                             fragment,
                           );

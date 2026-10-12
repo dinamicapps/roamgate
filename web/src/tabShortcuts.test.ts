@@ -1,7 +1,7 @@
 import { defaultShortcutBindings } from "./shortcutBindings";
 import { describe, expect, test } from "bun:test";
 import {
-  adjacentTabId,
+  adjacentStripEntry,
   closeShortcutTarget,
   tabShortcutAction as resolveShortcut,
 } from "./tabShortcuts";
@@ -114,23 +114,54 @@ describe("adjacent tab selection", () => {
     { tab_id: "second", number: 1 },
     { tab_id: "third", number: 2 },
   ];
+  const consoleTab = (tabId: string) => ({ kind: "console" as const, tabId });
+  const filesTab = (ownerTabId: string) => ({
+    kind: "files" as const,
+    ownerTabId,
+  });
+  const adjacentTabId = (
+    tabId: string | undefined,
+    direction: "previous" | "next",
+    pinned?: ReadonlySet<string>,
+    list = tabs,
+  ) => {
+    const entry = adjacentStripEntry(
+      list,
+      tabId ? consoleTab(tabId) : null,
+      direction,
+      pinned,
+    );
+    return entry?.kind === "console" ? entry.tabId : null;
+  };
 
   test("switches in tab-list order and wraps", () => {
-    expect(adjacentTabId(tabs, "first", "next")).toBe("second");
-    expect(adjacentTabId(tabs, "third", "next")).toBe("first");
-    expect(adjacentTabId(tabs, "first", "previous")).toBe("third");
+    expect(adjacentTabId("first", "next")).toBe("second");
+    expect(adjacentTabId("third", "next")).toBe("first");
+    expect(adjacentTabId("first", "previous")).toBe("third");
   });
 
   test("uses a deterministic edge when the active tab is unknown", () => {
-    expect(adjacentTabId(tabs, undefined, "next")).toBe("first");
-    expect(adjacentTabId(tabs, "missing", "previous")).toBe("third");
-    expect(adjacentTabId([], undefined, "next")).toBeNull();
+    expect(adjacentTabId(undefined, "next")).toBe("first");
+    expect(adjacentTabId("missing", "previous")).toBe("third");
+    expect(adjacentTabId(undefined, "next", undefined, [])).toBeNull();
   });
 
   test("follows the tab strip when pinned tabs lead it", () => {
     const pinned = new Set(["third"]);
-    expect(adjacentTabId(tabs, "third", "next", pinned)).toBe("first");
-    expect(adjacentTabId(tabs, "second", "next", pinned)).toBe("third");
-    expect(adjacentTabId(tabs, "first", "previous", pinned)).toBe("third");
+    expect(adjacentTabId("third", "next", pinned)).toBe("first");
+    expect(adjacentTabId("second", "next", pinned)).toBe("third");
+    expect(adjacentTabId("first", "previous", pinned)).toBe("third");
+  });
+
+  test("passes through a linked files tab right after its console", () => {
+    const linked = new Set(["second"]);
+    const step = (
+      current: ReturnType<typeof consoleTab> | ReturnType<typeof filesTab>,
+      direction: "previous" | "next",
+    ) => adjacentStripEntry(tabs, current, direction, new Set(), linked);
+    expect(step(consoleTab("second"), "next")).toEqual(filesTab("second"));
+    expect(step(filesTab("second"), "next")).toEqual(consoleTab("third"));
+    expect(step(filesTab("second"), "previous")).toEqual(consoleTab("second"));
+    expect(step(consoleTab("third"), "previous")).toEqual(filesTab("second"));
   });
 });

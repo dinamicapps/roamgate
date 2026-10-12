@@ -1,6 +1,6 @@
 import { getShortcutSnapshot } from "./shortcutPreferences";
 import { matchesShortcut, type ShortcutBindings } from "./shortcutBindings";
-import { orderTabsForDisplay } from "./tabPins";
+import { sameStripEntry, stripEntries, type StripEntry } from "./filesTabStrip";
 import type { Pane, Tab } from "./types";
 
 export type TabShortcutAction = "create" | "close" | "previous" | "next";
@@ -37,27 +37,24 @@ export function closeShortcutTarget(
   return { type: "pane", id: pane.pane_id };
 }
 
-/** Selects the adjacent tab in tab-strip order, wrapping at each end. */
-export function adjacentTabId(
+/**
+ * Selects the adjacent strip entry, wrapping at each end. Linked files tabs
+ * take part, unlike the number shortcuts, which address consoles only.
+ */
+export function adjacentStripEntry(
   tabs: Pick<Tab, "tab_id" | "number">[],
-  currentTabId: string | undefined,
+  current: StripEntry | null,
   direction: "previous" | "next",
   pinnedTabIds: ReadonlySet<string> = new Set(),
-): string | null {
-  if (tabs.length === 0) return null;
-
-  const orderedTabs = orderTabsForDisplay(tabs, pinnedTabIds);
-  const currentIndex = orderedTabs.findIndex(
-    (tab) => tab.tab_id === currentTabId,
-  );
-  if (currentIndex < 0) {
-    return direction === "previous"
-      ? orderedTabs[orderedTabs.length - 1].tab_id
-      : orderedTabs[0].tab_id;
-  }
-
+  linkedOwnerTabIds: ReadonlySet<string> = new Set(),
+): StripEntry | null {
+  const entries = stripEntries(tabs, pinnedTabIds, linkedOwnerTabIds);
+  if (entries.length === 0) return null;
+  const index = current
+    ? entries.findIndex((entry) => sameStripEntry(entry, current))
+    : -1;
+  if (index < 0)
+    return direction === "previous" ? entries[entries.length - 1] : entries[0];
   const offset = direction === "previous" ? -1 : 1;
-  const nextIndex =
-    (currentIndex + offset + orderedTabs.length) % orderedTabs.length;
-  return orderedTabs[nextIndex].tab_id;
+  return entries[(index + offset + entries.length) % entries.length];
 }

@@ -36,7 +36,7 @@ describe("terminalFocusBlockedByOverlay", () => {
     expect(
       terminalFocusBlockedByOverlay(
         elementMatching([
-          '[data-radix-popper-content-wrapper], .modal-backdrop, .workspace-tree-panel, .workspace-inspector, .annotation-panel, .assistant-panel, .tabbar-utilities, .mobile-nav, .pane-jump-backdrop, .popup-overlay-backdrop, .pane-drag-handle, [role="dialog"], [role="menu"]',
+          '[data-radix-popper-content-wrapper], .modal-backdrop, .workspace-tree-panel, .workspace-inspector, .files-tab-surface, .annotation-panel, .assistant-panel, .tabbar-utilities, .mobile-nav, .pane-jump-backdrop, .popup-overlay-backdrop, .pane-drag-handle, [role="dialog"], [role="menu"]',
         ]),
         doc,
       ),
@@ -55,6 +55,18 @@ describe("terminalFocusBlockedByOverlay", () => {
     expect(terminalFocusBlockedByOverlay(elementMatching(null), doc)).toBe(
       false,
     );
+  });
+
+  test("blocks while a console's files tab owns focus", () => {
+    const filesTabElement = {
+      closest: (selector: string) =>
+        selector.split(", ").includes(".files-tab-surface")
+          ? ({} as Element)
+          : null,
+    };
+    expect(
+      terminalFocusBlockedByOverlay(filesTabElement, docWithOpenPopper(false)),
+    ).toBe(true);
   });
 
   test("allows refocusing with no overlay and no focused element", () => {
