@@ -236,8 +236,9 @@ const AssistantPanel = lazyWithReload("assistant", () =>
   })),
 );
 
+// Loaded through the inspector module: both surfaces share one feature asset.
 const FilesTabSurface = lazyWithReload("files-tab", () =>
-  import("./components/FilesTabSurface").then((module) => ({
+  import("./components/WorkspaceInspectorHost").then((module) => ({
     default: module.FilesTabSurface,
   })),
 );

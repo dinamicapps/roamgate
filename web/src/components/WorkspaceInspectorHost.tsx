@@ -557,3 +557,7 @@ export function WorkspaceInspectorHost({
     </aside>
   );
 }
+
+// The files tab shares this lazy boundary so both workspace resource surfaces
+// load as one feature asset instead of two chunks plus their shared helpers.
+export { FilesTabSurface } from "./FilesTabSurface";

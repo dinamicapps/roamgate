@@ -65,6 +65,13 @@ export default defineConfig({
               name: "syntax-extra",
               test: /@shikijs\/langs\/dist\/(clojure|crystal|elixir|elm|erlang|fsharp|groovy|haskell|kotlin|common-lisp|lua|r|scala)\.mjs$/,
             },
+            {
+              // Terminal, diff and workspace resource surfaces share these
+              // helpers; keep one stable lazy asset. Listed last so earlier
+              // groups claim React and other shared dependencies first.
+              name: "workspace-annotations",
+              test: /src[\\/](?:filesystemPaths\.ts|components[\\/]AnnotationComposerPopover\.(?:tsx|css))$/,
+            },
           ],
         },
       },
