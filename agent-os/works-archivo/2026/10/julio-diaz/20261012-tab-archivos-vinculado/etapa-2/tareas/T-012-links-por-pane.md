@@ -24,7 +24,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 012: Links de terminal resueltos desde su pane (FM-07)
 
@@ -66,3 +66,13 @@ Verificando CA-14 en navegador: un link relativo al cwd del pane que lo imprimio
 | 2 | La cache positiva de links del cliente dura 30 s (terminalFileLinks.ts:9): tras un cd el mismo texto puede resolver al archivo anterior hasta que expire | Registrado en post-works | amelia |
 | 3 | Los nombres sin barra (index.ts) no son candidatos a link por diseno; hace falta dir/archivo o ./ | Comportamiento previo intencional para evitar falsos positivos | amelia |
 | 4 | Archivos no declarados: file-paths.ts(.test), terminalFileLinks.ts(.test) | Aceptados: normalizador y cache del link | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-14: Ctrl+clic en workspace/files.ts y ./index.ts impresos por un pane en server/src abre el archivo correcto en el tab de su consola; CA-09: el clic en la consola con su tab activo vuelve a ella.
+
+### Hallazgos de verificacion
+
+(ninguno)

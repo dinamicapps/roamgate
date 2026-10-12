@@ -19,7 +19,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 013: Worktree Lifecycle en Windows
 
@@ -59,3 +59,13 @@ Verificando CA-25 en navegador (Herdr 0.9.1, Windows): en el dialogo Worktree Li
 |---|----------|----------|---------|
 | 1 | workspaceResource.ts:131 y workspaceIdentity.ts:6 tienen normalizadores que no quitan \\?\ y generan claves persistidas | No se cambian para no invalidar preferencias guardadas; hoy comparan rutas de una sola fuente. Registrado en post-works | atlas |
 | 2 | Archivos no declarados: filesystemPaths.ts(.test), store.ts, worktreeLifecycle.test.ts, file-paths.ts(.test), files.ts(.test) | Aceptados: normalizador comun y el mismo patron en la resolucion de links | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-25: Files de un worktree cerrado abre su workspace y su tab de archivos; el dialogo muestra 2 checkouts Open sin duplicados (CA-25-despues.png, CA-25-lifecycle.png); link absoluto de Windows abre la ruta relativa.
+
+### Hallazgos de verificacion
+
+(ninguno)

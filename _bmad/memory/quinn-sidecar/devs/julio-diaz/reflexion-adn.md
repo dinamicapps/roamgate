@@ -29,3 +29,21 @@
     detalle: regresiones de presupuesto de build detectadas antes del cierre
     tipo: outcome
   work: "20261012-tab-archivos-vinculado"
+- arte: verificar
+  categoria: acierto-repetible
+  causa_atribuida: Los eventos sinteticos no pasan por la captura de puntero ni por el drag nativo, y las pruebas unitarias no corren en el shell de Git for Windows.
+  disparador: cuando un work de UI corre en un host Windows o toca rutas y eventos de puntero
+  evidencia:
+    - ancla: 20261012-tab-archivos-vinculado/T-011
+      tipo: work-record
+    - ancla: 20261012-tab-archivos-vinculado/T-012
+      tipo: work-record
+    - ancla: 20261012-tab-archivos-vinculado/T-013
+      tipo: work-record
+  fecha: "2026-10-12"
+  leccion_candidata: En E4 de UI, ejercitar cada CA con input real del navegador en el host del usuario antes de dar el CA por cubierto con pruebas unitarias.
+  observacion: 'Verificar con input real y entornos aislados destapo defectos que las pruebas unitarias y el typecheck no veian: diff con mktemp en /tmp, captura de puntero que se tragaba el clic, rutas de Windows enviadas como rama.'
+  verificacion:
+    detalle: defectos de entorno detectados en E4 y no despues del cierre
+    tipo: outcome
+  work: "20261012-tab-archivos-vinculado"

@@ -14,6 +14,13 @@ Capturas tomadas con Playwright sobre la vista real (Vite dev en localhost:5174 
 | `CA-22-despues.png` | CA-22 | Nav mobile con Files activo y el tab de archivos a pantalla completa |
 | `CA-24-antes.png` | CA-24 | Inspector con Files, Changes, Commits y History (baseline E3) |
 | `CA-24-despues.png` | CA-24 | Inspector con Changes, Commits y History; Changes del preview selecciona el archivo |
+| `CA-10-despues.png` | CA-10 | Anotacion creada sobre una seleccion del preview de AGENTS.md, visible en Review feedback tras cambiar de consola |
+| `CA-16-despues.png` | CA-16 | Open in Files desde Changes: Inspector cerrado y TabBar.tsx en el tab de archivos |
+| `CA-25-despues.png` | CA-25 | Files de un worktree cerrado abre su workspace y su tab de archivos |
+| `CA-25-lifecycle.png` | CA-25 | Worktree Lifecycle con 2 checkouts Open sin duplicados (T-013) |
+| `CA-26-despues.png` | CA-26 | Changes con el diff real de TabBar.tsx (T-011) |
+
+Segunda ronda (work reabierto): workspace aislado `fm-prueba3` y worktree `fm-prueba-wt`, creados y eliminados en la sesion; bridge en modo shared solo para CA-20 y en browser-local para el resto.
 
 ## Calidad UI (CU)
 
@@ -44,6 +51,13 @@ Capturas tomadas con Playwright sobre la vista real (Vite dev en localhost:5174 
 - CU-3: DEGRADADO (sin standard frontend, senal DT emitida).
 - CU-4: PASS con observacion — superficie sin borde ni radio como las demas vistas mobile; el strip no se desplaza al tab activo (FM-09, cosmetico).
 - CU-5: PASS (vista real: http://localhost:5174/?layout=mobile).
+
+### Worktree Lifecycle (accion Files)
+- CU-1: PASS — evidencia: Files de un worktree cerrado abre su workspace y el tab de archivos; Open/Focus/Remove con handler real.
+- CU-2: PASS — evidencia: estados Open y Linked correctos tras T-013 (CA-25-lifecycle.png); el estado de error se observo antes del arreglo y el mensaje no cambio.
+- CU-3: DEGRADADO (sin standard frontend, senal DT emitida).
+- CU-4: PASS — una fila por checkout, sin duplicados (CA-25-lifecycle.png).
+- CU-5: PASS (vista real: http://localhost:5174/).
 
 ## Llegada
 

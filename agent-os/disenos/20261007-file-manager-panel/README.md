@@ -3,7 +3,7 @@ autor: Julio Diaz
 brief_version: 1
 datos_md_version: 1
 es_paraguas: false
-estado: EN_USO
+estado: CERRADO
 fecha_fin: null
 fecha_inicio: "2026-10-07"
 file_type: diseno-readme

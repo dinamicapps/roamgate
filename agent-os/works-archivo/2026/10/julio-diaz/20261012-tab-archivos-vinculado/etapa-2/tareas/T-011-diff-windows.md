@@ -20,7 +20,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 011: Diff del servidor en Windows (FM-06)
 
@@ -61,3 +61,13 @@ verificador: null
 | 1 | snapshotWorktreeTree (modo last-step) falla en Windows con ulimit: file size (git-diff.ts:441); causa las 20 fallas restantes | Funcion distinta fuera del work; se registra en post-works | amelia |
 | 2 | Archivos no declarados: terminal-upload.ts, update.ts y sus pruebas | Aceptados: mismo patron de la causa raiz, corregido en la misma tarea | amelia |
 | 3 | A la instalacion de Git for Windows del host le faltan etc/fstab y etc/profile | Entorno del usuario; se le informa. El codigo ya no depende de ello | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-16, CA-26: con el bridge sin TMPDIR, Changes muestra el diff de TabBar.tsx en el navegador y Open in Files abre el archivo (CA-16-despues.png, CA-26-despues.png).
+
+### Hallazgos de verificacion
+
+(ninguno)

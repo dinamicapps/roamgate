@@ -29,3 +29,19 @@
     detalle: el operador confirma que E4 de works de UI corre en entorno aislado y no en sus sesiones
     tipo: humana
   work: "20261012-tab-archivos-vinculado"
+- arte: decidir
+  categoria: correccion-de-usuario
+  causa_atribuida: Confundi la limitacion de mi tecnica de prueba (eventos sinteticos) con una limitacion del ambiente.
+  disparador: cuando un CA falla con eventos sinteticos o parece requerir un entorno que no esta montado
+  evidencia:
+    - ancla: 20261012-tab-archivos-vinculado/T-011
+      tipo: correccion-usuario
+    - ancla: 20261012-tab-archivos-vinculado/T-013
+      tipo: work-record
+  fecha: "2026-10-12"
+  leccion_candidata: Antes de proponer verificacion diferida, agotar input real (mouse/teclado de Playwright), entornos aislados y la correccion del bloqueante; la diferida solo para lo que de verdad no existe en el ambiente.
+  observacion: Recomende cerrar con verificacion diferida seis CAs etiquetados como no reproducibles; el usuario lo rechazo y al verificarlos con input real aparecieron cuatro defectos de Windows que el cierre habria escondido.
+  verificacion:
+    detalle: el operador no vuelve a ver propuestas de diferir CAs verificables en el host
+    tipo: humana
+  work: "20261012-tab-archivos-vinculado"
