@@ -2,6 +2,8 @@ import { expect, test } from "bun:test";
 import {
   directoryPreviewName,
   directoryPreviewPath,
+  isAbsoluteFilesystemPath,
+  normalizeCheckoutPath,
   normalizeFilesystemPath,
   parentFilesystemPath,
 } from "./filesystemPaths";
@@ -112,3 +114,33 @@ test.each([
     ).toBe(expected);
   },
 );
+
+test("checkout paths compare Windows verbatim and drive forms equally", () => {
+  for (const [path, expected] of [
+    [String.raw`\\?\E:\DinamicAPPS\github\roamgate`, "E:/DinamicAPPS/github/roamgate"],
+    ["E:/DinamicAPPS/github/roamgate/", "E:/DinamicAPPS/github/roamgate"],
+    [String.raw`e:\repo`, "E:/repo"],
+    [String.raw`\\?\UNC\server\share\repo`, "//server/share/repo"],
+    ["\\\\?\\C:\\", "C:/"],
+    ["/home/me/repo/", "/home/me/repo"],
+    [String.raw`/home/me/odd\name`, String.raw`/home/me/odd\name`],
+    ["/", "/"],
+  ]) {
+    expect(normalizeCheckoutPath(path)).toBe(expected);
+  }
+});
+
+test("absolute filesystem paths include Windows drive, UNC, and verbatim", () => {
+  for (const path of [
+    "/repo",
+    "C:/repo",
+    String.raw`c:\repo`,
+    String.raw`\\server\share`,
+    String.raw`\\?\E:\repo`,
+  ]) {
+    expect(isAbsoluteFilesystemPath(path)).toBe(true);
+  }
+  for (const path of ["feature/login", "main", "C:repo", ""]) {
+    expect(isAbsoluteFilesystemPath(path)).toBe(false);
+  }
+});

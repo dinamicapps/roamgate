@@ -421,17 +421,19 @@ describe("workspace file handlers", () => {
       await withConsoles(async ({ repo, scratch, handlers }) => {
         await writeFile(join(repo, "web", "src", "index.ts"), "nested");
         const absolute = join(scratch, "notes.md");
+        const insideRoot = join(repo, "web", "src", "index.ts");
         await expect(
           handlers.resolveWorkspaceFiles({
             workspace_id: "w1",
             pane_id: "p1",
-            paths: ["web/src/index.ts", absolute],
+            paths: ["web/src/index.ts", absolute, insideRoot],
           }),
         ).resolves.toMatchObject({
           checkout_path: repo,
           files: [
             { candidate: "web/src/index.ts", path: "web/src/index.ts" },
             { candidate: absolute },
+            { candidate: insideRoot, path: "web/src/index.ts" },
           ],
         });
       });

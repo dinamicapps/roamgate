@@ -14,6 +14,32 @@ export function normalizeFilesystemPath(value: string): string {
   return path || "/";
 }
 
+// Herdr on Windows reports some checkouts with the verbatim prefix
+// (`\\?\E:\repo`) and others as `E:/repo`; both name the same directory.
+const WINDOWS_PATH = /^(?:\\\\|[a-z]:[\\/])/i;
+
+/** True for POSIX, drive-letter, UNC, and verbatim absolute paths. */
+export function isAbsoluteFilesystemPath(value: string): boolean {
+  return value.startsWith("/") || WINDOWS_PATH.test(value);
+}
+
+/**
+ * Comparable form of a checkout path: trailing slashes removed and, for
+ * Windows paths only, the verbatim prefix stripped, forward slashes, and an
+ * upper-case drive letter. POSIX paths keep their backslashes untouched.
+ */
+export function normalizeCheckoutPath(value: string): string {
+  const trimmed = value.trim();
+  if (!WINDOWS_PATH.test(trimmed)) {
+    if (trimmed === "/") return trimmed;
+    return trimmed.replace(/\/+$/, "");
+  }
+  const path = normalizeFilesystemPath(
+    trimmed.replace(/^\\\\\?\\UNC\\/i, "\\\\").replace(/^\\\\\?\\/, ""),
+  ).replace(/^[a-z]:/, (drive) => drive.toUpperCase());
+  return /^[A-Z]:$/.test(path) ? `${path}/` : path;
+}
+
 /** Absolute filesystem path for a directory preview, joining the preview root. */
 export function directoryPreviewPath(
   preview: { type?: string; root: string; path: string } | null | undefined,

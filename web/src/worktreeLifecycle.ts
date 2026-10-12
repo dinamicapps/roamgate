@@ -1,3 +1,7 @@
+import {
+  isAbsoluteFilesystemPath,
+  normalizeCheckoutPath,
+} from "./filesystemPaths";
 import type {
   ExistingWorktree,
   GitStatusSummary,
@@ -47,9 +51,18 @@ type LifecycleActionResult = {
   cleanup?: { warning?: string };
 };
 
-function normalizedCheckoutPath(path: string): string {
-  if (path === "/") return path;
-  return path.replace(/\/+$/, "");
+/**
+ * Herdr's `worktree.open` locator: absolute paths (POSIX or Windows) open by
+ * checkout path, anything else is a branch name. Git refnames cannot contain
+ * `:` or `\`, so a drive-letter path is never a valid branch.
+ */
+export function worktreeOpenLocator(
+  target: string,
+): { path: string } | { branch: string } {
+  const trimmed = target.trim();
+  return isAbsoluteFilesystemPath(trimmed)
+    ? { path: trimmed }
+    : { branch: trimmed };
 }
 
 export function lifecycleWorktreeTitle(worktree: ExistingWorktree): string {
@@ -180,12 +193,12 @@ function workspaceForCheckout(
   repoKey: string,
   path: string,
 ): Workspace | undefined {
-  const normalizedPath = normalizedCheckoutPath(path);
+  const normalizedPath = normalizeCheckoutPath(path);
   return workspaces
     .filter(
       (workspace) =>
         workspace.worktree?.repo_key === repoKey &&
-        normalizedCheckoutPath(workspace.worktree.checkout_path) ===
+        normalizeCheckoutPath(workspace.worktree.checkout_path) ===
           normalizedPath,
     )
     .sort(
@@ -206,7 +219,7 @@ export function buildWorktreeLifecycleRows(
   const rowsByPath = new Map<string, WorktreeLifecycleRow>();
 
   for (const worktree of list.worktrees) {
-    const path = normalizedCheckoutPath(worktree.path);
+    const path = normalizeCheckoutPath(worktree.path);
     const workspace = workspaceForCheckout(
       workspaces,
       list.source.repo_key,
@@ -227,7 +240,7 @@ export function buildWorktreeLifecycleRows(
   for (const workspace of workspaces) {
     const info = workspace.worktree;
     if (!info || info.repo_key !== list.source.repo_key) continue;
-    const path = normalizedCheckoutPath(info.checkout_path);
+    const path = normalizeCheckoutPath(info.checkout_path);
     if (rowsByPath.has(path)) continue;
     rowsByPath.set(path, {
       worktree: {

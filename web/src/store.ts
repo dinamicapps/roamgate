@@ -81,6 +81,7 @@ import {
   type GitRepoAction,
   type GitWorkingCounts,
 } from "./gitActions";
+import { worktreeOpenLocator } from "./worktreeLifecycle";
 
 export interface ServerSessionState {
   /** ConnectionManager generation that owns every server resource below. */
@@ -3239,10 +3240,7 @@ export const store = {
 
   openWorktree(workspaceId: string, target: string, focus = true) {
     const navigation = state.browserNavigation;
-    const trimmed = target.trim();
-    const locator = trimmed.startsWith("/")
-      ? { path: trimmed }
-      : { branch: trimmed };
+    const locator = worktreeOpenLocator(target);
     return action(async (lease) => {
       const result = await lease.client.call("worktree.open", {
         workspace_id: workspaceId,
@@ -3267,10 +3265,7 @@ export const store = {
   // the GUI to reopen main without inventing or guessing a workspace ID.
   openWorktreeFromCwd(cwd: string, target: string, focus = true) {
     const navigation = state.browserNavigation;
-    const trimmed = target.trim();
-    const locator = trimmed.startsWith("/")
-      ? { path: trimmed }
-      : { branch: trimmed };
+    const locator = worktreeOpenLocator(target);
     return action(async (lease) => {
       const result = await lease.client.call("worktree.open", {
         cwd,

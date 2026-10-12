@@ -467,7 +467,17 @@ export function createFileHandlers({
         const path = readings
           .get(entry)!
           .find((reading) => existingPaths.has(reading));
-        return path ? [{ candidate: entry.candidate, path }] : [];
+        if (!path) return [];
+        // An absolute path inside the root opens as the same root-relative
+        // file the tree shows, not as a separate absolute preview.
+        const below = ABSOLUTE_RESOLUTION_PATH_RE.test(path)
+          ? pathBelowRoot(
+              checkoutPath,
+              path,
+              !host && process.platform === "win32",
+            )
+          : null;
+        return [{ candidate: entry.candidate, path: below || path }];
       }),
     };
   }

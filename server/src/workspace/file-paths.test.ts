@@ -67,6 +67,13 @@ describe("workspace file path helpers", () => {
     expect(
       pathBelowRoot("E:/Dev/roamgate", "e:\\Dev\\roamgate\\server\\src", true),
     ).toBe("server/src");
+    expect(
+      pathBelowRoot(
+        "\\\\?\\E:\\Dev\\roamgate",
+        "E:/Dev/roamgate/server/src/index.ts",
+        true,
+      ),
+    ).toBe("server/src/index.ts");
     expect(pathBelowRoot("/repo", "", false)).toBeNull();
   });
 });

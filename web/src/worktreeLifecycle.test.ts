@@ -8,6 +8,7 @@ import {
   lifecycleGitChangeCount,
   lifecycleOpenedWorkspaceId,
   removeTemporaryWorkspaceSafely,
+  worktreeOpenLocator,
 } from "./worktreeLifecycle";
 
 const list: WorktreeList = {
@@ -113,6 +114,60 @@ describe("worktree lifecycle rows", () => {
     expect(rows).toHaveLength(2);
     expect(rows[1].worktree.path).toBe("/worktrees/late");
     expect(rows[1].worktree.open_workspace_id).toBe("w3");
+  });
+
+  // Herdr 0.9.1 on Windows: worktree.list reports `E:/repo` while
+  // workspace.list reports the verbatim `\\?\E:\repo` for the same checkout.
+  test("joins Windows verbatim workspace paths with listed drive paths", () => {
+    const repoKey = "\\\\?\\E:\\repo\\.git";
+    const windowsList: WorktreeList = {
+      ...list,
+      source: {
+        ...list.source,
+        repo_key: repoKey,
+        repo_root: "\\\\?\\E:\\repo",
+        source_checkout_path: "\\\\?\\E:\\repo",
+        source_workspace_id: "w9",
+      },
+      worktrees: [
+        { ...list.worktrees[0], path: "E:/repo", open_workspace_id: "w9" },
+        { ...list.worktrees[1], path: "C:/Users/me/wt-feature" },
+      ],
+    };
+    const windowsWorkspace = (id: string, path: string, linked: boolean) => {
+      const value = workspace(id, path, linked);
+      value.worktree = { ...value.worktree!, repo_key: repoKey };
+      return value;
+    };
+
+    const rows = buildWorktreeLifecycleRows(windowsList, [
+      windowsWorkspace("w9", "\\\\?\\E:\\repo", false),
+      windowsWorkspace("w11", "\\\\?\\c:\\Users\\me\\wt-feature\\", true),
+    ]);
+
+    expect(rows).toHaveLength(2);
+    expect(
+      rows.map((row) => [row.worktree.path, row.workspace?.workspace_id]),
+    ).toEqual([
+      ["E:/repo", "w9"],
+      ["C:/Users/me/wt-feature", "w11"],
+    ]);
+  });
+
+  test("opens Windows and POSIX checkouts by path, others by branch", () => {
+    expect(worktreeOpenLocator("C:/Users/me/wt-feature")).toEqual({
+      path: "C:/Users/me/wt-feature",
+    });
+    expect(worktreeOpenLocator("E:\\repo")).toEqual({ path: "E:\\repo" });
+    expect(worktreeOpenLocator("\\\\?\\E:\\repo")).toEqual({
+      path: "\\\\?\\E:\\repo",
+    });
+    expect(worktreeOpenLocator(" /worktrees/feature ")).toEqual({
+      path: "/worktrees/feature",
+    });
+    expect(worktreeOpenLocator("feature/login")).toEqual({
+      branch: "feature/login",
+    });
   });
 
   test("counts all user-visible git changes", () => {

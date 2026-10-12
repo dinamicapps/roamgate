@@ -94,8 +94,12 @@ export function pathBelowRoot(
   path: string,
   ignoreCase: boolean,
 ): string | null {
+  // Herdr reports some Windows checkouts with the verbatim \\?\ prefix.
   const normalize = (value: string) =>
-    value.replace(/\\/g, "/").replace(/\/+$/, "");
+    value
+      .replace(/\\/g, "/")
+      .replace(/^\/\/\?\/(?=[A-Za-z]:\/)/, "")
+      .replace(/\/+$/, "");
   const rootPath = normalize(root);
   const target = normalize(path);
   if (!root || !target) return null;
