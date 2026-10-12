@@ -16,7 +16,7 @@ const descriptions: [ShortcutId, string, string][] = [
   ["plugin.herdrFloat.toggle", "Toggle the Herdr Float popup shell", "Global"],
   ["panes.search", "Search panes in the pane switcher", "Global"],
   ["workspaces.open", "Open Workspaces", "Global"],
-  ["files.toggle", "Toggle File Explorer", "Global"],
+  ["files.toggle", "Toggle Files Tab", "Global"],
   ["diff.toggle", "Toggle Diff Viewer", "Global"],
   ["tab.create", "Create a tab", "Tabs & panes"],
   ["tab.close", "Close the active pane or its single-pane tab", "Tabs & panes"],

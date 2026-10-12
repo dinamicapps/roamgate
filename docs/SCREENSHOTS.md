@@ -278,7 +278,7 @@ Pin the review panel and keep the comment as a draft.
 | Asset stem | Layout and selection | Ready condition |
 | --- | --- | --- |
 | `roamgate-desktop-changes` | Sidebar visible in Nested mode, genuine Pi TUI in Implementation/Checks split, Inspector right at about 55%; Working tree, `tasks.ts` | Connected; at least three real workspaces and two real Agent rows visible; Pi process registered and running; five review files loaded; real tests finished; PR #1 open with successful CI. |
-| `roamgate-desktop-files` | Sidebar visible in Nested mode; expand Inspector; Files; open `index.html` Preview; scroll to Release checklist | At least three real workspaces and two real Agent rows visible; local styles loaded; checklist heading, filters, and all six cards visible. |
+| `roamgate-desktop-files` | Sidebar visible in Nested mode; open the console's files tab; open `index.html` Preview; scroll to Release checklist | At least three real workspaces and two real Agent rows visible; local styles loaded; checklist heading, filters, and all six cards visible. |
 | `roamgate-desktop-annotations` | Sidebar visible in Nested mode; `tasks.ts` unified diff and the review draft | At least three real workspaces and two real Agent rows visible; correct line anchor and full comment visible. |
 | `roamgate-desktop-history` | Genuine Northstar Agent History, User/Agent/Tool enabled | The matching real task and completed test tool call are visible. |
 | `roamgate-mobile-changes` | Mobile; Changes, Working tree, `tasks.ts` | Unified diff loaded; key changed function readable. |

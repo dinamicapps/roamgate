@@ -193,7 +193,8 @@ Other URI schemes are not opened.
 Async lookups recheck frame, buffer, geometry, navigation, and connection state,
 even while selection freezes presentation. Once clicked, a file menu survives
 ordinary output but closes on connection/workspace/navigation changes. Web links
-open in the browser; files use the pane's workspace, not later global focus.
+open in the browser; files use the pane's workspace, not later global focus, and
+open in the files tab of the console owning that pane.
 
 Touch long-press resolves the original touched cell, with at most one upstream
 probe, then requires an explicit **Open link** or **File actions** gesture.
@@ -258,6 +259,29 @@ Inspector geometry is shared; active views, files, workspace/tab navigation,
 drafts and focus stay local to each tab. A saved input-mode choice is read on
 explicit dock opening and never remotely enables Direct input in a live session.
 Session-storage reload guards and live connection controls remain tab-local.
+
+### Console files tabs
+
+The Inspector offers Changes, Commits and History only; a saved `files` view reads
+as `changes`. Files is a client-only tab linked 1:1 to a console. Its strip id
+`files:{ownerTabId}` (`filesTabStrip.ts`) never reaches Herdr or `tabPins`: strip
+entries carry the owner's id, numbered shortcuts skip it, and activating it is
+local unless it reaches another console. While active, `FilesTabSurface` covers
+the owner's terminal, which stays mounted under `visibility: hidden` at the same
+size, so Herdr receives no resize; keyboard focus leaves the hidden terminal.
+The surface mounts `WorkspaceFilesView`, the Files block extracted from the
+Inspector, and rebuilds from persisted state on every mount.
+
+`filesTabResource.ts` keeps two per-connection keys: `filesTabLinks` (owner to
+workspace, scope owner, initial directory and split ratios) and
+`filesTabFiles:{ownerTabId}` (open file tabs, active and preview paths). Writes
+reread and merge by owner, so concurrent browser tabs keep each other's links;
+storage events mirror them. Links stay hidden and unpruned until the first
+snapshot of the connection generation. Each accepted snapshot then drops links
+whose console is gone and sweeps `filesTabFiles` keys without a link, which is
+how closes from the TUI or another browser propagate. File tabs are capped at 20,
+dropping the oldest but never the active or preview path; quota errors retry
+with fewer paths.
 
 ### Last step capture limits and ownership
 

@@ -91,27 +91,16 @@ metadata. See [link contracts](docs/ARCHITECTURE.md#links).
 
 ## Workspace Inspector
 
-Open **Files**, **Changes**, **Commits**, or **Agent History** from the Inspector button,
-keyboard shortcuts, or workspace/agent menus.
+Open **Changes**, **Commits**, or **Agent History** from the Inspector button,
+keyboard shortcuts, or workspace/agent menus. Files lives in each console's
+[files tab](#file-explorer-and-preview); a saved Files view opens Changes.
 
 - Dock right/bottom, resize, or expand without unmounting terminals. Narrow
   layouts use drill-down/overlay views; Esc dismisses transient UI, not Inspector.
 - Tab switches keep Inspector open; workspace switches restore checkout-scoped
-  selection/layout. Files and Changes save separate widths. Closing returns to
-  the originating tab if it still exists.
-- Agent browsing starts at its cwd only inside the checkout. Terminal links use
-  their pane's workspace. Changes describe the checkout, not agent ownership.
-- Single-clicking a file opens a temporary preview tab; the next single-click
-  reuses it. Double-click a file or its tab name to keep it open, or press Enter
-  on the focused preview tab. Reopening Inspector or reloading restores the open
-  files and active tab per connection and checkout. Reopening a file focuses its
-  existing tab; identical filenames show their parent paths. Tabs scroll
-  horizontally on compact layouts. Use Left/Right, Home/End on a focused file tab
-  to switch, and Delete, middle-click, or the close button to close it. Unfinished
-  review comments stay attached to their file when switching tabs.
-- Files searches names/paths or text across the selected checkout, including
-  unopened directories. Content results open the preview at the matching line.
-  Git ignore rules and binary files are respected; results stop at 100.
+  selection/layout. Closing returns to the originating tab if it still exists.
+- Changes describe the checkout, not agent ownership. **Open in Files** opens
+  the file in its console's files tab and closes the Inspector.
 - Commits browses the current branch in pages. Select a commit to see its
   metadata, changed files, diffs, and historical file previews. Merge commits
   compare with their first parent; shallow history boundaries are labeled.
@@ -329,6 +318,32 @@ after fetch, and abort conflicts. They never push.
 
 ## File Explorer and Preview
 
+Each console can have one **files tab**, placed right after it in the tab strip.
+It has no `Ctrl+1…9` number, pin, or rename. It opens at the focused pane's cwd
+(the checkout root when that cwd is outside the checkout), is reused once it
+exists, and closes with its console, including closes from the TUI or another
+browser. Open it from the tab bar's **Files** button, **Open files of this
+console** in a tab's menu, the Files shortcut (which returns to the console when
+the files tab is showing), the command menu (**Open file explorer**, **Open
+path**), **Browse files** in workspace/agent menus, terminal file links (the
+files tab of the console that printed them), worktree actions, or Changes.
+
+- Esc clears search text, menus, and the compact detail first, then shows the
+  console without closing the tab. The close-tab shortcut on an active files tab
+  closes only that tab. On mobile, the **Files** and **Terminal** nav buttons
+  switch between them; a files tab does not make the tab strip appear.
+- Single-clicking a file opens a temporary preview tab; the next single-click
+  reuses it. Double-click a file or its tab name to keep it open, or press Enter
+  on the focused preview tab. Each files tab remembers its open files, active
+  tab, and preview across reloads. Reopening a file focuses its
+  existing tab; identical filenames show their parent paths. Tabs scroll
+  horizontally on compact layouts. Use Left/Right, Home/End on a focused file tab
+  to switch, and Delete, middle-click, or the close button to close it. Unfinished
+  review comments stay attached to their file when switching tabs.
+- Search names/paths or text across the selected checkout, including
+  unopened directories. Content results open the preview at the matching line.
+  Git ignore rules and binary files are respected; results stop at 100.
+- **Changes** in a file preview opens the Inspector's Changes at that file.
 - Browse cached trees, toggle hidden files, and filter **loaded** names/paths
   with case-insensitive substrings or globs (`*`, `?`, `[]`, `{}`, `**`).
   Git badges mark changes; ignored files are dimmed.
@@ -341,7 +356,7 @@ after fetch, and abort conflicts. They never push.
   Mermaid fences and `.mmd`/`.mermaid` files
   have zoomable diagrams, fullscreen viewing, and source views. Markdown
   diagrams expand to their content height. Markdown links navigate within
-  Inspector; external links open a browser tab.
+  the files tab; external links open a browser tab.
 - Workspace `.html`/`.htm` files open in Preview mode with a Preview/Source switch.
   Static previews support workspace CSS, images, and fonts, including relative
   CSS imports, plus HTTPS CDN stylesheets. Scripts, external images and external
@@ -365,7 +380,8 @@ after fetch, and abort conflicts. They never push.
   ancestor for deleted paths, including removed directories. Disabled by
   default; SSH profiles and non-loopback peers are refused.
 - Drag a file or folder from the tree with the mouse to insert its absolute path
-  into the active terminal pane or the terminal composer.
+  into the active terminal pane or the terminal composer. Hold the drag over a
+  console's tab for about half a second to switch to it and drop into its terminal.
 
 ## Review Annotations
 
@@ -545,7 +561,7 @@ Common defaults (Linux/Android exceptions follow):
 | Numbered tab | `Ctrl+1…9` | `Ctrl+Alt+1…9` |
 | Numbered command menu action | `Option+1…9` | `Alt+1…9` |
 | Workspaces | `Ctrl+Shift+W` | `Ctrl+Alt+O` |
-| File Explorer | `Cmd+Shift+E` | `Ctrl+Alt+E` |
+| Files tab of the active console (toggle) | `Cmd+Shift+E` | `Ctrl+Alt+E` |
 | Diff Viewer | `Ctrl+Shift+G` | `Ctrl+Alt+G` |
 | Agent history | `Cmd+Shift+H` | `Ctrl+Alt+H` |
 | Search raw preview / diff | `Cmd+F` | `Ctrl+F` |
