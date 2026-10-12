@@ -1961,6 +1961,9 @@ async function action<T>(
     pendingFocusWorkspaceSeq?: number;
     failureNotice?: (error: Error) => Notice;
     retryOnReconnect?: boolean;
+    // Callers that report failures themselves (e.g. a dialog) receive the
+    // error instead of an undefined result they would have to interpret.
+    rethrow?: boolean;
   } = {},
 ): Promise<T | undefined> {
   if (state.connectionPaused) {
@@ -1976,6 +1979,7 @@ async function action<T>(
         detail: "Resume the connection before sending actions to Herdr.",
       },
     });
+    if (options.rethrow) throw new Error("Connection is paused");
     return undefined;
   }
   const attempt = (
@@ -2009,12 +2013,21 @@ async function action<T>(
     if (options.pendingFocusWorkspaceSeq !== undefined) {
       clearPendingFocusWorkspace(options.pendingFocusWorkspaceSeq);
     }
-    if (!leaseIsCurrent(activeLease)) return undefined;
+    // A dead lease means the failure belongs to a connection that is no
+    // longer shown, so it is not recorded; a rethrowing caller still must not
+    // read the settled attempt as a success.
+    if (!leaseIsCurrent(activeLease)) {
+      if (options.rethrow) {
+        throw new Error("The connection changed before the action finished");
+      }
+      return undefined;
+    }
     const error = outcome.error;
     setForConnection(activeLease, {
       error: error.message,
       notice: options.failureNotice?.(error) ?? state.notice,
     });
+    if (options.rethrow) throw error;
     return undefined;
   }
   // The action completed, so the attempt is settled even when the lease died
@@ -3238,51 +3251,81 @@ export const store = {
     );
   },
 
-  openWorktree(workspaceId: string, target: string, focus = true) {
+  openWorktree(
+    workspaceId: string,
+    target: string,
+    focus = true,
+    options: { rethrow?: boolean } = {},
+  ) {
     const navigation = state.browserNavigation;
     const locator = worktreeOpenLocator(target);
-    return action(async (lease) => {
-      const result = await lease.client.call("worktree.open", {
-        workspace_id: workspaceId,
-        ...locator,
-        focus: focus && state.navigationMode !== "browser-local",
-      });
-      if (focus && browserSelectionIsCurrent(navigation))
-        adoptBrowserTarget(lease, result);
-      const openedHook = result?.opened_hook as
-        | WorktreeHookRunResult
-        | undefined;
-      const openedNotice = openedHook
-        ? summarizeDirectHookResult(openedHook)
-        : null;
-      if (openedNotice) setForConnection(lease, { notice: openedNotice });
-      return result;
-    });
+    return action(
+      async (lease) => {
+        const result = await lease.client.call("worktree.open", {
+          workspace_id: workspaceId,
+          ...locator,
+          focus: focus && state.navigationMode !== "browser-local",
+        });
+        if (focus && browserSelectionIsCurrent(navigation))
+          adoptBrowserTarget(lease, result);
+        const openedHook = result?.opened_hook as
+          | WorktreeHookRunResult
+          | undefined;
+        const openedNotice = openedHook
+          ? summarizeDirectHookResult(openedHook)
+          : null;
+        if (openedNotice) setForConnection(lease, { notice: openedNotice });
+        return result;
+      },
+      {
+        failureNotice: (error) => ({
+          kind: "error",
+          message: "Failed to open worktree",
+          detail: error.message,
+        }),
+        rethrow: options.rethrow,
+      },
+    );
   },
 
   // A linked checkout can remain open after its main workspace is closed.
   // Herdr accepts the repository root as the source in that state, allowing
   // the GUI to reopen main without inventing or guessing a workspace ID.
-  openWorktreeFromCwd(cwd: string, target: string, focus = true) {
+  openWorktreeFromCwd(
+    cwd: string,
+    target: string,
+    focus = true,
+    options: { rethrow?: boolean } = {},
+  ) {
     const navigation = state.browserNavigation;
     const locator = worktreeOpenLocator(target);
-    return action(async (lease) => {
-      const result = await lease.client.call("worktree.open", {
-        cwd,
-        ...locator,
-        focus: focus && state.navigationMode !== "browser-local",
-      });
-      if (focus && browserSelectionIsCurrent(navigation))
-        adoptBrowserTarget(lease, result);
-      const openedHook = result?.opened_hook as
-        | WorktreeHookRunResult
-        | undefined;
-      const openedNotice = openedHook
-        ? summarizeDirectHookResult(openedHook)
-        : null;
-      if (openedNotice) setForConnection(lease, { notice: openedNotice });
-      return result;
-    });
+    return action(
+      async (lease) => {
+        const result = await lease.client.call("worktree.open", {
+          cwd,
+          ...locator,
+          focus: focus && state.navigationMode !== "browser-local",
+        });
+        if (focus && browserSelectionIsCurrent(navigation))
+          adoptBrowserTarget(lease, result);
+        const openedHook = result?.opened_hook as
+          | WorktreeHookRunResult
+          | undefined;
+        const openedNotice = openedHook
+          ? summarizeDirectHookResult(openedHook)
+          : null;
+        if (openedNotice) setForConnection(lease, { notice: openedNotice });
+        return result;
+      },
+      {
+        failureNotice: (error) => ({
+          kind: "error",
+          message: "Failed to open worktree",
+          detail: error.message,
+        }),
+        rethrow: options.rethrow,
+      },
+    );
   },
 
   removeWorktree(
@@ -3910,8 +3953,7 @@ export const store = {
   watchPopup() {
     return action(async (lease) => {
       const result = (await lease.client.call("terminal.watch_popup", {})) as
-        | { popup: PopupInfo | null }
-        | undefined;
+        { popup: PopupInfo | null } | undefined;
       setForConnection(lease, { popup: result?.popup ?? null });
     });
   },

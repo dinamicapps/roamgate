@@ -287,6 +287,8 @@ export function WorktreeLifecycleDialog({
       const result = await action();
       if (!operationIsCurrent()) return;
       if (result === undefined) {
+        // A successful refresh clears the store error, so read it first.
+        const recordedError = store.get().error;
         await store.refresh();
         if (!operationIsCurrent()) return;
         await load(false, true);
@@ -295,7 +297,7 @@ export function WorktreeLifecycleDialog({
           key,
           label,
           status: "failed",
-          detail: store.get().error ?? `${label} failed`,
+          detail: recordedError ?? `${label} failed`,
         });
         return;
       }
@@ -362,12 +364,15 @@ export function WorktreeLifecycleDialog({
         openSource.workspaceId,
         row.worktree.path,
         focus,
+        { rethrow: true },
       );
     }
     if (!openSource?.cwd) {
       throw new Error("The repository root is unavailable.");
     }
-    return store.openWorktreeFromCwd(openSource.cwd, row.worktree.path, focus);
+    return store.openWorktreeFromCwd(openSource.cwd, row.worktree.path, focus, {
+      rethrow: true,
+    });
   };
 
   const openWorktreeResource = async (

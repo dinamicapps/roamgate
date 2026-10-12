@@ -1,0 +1,26 @@
+nodos:
+    - id: CAP_worktree_lifecycle_acciones
+      tipo: capacidad
+      estado: resuelto
+      origen: work:20261012-bugfix-worktree-error-real#abordaje
+      rol: construye
+      campos:
+        citas:
+            - web/src/components/WorktreeLifecycleDialog.tsx:381
+        clasificacion: se_modifica
+        nombre: Acciones del dialogo Worktree Lifecycle (abrir, Files, Changes, Remove)
+    - id: REG_action_contrato
+      tipo: regla
+      estado: resuelto
+      origen: work:20261012-bugfix-worktree-error-real#abordaje
+      rol: consume
+      campos:
+        citas:
+            - web/src/store.ts:1957
+        enunciado: action() devuelve undefined ante un rechazo y deja el error en state.error; 37 llamadores dependen de ese contrato
+        origen: heredada
+aristas: []
+reconstruido:
+    desde: abordaje
+    fecha: "2026-10-12"
+    cobertura_declarada: acciones del dialogo y el contrato de action(); sin procesos

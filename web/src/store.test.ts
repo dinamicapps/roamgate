@@ -1376,6 +1376,101 @@ describe("workspace source navigation", () => {
   });
 });
 
+describe("worktree open failures", () => {
+  const herdrError = "worktree not found: /repo/.worktrees/gone";
+
+  function failingOpenFixture(overrides: Partial<State> = {}) {
+    const previousState = store.get();
+    const originalConnection = bridge.connection;
+    bridge.connection = ((connectionId = "alpha", runtimeGeneration = 1) => ({
+      connectionId,
+      generation: 10,
+      serverRuntimeGeneration: runtimeGeneration,
+      isCurrent: () => true,
+      acceptsServerGeneration: (value: unknown) => value === runtimeGeneration,
+      call: async (method: string) => {
+        if (method === "worktree.open") throw new Error(herdrError);
+        return {};
+      },
+    })) as typeof bridge.connection;
+    __storeTesting.replaceState({
+      ...partitionState(),
+      error: null,
+      notice: null,
+      ...overrides,
+    });
+    return {
+      restore() {
+        bridge.connection = originalConnection;
+        __storeTesting.replaceState(previousState);
+      },
+    };
+  }
+
+  test.each(["workspace", "cwd"] as const)(
+    "open from %s with rethrow rejects with Herdr's error and an error notice",
+    async (source) => {
+      const f = failingOpenFixture();
+      try {
+        const opening =
+          source === "workspace"
+            ? store.openWorktree("alpha-ws", "/repo/.worktrees/gone", false, {
+                rethrow: true,
+              })
+            : store.openWorktreeFromCwd(
+                "/repo",
+                "/repo/.worktrees/gone",
+                false,
+                { rethrow: true },
+              );
+        await expect(opening).rejects.toThrow(herdrError);
+        expect(store.get().error).toBe(herdrError);
+        expect(store.get().notice).toMatchObject({
+          kind: "error",
+          message: "Failed to open worktree",
+          detail: herdrError,
+        });
+      } finally {
+        f.restore();
+      }
+    },
+  );
+
+  test("open without rethrow keeps resolving undefined and records the error", async () => {
+    const f = failingOpenFixture();
+    try {
+      expect(
+        await store.openWorktree("alpha-ws", "/repo/.worktrees/gone", false),
+      ).toBeUndefined();
+      expect(store.get().error).toBe(herdrError);
+      expect(store.get().notice).toMatchObject({
+        kind: "error",
+        message: "Failed to open worktree",
+        detail: herdrError,
+      });
+    } finally {
+      f.restore();
+    }
+  });
+
+  test("open with rethrow rejects while the connection is paused", async () => {
+    const f = failingOpenFixture({ connectionPaused: true });
+    try {
+      await expect(
+        store.openWorktree("alpha-ws", "/repo/.worktrees/gone", false, {
+          rethrow: true,
+        }),
+      ).rejects.toThrow("Connection is paused");
+      expect(store.get().notice).toMatchObject({
+        kind: "info",
+        message: "Connection is paused",
+      });
+    } finally {
+      f.restore();
+    }
+  });
+});
+
 describe("stabilizeRefreshPatch", () => {
   test("returns null when a refresh reproduces the current state", () => {
     const snapshot = partitionState();
