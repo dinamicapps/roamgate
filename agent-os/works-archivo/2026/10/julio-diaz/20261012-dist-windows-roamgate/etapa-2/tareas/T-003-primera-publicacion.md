@@ -13,7 +13,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 003: Primera publicacion en dinamicapps/roamgate-dist
 
@@ -44,5 +44,15 @@ Clonar el repo dist vacio en E:\DinamicAPPSoamgate-dist y publicar la primera v
 - Remoto verificado: main y tag roamgate-v0.7.15-dinamicapps.1 en 53f7037; 8 archivos versionados y el .exe fuera de git.
 
 ### Hallazgos
+
+(ninguno)
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-05: remoto con main y tags .1 y .2; .exe fuera de git.
+
+### Hallazgos de verificacion
 
 (ninguno)

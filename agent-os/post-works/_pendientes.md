@@ -48,6 +48,9 @@ Usar `/post-works status` para ver conteos y antiguedad agregada.
 | FM-16 | El dialogo Worktree Lifecycle muestra "Herdr opened the checkout without returning a workspace ID" cuando Herdr devuelve un error: `action()` en `web/src/store.ts` se traga el error real | 20261012-tab-archivos-vinculado | 2026-10-12 | media | pendiente |
 | FM-17 | git-snapshot.test.ts tiene 10 pruebas que no pueden pasar en Windows tal como estan escritas: symlinks sin privilegio, nombres con `"` y `\` invalidos en NTFS, chmod sin efecto, y los dos timeouts reales; deberian saltarse o adaptarse en win32 | 20261012-bugfix-last-step-ulimit | 2026-10-12 | baja | pendiente |
 | FM-18 | El Git for Windows del host tiene `core.autocrlf=true` en `C:/Program Files/Git/etc/gitconfig` (y le faltan etc/fstab y etc/profile); explica 3 fallas de sparse-checkout en git-snapshot.test.ts:474. Configuracion del entorno, no del codigo | 20261012-bugfix-last-step-ulimit | 2026-10-12 | baja | pendiente |
+| FM-19 | El update checker (`server/src/http/update.ts:160-189`) trata `0.7.15-dinamicapps.N` como menor que la `0.7.15` del upstream: en macOS/Linux ofreceria actualizar e instalar el upstream encima del fork. En Windows no aplica. Si el fork llega a otras plataformas: ROAMGATE_UPDATE_BASE_URL propio, ROAMGATE_DISABLE_UPDATE_CHECK=1 o build metadata | 20261012-dist-windows-roamgate | 2026-10-12 | media | pendiente |
+| FM-20 | `scripts/prepare-release.ts:26,83-85` solo acepta versiones X.Y.Z y aborta con el sufijo del fork; el flujo de release del upstream no corre en este repo | 20261012-dist-windows-roamgate | 2026-10-12 | baja | pendiente |
+| FM-21 | `build:windows-x64` (`package.json:41`) no tiene postbuild de limpieza de `*.bun-build`, a diferencia de linux y darwin | 20261012-dist-windows-roamgate | 2026-10-12 | baja | pendiente |
 
 ## Items archivados
 

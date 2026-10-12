@@ -3,8 +3,8 @@ slug: 20261012-dist-windows-roamgate
 autor: julio-diaz
 autor_kebab: julio-diaz
 fecha_inicio: "2026-10-12"
-fecha_fin: null
-estado: EN_PROGRESO
+fecha_fin: "2026-10-12"
+estado: COMPLETADO
 modo: normal
 nivel: normal
 tipo: feature
@@ -19,6 +19,13 @@ abordaje:
   ruta_aprobada: acotado
 meta: "En E:\\DinamicAPPS\\roamgate-dist (clon de dinamicapps/roamgate-dist) un dev hace git pull + .\\install.ps1 y obtiene roamgate.exe 0.7.15-dinamicapps.1 con un roamgate.cmd que arranca en la IP de Tailscale de su maquina (o localhost) y puerto configurable; en esta maquina corre en 8789 junto al v0.7.8 de 8787."
 meta_definida_en: "2026-10-12"
+cosecha:
+  memoria_expertos:
+    ejecutado: true
+    fecha: "2026-10-12"
+    por: julio-diaz
+    reflexion_depositada: true
+    reflexiones_por_agente: 1
 ---
 # Work: Dist Windows de Roamgate dinamicapps
 
@@ -80,7 +87,26 @@ _este modelo se reconstruyo desde la data del work y no tiene frontera derivable
 
 ## Archivos modificados
 
-<!-- Se llena al cierre del work con git diff. -->
+- `bun.lock`
+- `herdr-plugin.toml`
+- `package.json`
+- `scripts/instalador/README.md`
+- `scripts/instalador/gitattributes-dist`
+- `scripts/instalador/gitignore-dist`
+- `scripts/instalador/install.ps1`
+- `scripts/instalador/install.sh`
+- `scripts/instalador/roamgate.cmd`
+- `scripts/publicar-dist.test.ts`
+- `scripts/publicar-dist.ts`
+- `server/package.json`
+- `web/package.json`
+
+Repo dist (E:/DinamicAPPS/roamgate-dist, dinamicapps/roamgate-dist): `bin/roamgate-windows-x64.zip`, `VERSION-roamgate`, `install.ps1`, `install.sh`, `roamgate.cmd`, `README.md`, `.gitignore`, `.gitattributes`.
 
 ## Cierre
 
+Cerrado el 2026-10-12 como COMPLETADO. Meta cumplida: E:/DinamicAPPS/roamgate-dist es el clon de dinamicapps/roamgate-dist; `git pull` + `.\install.ps1` deja roamgate.exe 0.7.15-dinamicapps.2 y `roamgate.cmd` arranca en la IP de Tailscale (o 127.0.0.1) con puerto configurable. En esta maquina corre en 8789 junto al v0.7.8 de 8787.
+
+- Publicaciones: roamgate-v0.7.15-dinamicapps.1 (53f7037) y roamgate-v0.7.15-dinamicapps.2 (0904923), desde scripts/publicar-dist.ts.
+- El .exe (103,6 MB) supera el limite de 100 MB de GitHub y viaja como zip de 43,7 MB que el instalador extrae.
+- La version nueva exige ROAMGATE_PASSWORD de 15+ caracteres: el instalador avisa y el README lo explica (T-005). En esta maquina el proceso de 8789 usa una contrasena generada que se entrego al usuario; la variable de maquina no se toco.

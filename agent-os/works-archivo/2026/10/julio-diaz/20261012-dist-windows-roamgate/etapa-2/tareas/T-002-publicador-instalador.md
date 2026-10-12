@@ -26,7 +26,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 002: Publicador del dist e instalador
 
@@ -66,3 +66,13 @@ Script de publicacion y fuentes del instalador y lanzador, siguiendo el patron d
 |---|----------|----------|---------|
 | 1 | gitignore-dist y gitattributes-dist se renombran al publicar; .gitattributes fija CRLF para .cmd/.ps1 y LF para .sh | Aceptado: evita que cmd.exe o bash rompan segun core.autocrlf de quien clona | amelia |
 | 2 | build:windows-x64 no tiene postbuild de limpieza de *.bun-build (package.json:41) | Sin restos observados; registrado en post-works | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-02/03/04: publicacion real con push, instalacion idempotente, guarda de proceso vivo y roamgate.cmd con ROAMGATE_PORT verificados.
+
+### Hallazgos de verificacion
+
+(ninguno)

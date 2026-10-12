@@ -18,7 +18,7 @@ file_type: tarea-etapa-2
 standards_cargados: []
 status: done
 tipo_tarea: codigo
-verificador: null
+verificador: quinn
 ---
 # Tarea 001: Version del fork
 
@@ -55,3 +55,13 @@ Marcar el build como nuestro: 0.7.15-dinamicapps.1.
 | 1 | herdr-plugin.toml:3 duplicaba la version y prepare-release.ts:176-182 exige que coincida | Alineado; archivo no declarado aceptado | amelia |
 | 2 | scripts/prepare-release.ts:26,83-85 solo acepta X.Y.Z y aborta con el sufijo | Es el flujo de release del upstream; no aplica al dist Windows. Registrado en post-works | amelia |
 | 3 | update.ts:160-189 trata 0.7.15-dinamicapps.1 como menor que 0.7.15 del upstream; en macOS/Linux ofreceria actualizar al upstream. En Windows no aplica (UPDATE_PLATFORMS sin win32) | Registrado en post-works: si el fork llega a macOS/Linux usar ROAMGATE_UPDATE_BASE_URL o ROAMGATE_DISABLE_UPDATE_CHECK, o build metadata | amelia |
+
+## Verificador: quinn
+
+### Que verifico
+
+- CA-01: roamgate.exe --version y la interfaz muestran la version del fork (.1 y luego .2).
+
+### Hallazgos de verificacion
+
+(ninguno)
