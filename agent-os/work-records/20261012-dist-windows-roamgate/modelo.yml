@@ -1,0 +1,41 @@
+nodos:
+    - id: CAP_dist_windows
+      tipo: capacidad
+      estado: resuelto
+      origen: work:20261012-dist-windows-roamgate#abordaje
+      rol: construye
+      campos:
+        clasificacion: nueva
+        nombre: Dist Windows de Roamgate dinamicapps (zip + instalador + lanzador)
+    - id: CAP_build_windows
+      tipo: capacidad
+      estado: resuelto
+      origen: work:20261012-dist-windows-roamgate#abordaje
+      rol: consume
+      campos:
+        citas:
+            - package.json:40
+        clasificacion: se_conserva
+        nombre: Compilacion build:windows-x64 (bun build --compile)
+    - id: REST_limite_100mb_github
+      tipo: restriccion
+      estado: resuelto
+      origen: work:20261012-dist-windows-roamgate#abordaje
+      rol: consume
+      campos:
+        enunciado: GitHub rechaza archivos de mas de 100 MB; el .exe pesa 108,6 MB y se distribuye como zip de 45,8 MB
+        tipo: tecnica
+    - id: RSG_crecimiento_repo
+      tipo: riesgo
+      estado: resuelto
+      origen: work:20261012-dist-windows-roamgate#abordaje
+      rol: consume
+      campos:
+        amenaza: CAP_dist_windows
+        enunciado: Cada version publicada agrega ~46 MB a la historia del repo dist
+        responsable: Julio Diaz
+aristas: []
+reconstruido:
+    desde: abordaje
+    fecha: "2026-10-12"
+    cobertura_declarada: capacidad del dist, build existente, restriccion de 100 MB y riesgo de crecimiento; sin procesos
