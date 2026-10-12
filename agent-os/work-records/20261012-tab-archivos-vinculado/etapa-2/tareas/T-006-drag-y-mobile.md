@@ -9,7 +9,7 @@ cas:
   - CA-22
 depende_de:
   - T-003
-ejecutor: null
+ejecutor: amelia
 evidencia_requerida:
   api: false
   bd: false
@@ -18,7 +18,7 @@ evidencia_requerida:
 fase: 4
 file_type: tarea-etapa-2
 standards_cargados: []
-status: pending
+status: done
 tipo_tarea: codigo
 verificador: null
 ---
@@ -42,3 +42,23 @@ Conservar el gesto de arrastrar rutas a la terminal y adaptar la navegacion mobi
 |---|---|---|
 | CA-21 | ESC_P3_drag_ruta_a_terminal: arrastrar una ruta sobre el tab de una consola la activa para soltar en su terminal | REG_drop_hover_activa_consola |
 | CA-22 | ESC_P3_mobile_nav: en mobile Files/Terminal alternan; el tab no cuenta para el strip ni aparece en MobileTabSheet | DEC_D9_nav_mobile |
+
+## Ejecutor: amelia
+
+### Que hizo
+
+- tabDragHover.ts: createDragHoverActivator (500 ms, temporizador inyectable) y showsTabStrip; 8 pruebas.
+- TabBar: el tab de consola activa su superficie tras 500 ms de hover con una ruta (application/x-roamgate-path); el reorder por pointer events no se afecta.
+- Nav mobile: Files abre o enfoca el tab de la consola activa y Terminal vuelve a la consola (showConsoleSession); el active refleja la superficie visible.
+- El tab de archivos no cuenta para showTabStrip ni se lista en MobileTabSheet; se elimino openFileExplorer sin llamadores.
+- Anfitriona: MobileTabSheet onShowSession pasa a showConsoleSession para que elegir la consola duena muestre la consola (P3).
+- Suite 1266+ pass, 9 fail previas; navegador mobile 390x844: Files/Terminal alternan con active correcto y badge 5 sin contar el tab; captura CA-22-despues.png.
+
+### Hallazgos
+
+| # | Hallazgo | Solucion | Decidio |
+|---|----------|----------|---------|
+| 1 | MobileTabSheet onShowSession no limpiaba el tab de archivos al elegir la consola duena (App.tsx:4158) | Corregido por la anfitriona: usa showConsoleSession | amelia |
+| 2 | En mobile el strip no se desplaza hasta el tab de archivos activo, que queda fuera de pantalla | Cosmetico; se registra para E4 sin bloquear | amelia |
+| 3 | FilesTabSurface.css conserva borde y radio de 10px en mobile, a diferencia de las demas vistas mobile | Cosmetico; se consolida con los estilos en T-007 | amelia |
+| 4 | CA-21 (hover de arrastre) no se ejercito en navegador: el arrastre HTML5 no se reproduce con eventos sinteticos de forma fiable y activaria otra consola del Herdr real | Cubierto por pruebas unitarias; verificacion manual en E4 | amelia |

@@ -23,7 +23,9 @@ import {
 } from "../terminalComposer";
 import { summarizeTabAgents } from "./agentSession";
 import { filesTabId } from "../filesTabStrip";
+import { createDragHoverActivator, showsTabStrip } from "../tabDragHover";
 import { tabMoveInsertIndex } from "../tabReorder";
+import { isWorkspacePathDrag } from "../workspacePathDrag";
 import { useTabReorderDrag } from "./useTabReorderDrag";
 import "./TabBar.css";
 
@@ -168,7 +170,14 @@ export function TabBar({
       pendingClosePane ? [pendingClosePane.pane_id] : [],
     ).length,
   );
-  const showTabStrip = !!focusedWs && (!mobile || tabs.length > 1);
+  const showTabStrip = !!focusedWs && showsTabStrip(mobile, tabs.length);
+  const dragActivateRef = useRef<(tabId: string) => void>(() => {});
+  const [dragHover] = useState(() =>
+    createDragHoverActivator({
+      onActivate: (tabId) => dragActivateRef.current(tabId),
+    }),
+  );
+  useEffect(() => dragHover.cancel, [dragHover]);
   const gitStatus = focusedWs?.worktree?.git_status;
   const changedCount = gitStatus
     ? gitStatus.staged +
@@ -208,6 +217,11 @@ export function TabBar({
   const selectConsole = (tabId: string) => {
     if (filesTabs) filesTabs.onSelectConsole(tabId);
     else void store.focusTab(tabId);
+  };
+  dragActivateRef.current = (tabId) => {
+    const tab = tabs.find((candidate) => candidate.tab_id === tabId);
+    if (!tab || (tab.focused && filesTabs?.activeOwnerTabId !== tabId)) return;
+    selectConsole(tabId);
   };
 
   const overlays = (
@@ -313,6 +327,18 @@ export function TabBar({
                     t.focused && !filesTabActive ? "is-active" : ""
                   } ${pinned ? "is-pinned" : ""}`}
                   onClick={() => selectConsole(t.tab_id)}
+                  onDragOver={(e) => {
+                    if (isWorkspacePathDrag(e.dataTransfer))
+                      dragHover.hover(t.tab_id);
+                  }}
+                  onDragLeave={(e) => {
+                    if (
+                      e.currentTarget.contains(e.relatedTarget as Node | null)
+                    )
+                      return;
+                    dragHover.leave(t.tab_id);
+                  }}
+                  onDrop={dragHover.cancel}
                   onDoubleClick={(e) => {
                     if (
                       (e.target as Element).closest("button") ||

@@ -2139,11 +2139,6 @@ export default function App() {
     connectionClient,
     deliveredPaneId,
   ]);
-  const openFileExplorer = useCallback(
-    (workspaceId?: string, focusInspector = true) =>
-      openInspector("files", workspaceId, { focusInspector }),
-    [openInspector],
-  );
   const openFileExplorerFile = useCallback(
     (
       workspaceId: string,
@@ -2420,6 +2415,12 @@ export default function App() {
     commitFilesSurfaceOwner(null);
     focusActiveTerminal();
   }, [commitFilesSurfaceOwner, focusActiveTerminal]);
+  // The mobile nav swaps whole views, so leaving the files tab there also
+  // closes whatever other view was covering the terminal.
+  const showConsoleSession = useCallback(() => {
+    commitFilesSurfaceOwner(null);
+    activateTerminalSurface();
+  }, [activateTerminalSurface, commitFilesSurfaceOwner]);
   /**
    * Single entry to a console's files tab: focuses its link or creates it,
    * then shows it. Activating it is local; only reaching another console
@@ -4154,7 +4155,7 @@ export default function App() {
         <MobileTabSheet
           open={mobile && mobileTabSheetOpen}
           onClose={() => setMobileTabSheetOpen(false)}
-          onShowSession={activateTerminalSurface}
+          onShowSession={showConsoleSession}
         />
         <nav
           className="mobile-nav mobile-workspace-tools"
@@ -4212,23 +4213,31 @@ export default function App() {
             <button
               type="button"
               className={
-                mobileView === "session" && !agentHistoryOpen ? "active" : ""
+                mobileView === "session" &&
+                !agentHistoryOpen &&
+                !filesSurfaceVisibleOwnerTabId
+                  ? "active"
+                  : ""
               }
               title="Terminal"
               aria-label="Show terminal session"
               tabIndex={mobileControlsCollapsed ? -1 : 0}
-              onClick={activateTerminalSurface}
+              onClick={showConsoleSession}
             >
               <SquareTerminal size={16} />
               <span className="mobile-nav-label">Terminal</span>
             </button>
             <button
               type="button"
-              className={mobileView === "files" ? "active" : ""}
+              className={
+                mobileView === "session" && filesSurfaceVisibleOwnerTabId
+                  ? "active"
+                  : ""
+              }
               title={shortcutTitle("Files", "files.toggle")}
-              aria-label="Show workspace files"
+              aria-label="Show files of this console"
               tabIndex={mobileControlsCollapsed ? -1 : 0}
-              onClick={() => openFileExplorer()}
+              onClick={() => openFilesTabForWorkspace()}
             >
               <FolderTree size={16} />
               <span className="mobile-nav-label">Files</span>
@@ -4283,7 +4292,7 @@ export default function App() {
           onClick={() => {
             flushSync(() => {
               setMobileTabSheetOpen(false);
-              activateTerminalSurface();
+              showConsoleSession();
               setTerminalComposerOpen(true);
             });
             // Give the dock focus; Composer's editor opens the keyboard on tap.
