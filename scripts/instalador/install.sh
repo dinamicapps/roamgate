@@ -97,6 +97,18 @@ else
   echo "            ./roamgate.exe herdr setup"
 fi
 
+# --- 1b. Contrasena de login: aviso, no abort ----------------------------------------------------
+#
+# Fuera de 127.0.0.1 (la IP de Tailscale) Roamgate exige login. Con ROAMGATE_PASSWORD definida debe
+# tener 15..1024 caracteres (server/src/config/auth-token.ts); versiones viejas aceptaban menos y
+# con una corta el nuevo no arranca. Sin la variable, Roamgate genera un token por su cuenta.
+
+if [ -n "${ROAMGATE_PASSWORD:-}" ] && [ "${#ROAMGATE_PASSWORD}" -lt 15 ]; then
+  echo "  [aviso] ROAMGATE_PASSWORD tiene ${#ROAMGATE_PASSWORD} caracteres; esta version exige 15 o mas."
+  echo "          Con ella roamgate.cmd no arranca fuera de 127.0.0.1. Define una mas larga, p. ej.:"
+  echo "            setx ROAMGATE_PASSWORD \"<15 o mas caracteres>\"   (agrega /M para toda la maquina)"
+fi
+
 # --- 2. Ya al dia: se informa y NO se toca nada --------------------------------------------------
 
 VER_VIEJA="$(version_del_exe "$EXE")"

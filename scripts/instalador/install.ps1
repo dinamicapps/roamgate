@@ -119,6 +119,19 @@ if (Get-Command herdr -ErrorAction SilentlyContinue) {
     Write-Host "            .\roamgate.exe herdr setup"
 }
 
+# --- 1b. Contrasena de login: aviso, no abort ----------------------------------------------------
+#
+# Fuera de 127.0.0.1 (la IP de Tailscale) Roamgate exige login. Con ROAMGATE_PASSWORD definida debe
+# tener 15..1024 caracteres (server/src/config/auth-token.ts); versiones viejas aceptaban menos y
+# con una corta el nuevo no arranca. Sin la variable, Roamgate genera un token por su cuenta.
+
+$Pw = $env:ROAMGATE_PASSWORD
+if ($Pw -and $Pw.Length -lt 15) {
+    Write-Host "  [aviso] ROAMGATE_PASSWORD tiene $($Pw.Length) caracteres; esta version exige 15 o mas." -ForegroundColor Yellow
+    Write-Host "          Con ella roamgate.cmd no arranca fuera de 127.0.0.1. Define una mas larga, p. ej.:"
+    Write-Host "            setx ROAMGATE_PASSWORD ""<15 o mas caracteres>""   (agrega /M para toda la maquina)"
+}
+
 # --- 2. Ya al dia: se informa y NO se toca nada --------------------------------------------------
 
 $VerVieja = Version-DelExe $Exe

@@ -86,8 +86,17 @@ $env:ROAMGATE_HOST = "127.0.0.1"     # forzar solo esta maquina
 ```
 
 Abre la URL que imprime (por ejemplo `http://100.x.y.z:8787`). Fuera de localhost Roamgate pide
-login: la contraseña o el token aparecen en la consola al arrancar. Dejala abierta mientras lo uses;
-`Ctrl+C` lo detiene.
+login:
+
+- **Con `ROAMGATE_PASSWORD` definida**, entras con esa contraseña. Debe tener **15 caracteres o
+  mas**: versiones anteriores aceptaban menos, y con una corta el arranque falla con
+  `Login password must contain at least 15 characters`. `install.ps1` te avisa si la tuya es corta.
+  Para fijarla: `setx ROAMGATE_PASSWORD "<15 o mas caracteres>"` (agrega `/M` para toda la maquina) y
+  abre una consola nueva.
+- **Sin la variable**, Roamgate genera un token, lo guarda en un archivo y la consola muestra su ruta
+  (`authentication required mode="generated token" path=...`).
+
+Deja la consola abierta mientras lo uses; `Ctrl+C` lo detiene.
 
 ## Actualizar
 
