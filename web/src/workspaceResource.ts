@@ -4,7 +4,7 @@ import { matchesShortcut, type ShortcutBindings } from "./shortcutBindings";
 import type { Workspace } from "./types";
 import { connectionStorageKey } from "./connectionStorage";
 
-export type InspectorView = "files" | "changes" | "commits" | "history";
+export type InspectorView = "changes" | "commits" | "history";
 export type WorkspaceSurface = "terminal" | "annotations" | InspectorView;
 export const WORKSPACE_INSPECTOR_REQUEST_EVENT =
   "roamgate:workspace-inspector-request";
@@ -21,11 +21,14 @@ export function isWorkspaceInspectorShortcut(
   return !event.repeat && matchesShortcut(event, "inspector.toggle", bindings);
 }
 
+/** "files" opens the workspace's files tab; the Inspector has no Files view. */
+export type WorkspaceResourceView = InspectorView | "files";
+
 export interface WorkspaceInspectorRequest {
   connectionId: string;
   generation: number;
   workspaceId: string;
-  view: InspectorView;
+  view: WorkspaceResourceView;
 }
 
 export interface WorkspaceAnnotationRequest {
@@ -102,21 +105,19 @@ export interface WorkspaceInspectorState {
   expanded: boolean;
   returnTabId?: string;
   originPaneId?: string;
-  initialDirectory?: string;
 }
 
 export interface InspectorPreferences {
   view: InspectorView;
   dock: InspectorDock;
   expanded: boolean;
-  expandedNavigationRatios: Partial<Record<InspectorSplitView, number>>;
+  expandedNavigationRatios: { changes?: number };
   rightSize: number;
   bottomSize: number;
+  /** Left from the Inspector's Files view; seeds new files tab links. */
   filesNavigationRatio: number;
   changesNavigationRatio: number;
 }
-
-export type InspectorSplitView = Extract<InspectorView, "files" | "changes">;
 
 const DEFAULT_RIGHT_SIZE = 520;
 const DEFAULT_BOTTOM_SIZE = 360;
@@ -272,7 +273,7 @@ export function readInspectorPreferences(
   > = {},
 ): InspectorPreferences {
   const fallback: InspectorPreferences = {
-    view: "files",
+    view: "changes",
     dock: "right",
     expanded: false,
     expandedNavigationRatios: {},
@@ -287,21 +288,20 @@ export function readInspectorPreferences(
     const value = JSON.parse(raw) as Partial<InspectorPreferences>;
     return {
       view:
-        value.view === "changes" ||
-        value.view === "commits" ||
-        value.view === "history"
+        value.view === "commits" || value.view === "history"
           ? value.view
-          : "files",
+          : "changes",
       dock: value.dock === "bottom" ? "bottom" : "right",
       expanded: value.expanded === true,
-      expandedNavigationRatios: Object.fromEntries(
-        (["files", "changes"] as const).flatMap((view) => {
-          const ratio = value.expandedNavigationRatios?.[view];
-          return typeof ratio === "number" && Number.isFinite(ratio)
-            ? [[view, finiteNavigationRatio(ratio)]]
-            : [];
-        }),
-      ),
+      expandedNavigationRatios:
+        typeof value.expandedNavigationRatios?.changes === "number" &&
+        Number.isFinite(value.expandedNavigationRatios.changes)
+          ? {
+              changes: finiteNavigationRatio(
+                value.expandedNavigationRatios.changes,
+              ),
+            }
+          : {},
       rightSize: finiteSize(value.rightSize, DEFAULT_RIGHT_SIZE),
       bottomSize: finiteSize(value.bottomSize, DEFAULT_BOTTOM_SIZE),
       filesNavigationRatio: finiteNavigationRatio(value.filesNavigationRatio),
@@ -333,13 +333,10 @@ export function writeInspectorPreferences(
 export function writeInspectorNavigationRatio(
   storage: Pick<Storage, "getItem" | "setItem">,
   scope: ResourceScope,
-  view: InspectorSplitView,
   ratio: number,
   expanded = false,
 ): void {
   const previous = readInspectorPreferences(storage, scope);
-  const key =
-    view === "files" ? "filesNavigationRatio" : "changesNavigationRatio";
   storage.setItem(
     preferencesStorageKey(scope),
     JSON.stringify(
@@ -347,11 +344,10 @@ export function writeInspectorNavigationRatio(
         ? {
             ...previous,
             expandedNavigationRatios: {
-              ...previous.expandedNavigationRatios,
-              [view]: finiteNavigationRatio(ratio),
+              changes: finiteNavigationRatio(ratio),
             },
           }
-        : { ...previous, [key]: finiteNavigationRatio(ratio) },
+        : { ...previous, changesNavigationRatio: finiteNavigationRatio(ratio) },
     ),
   );
 }

@@ -7,11 +7,6 @@
   border-radius: 0;
 }
 
-.file-preview-changes > .diff-content-view {
-  border: none;
-  border-radius: 0;
-}
-
 .diff-content-view {
   position: relative;
   flex: 1 1 auto;

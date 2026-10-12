@@ -6,7 +6,6 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type ReactNode,
 } from "react";
 import {
   type NewReviewAnnotation,
@@ -46,7 +45,6 @@ export type WorkspaceFilesViewProps = {
   // Must keep its identity while the scope is unchanged: tabs are re-read
   // whenever it changes.
   tabsStore: FileTabsStore;
-  active: boolean;
   compact: boolean;
   initialDirectory?: string;
   split?: WorkspaceFilesSplit;
@@ -64,20 +62,14 @@ export type WorkspaceFilesViewProps = {
   onCreateAnnotation: (input: NewReviewAnnotation) => void;
   onReanchorAnnotations: (path: string, text: string) => void;
   onOpenFileChanges?: (entries: GitDiffEntry[]) => void;
-  renderFileChanges?: (changes: {
-    entries: GitDiffEntry[];
-    changesKey: string;
-  }) => ReactNode;
   onEmptyFocusFallback?: () => void;
   onClose: () => void;
-  onBack: () => void;
 };
 
 export function WorkspaceFilesView({
   workspaceId,
   scope,
   tabsStore,
-  active,
   compact,
   initialDirectory,
   split,
@@ -93,10 +85,8 @@ export function WorkspaceFilesView({
   onCreateAnnotation,
   onReanchorAnnotations,
   onOpenFileChanges,
-  renderFileChanges,
   onEmptyFocusFallback,
   onClose,
-  onBack,
 }: WorkspaceFilesViewProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const splitId = useId();
@@ -106,12 +96,12 @@ export function WorkspaceFilesView({
   useLayoutEffect(() => {
     setFileTabs(tabsStore.read());
   }, [fileSelection.entry?.path, tabsStore]);
-  // A scope can first open on Changes or History. Restore its active file when
-  // entering Files, without requiring another explorer selection.
+  // Restore the active file on mount, without requiring another explorer
+  // selection.
   useEffect(() => {
-    if (active && !fileSelection.entry && fileTabs.activePath)
+    if (!fileSelection.entry && fileTabs.activePath)
       onSelectFileTab(fileTabs.activePath);
-  }, [active, fileSelection.entry, fileTabs.activePath, onSelectFileTab]);
+  }, [fileSelection.entry, fileTabs.activePath, onSelectFileTab]);
   const onCloseFileTab = (path: string, directory = false) => {
     const current = tabsStore.read();
     const tabs = closeResourceFileTab(current, path, directory);
@@ -157,14 +147,8 @@ export function WorkspaceFilesView({
         (entry) => entry.path === fileSelection.entry?.path,
       )
     : [];
-  const primaryFileChangesEntry =
-    fileChangesEntries[fileChangesEntries.length - 1] ?? null;
-  const fileChangesKey = fileChangesEntries
-    .map((entry) => `${entry.kind}:${entry.status}:${entry.path}`)
-    .join("|");
 
   useEffect(() => {
-    if (!active) return;
     if (initialDirectory !== undefined) {
       // Explicit directory navigation returns compact layouts to the tree,
       // while the saved preview and tabs remain available on desktop.
@@ -172,14 +156,14 @@ export function WorkspaceFilesView({
       return;
     }
     if (fileSelection.entry) onDrillInChange(true);
-  }, [fileSelection.entry, active, initialDirectory, onDrillInChange]);
+  }, [fileSelection.entry, initialDirectory, onDrillInChange]);
 
   return (
     <div
       ref={rootRef}
       className={`workspace-inspector-resource inspector-files-resource ${
-        active ? "" : "is-hidden"
-      } ${split ? "has-split-resizer" : ""}`}
+        split ? "has-split-resizer" : ""
+      }`}
       style={
         split
           ? ({
@@ -196,7 +180,7 @@ export function WorkspaceFilesView({
           initialDirectory={initialDirectory}
           activePath={fileSelection.entry?.path}
           previewRequestRef={previewRequestRef}
-          keyboardActive={active && (!compact || !hasDetail)}
+          keyboardActive={!compact || !hasDetail}
           onClose={onClose}
           onPreviewChange={(selection, meta) => {
             if (meta?.deletedEntry) {
@@ -261,10 +245,7 @@ export function WorkspaceFilesView({
             compact && drillIn && fileSelection.entry
               ? {
                   label: "Files",
-                  onClick: () => {
-                    onDrillInChange(false);
-                    onBack();
-                  },
+                  onClick: () => onDrillInChange(false),
                 }
               : undefined
           }
@@ -272,17 +253,8 @@ export function WorkspaceFilesView({
           onCreateAnnotation={onCreateAnnotation}
           onReanchorAnnotations={onReanchorAnnotations}
           onOpenChanges={
-            primaryFileChangesEntry && onOpenFileChanges
+            fileChangesEntries.length && onOpenFileChanges
               ? () => onOpenFileChanges(fileChangesEntries)
-              : undefined
-          }
-          changesKey={fileChangesKey || undefined}
-          changesContent={
-            primaryFileChangesEntry
-              ? renderFileChanges?.({
-                  entries: fileChangesEntries,
-                  changesKey: fileChangesKey,
-                })
               : undefined
           }
         />

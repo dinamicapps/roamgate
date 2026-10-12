@@ -15,7 +15,7 @@ import {
   type FilesTabLink,
 } from "../filesTabResource";
 import { filesTabEscapeStep } from "../filesTabEscape";
-import type { FileExplorerEntry } from "../types";
+import type { FileExplorerEntry, GitDiffEntry } from "../types";
 import {
   DEFAULT_INSPECTOR_NAVIGATION_RATIO,
   openResourceFileTab,
@@ -53,6 +53,7 @@ export function FilesTabSurface({
   annotations,
   onCreateAnnotation,
   onReanchorAnnotations,
+  onOpenFileChanges,
   onNavigationRatioCommit,
   onShowConsole,
   filesRevision,
@@ -68,6 +69,7 @@ export function FilesTabSurface({
   annotations: readonly ReviewAnnotation[];
   onCreateAnnotation: (input: NewReviewAnnotation) => void;
   onReanchorAnnotations: (path: string, text: string) => void;
+  onOpenFileChanges: (entries: GitDiffEntry[]) => void;
   onNavigationRatioCommit: (ratio: number) => void;
   onShowConsole: () => void;
   /** Bumped when another browser tab rewrote this link's file tabs. */
@@ -188,7 +190,6 @@ export function FilesTabSurface({
         workspaceId={workspaceId}
         scope={scope}
         tabsStore={tabsStore}
-        active
         compact={compact}
         initialDirectory={link.initialDirectory ?? undefined}
         split={
@@ -216,9 +217,9 @@ export function FilesTabSurface({
         annotations={annotations}
         onCreateAnnotation={onCreateAnnotation}
         onReanchorAnnotations={onReanchorAnnotations}
+        onOpenFileChanges={onOpenFileChanges}
         onEmptyFocusFallback={() => rootRef.current?.focus()}
         onClose={onShowConsole}
-        onBack={() => {}}
       />
     </section>
   );

@@ -7,9 +7,9 @@ import { store, useStoreSelector } from "../store";
 import type { Workspace, WorktreeList } from "../types";
 import { resolveWorktreeOpenSource, worktreeCreationSource } from "../worktree";
 import {
-  type InspectorView,
   WORKSPACE_INSPECTOR_REQUEST_EVENT,
   type WorkspaceInspectorRequest,
+  type WorkspaceResourceView,
 } from "../workspaceResource";
 import {
   buildWorktreeLifecycleRows,
@@ -372,7 +372,7 @@ export function WorktreeLifecycleDialog({
 
   const openWorktreeResource = async (
     row: WorktreeLifecycleRow,
-    view: InspectorView,
+    view: WorkspaceResourceView,
   ) => {
     const result = await openWorktree(row, true);
     const targetWorkspaceId = lifecycleOpenedWorkspaceId(result);

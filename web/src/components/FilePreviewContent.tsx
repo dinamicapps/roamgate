@@ -12,7 +12,6 @@ import {
   useRef,
   useState,
   type MutableRefObject,
-  type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
 import type { EditorView as CodeMirrorEditorView } from "@codemirror/view";
@@ -193,8 +192,6 @@ export function FilePreviewContent({
   fragment,
   line,
   snippet,
-  changesContent,
-  changesKey,
   annotations = [],
   backAction,
   onOpenChanges,
@@ -211,8 +208,6 @@ export function FilePreviewContent({
   fragment?: string;
   line?: number;
   snippet?: string;
-  changesContent?: ReactNode;
-  changesKey?: string;
   backAction?: { label: string; onClick: () => void };
   annotations?: readonly ReviewAnnotation[];
   onOpenChanges?: () => void;
@@ -227,12 +222,9 @@ export function FilePreviewContent({
   const previewSectionRef = useRef<HTMLElement | null>(null);
   const previewContentRef = useRef<HTMLDivElement | null>(null);
   const editorViewRef = useRef<CodeMirrorEditorView | null>(null);
-  const onOpenChangesRef = useRef(onOpenChanges);
-  onOpenChangesRef.current = onOpenChanges;
   const [previewMode, setPreviewMode] = useState<"rendered" | "raw">(
     "rendered",
   );
-  const [detailTab, setDetailTab] = useState<"file" | "changes">("file");
   const [workspaceDialogOpen, setWorkspaceDialogOpen] = useState(false);
   // Keep unfinished comments attached to their file while switching tabs.
   // The Inspector is keyed by connection/checkout, so this map cannot cross scopes.
@@ -330,9 +322,6 @@ export function FilePreviewContent({
     return (path: string) =>
       workspaceFileUrl(connectionClient, preview.workspace_id, path);
   }, [connectionClient, preview?.workspace_id]);
-  const changesAvailable =
-    changesContent !== undefined && !!changesKey && !!onOpenChanges;
-  const showingChanges = detailTab === "changes" && changesAvailable;
   const directoryPath = directoryPreviewPath(preview);
   const directoryWorkspaceRoot = directoryPath
     ? workspaces.some((workspace) => {
@@ -388,18 +377,12 @@ export function FilePreviewContent({
   }, [onReanchorAnnotations, preview?.truncated, previewPath, previewText]);
 
   useEffect(() => {
-    if (hasMarkdownPreview && renderRichPreview && !showingChanges) return;
+    if (hasMarkdownPreview && renderRichPreview) return;
     setMarkdownSelection(null);
-  }, [hasMarkdownPreview, renderRichPreview, showingChanges]);
+  }, [hasMarkdownPreview, renderRichPreview]);
 
   useEffect(() => {
-    if (detailTab === "changes" && changesAvailable) {
-      onOpenChangesRef.current?.();
-    }
-  }, [changesAvailable, changesKey, detailTab]);
-
-  useEffect(() => {
-    if (showingChanges || !hasPreviewText) return;
+    if (!hasPreviewText) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || document.querySelector(".shortcut-modal"))
         return;
@@ -427,7 +410,7 @@ export function FilePreviewContent({
     window.addEventListener("keydown", onKey, { capture: true });
     return () =>
       window.removeEventListener("keydown", onKey, { capture: true });
-  }, [hasPreviewText, renderRichPreview, showingChanges]);
+  }, [hasPreviewText, renderRichPreview]);
 
   useEffect(() => {
     const section = previewSectionRef.current;
@@ -503,7 +486,7 @@ export function FilePreviewContent({
       tabIndex={-1}
       onKeyDownCapture={(e) => {
         if (shortcutMatches(e.nativeEvent, "preview.search")) {
-          if (showingChanges || renderRichPreview) return;
+          if (renderRichPreview) return;
           e.preventDefault();
           e.stopPropagation();
           openPreviewSearch(editorViewRef.current);
@@ -527,7 +510,7 @@ export function FilePreviewContent({
             {entry?.name ?? "Preview"}
           </div>
           <div className="file-preview-head-actions">
-            {!showingChanges && showDirectoryWorkspaceAction ? (
+            {showDirectoryWorkspaceAction ? (
               <button
                 type="button"
                 className="file-preview-refresh"
@@ -538,7 +521,7 @@ export function FilePreviewContent({
                 <FolderPlus size={13} aria-hidden="true" />
               </button>
             ) : null}
-            {!showingChanges && entry && onRefresh ? (
+            {entry && onRefresh ? (
               <button
                 type="button"
                 className="file-preview-refresh"
@@ -554,7 +537,7 @@ export function FilePreviewContent({
                 />
               </button>
             ) : null}
-            {!showingChanges && hasPreviewText && !preview?.truncated ? (
+            {hasPreviewText && !preview?.truncated ? (
               <button
                 type="button"
                 className="file-preview-copy"
@@ -564,7 +547,7 @@ export function FilePreviewContent({
                 Copy
               </button>
             ) : null}
-            {!showingChanges && hasRichPreview ? (
+            {hasRichPreview ? (
               <button
                 type="button"
                 className="file-preview-mode-toggle"
@@ -591,15 +574,12 @@ export function FilePreviewContent({
                 <span className="file-preview-mode-label">Source</span>
               </button>
             ) : null}
-            {changesAvailable ? (
+            {onOpenChanges ? (
               <button
                 type="button"
                 className="file-preview-changes-toggle"
-                aria-pressed={showingChanges}
-                title={showingChanges ? "Show file preview" : "Show changes"}
-                onClick={() =>
-                  setDetailTab(showingChanges ? "file" : "changes")
-                }
+                title="Show changes in the Inspector"
+                onClick={onOpenChanges}
               >
                 Changes
               </button>
@@ -620,189 +600,178 @@ export function FilePreviewContent({
         {entry ? <span>{entry.path}</span> : null}
       </div>
 
-      {showingChanges ? (
-        <div
-          className="file-preview-changes"
-          role="region"
-          aria-label={`Changes for ${entry?.name ?? "selected file"}`}
-        >
-          {changesContent}
-        </div>
-      ) : (
-        <div
-          ref={previewContentRef}
-          className="file-preview-file-content"
-          role="region"
-          aria-label={`Preview of ${entry?.name ?? "selected file"}`}
-        >
-          {!entry ? (
-            <div className="file-preview-state">
-              Select a text file to preview.
-            </div>
-          ) : null}
-          {loading ? (
-            <div className="file-preview-state">
-              <span className="file-loading-spinner" />
-              Loading preview
-            </div>
-          ) : null}
-          {error ? (
-            <div className="file-preview-state is-error">{error}</div>
-          ) : null}
-          {!loading && !error && directoryPath ? (
-            <div className="file-preview-state">
-              Directories cannot be previewed.
-            </div>
-          ) : null}
-          {!loading && !error && preview?.image_data_url ? (
-            <ImagePreview
-              key={previewPath}
-              src={preview.image_data_url}
-              name={entry?.name ?? preview.path}
-            />
-          ) : null}
-          {!loading &&
-          !error &&
-          hasPdfPreview &&
-          !pdfTooLarge &&
-          inlinePreviewUrl ? (
-            <iframe
-              className="file-preview-pdf"
+      <div
+        ref={previewContentRef}
+        className="file-preview-file-content"
+        role="region"
+        aria-label={`Preview of ${entry?.name ?? "selected file"}`}
+      >
+        {!entry ? (
+          <div className="file-preview-state">
+            Select a text file to preview.
+          </div>
+        ) : null}
+        {loading ? (
+          <div className="file-preview-state">
+            <span className="file-loading-spinner" />
+            Loading preview
+          </div>
+        ) : null}
+        {error ? (
+          <div className="file-preview-state is-error">{error}</div>
+        ) : null}
+        {!loading && !error && directoryPath ? (
+          <div className="file-preview-state">
+            Directories cannot be previewed.
+          </div>
+        ) : null}
+        {!loading && !error && preview?.image_data_url ? (
+          <ImagePreview
+            key={previewPath}
+            src={preview.image_data_url}
+            name={entry?.name ?? preview.path}
+          />
+        ) : null}
+        {!loading &&
+        !error &&
+        hasPdfPreview &&
+        !pdfTooLarge &&
+        inlinePreviewUrl ? (
+          <iframe
+            className="file-preview-pdf"
+            src={inlinePreviewUrl}
+            title={`PDF preview: ${entry?.name ?? previewPath}`}
+          />
+        ) : null}
+        {!loading && !error && pdfTooLarge ? (
+          <div className="file-preview-state">
+            PDF is too large to preview. Use Download from the file menu.
+          </div>
+        ) : null}
+        {!loading && !error && audioTooLarge ? (
+          <div className="file-preview-state">
+            Audio is too large to preview (25 MiB maximum). Use Download from
+            the file menu.
+          </div>
+        ) : null}
+        {!loading &&
+        !error &&
+        hasAudioPreview &&
+        !audioTooLarge &&
+        inlinePreviewUrl ? (
+          <div className="file-preview-audio">
+            <audio
+              key={inlinePreviewUrl}
+              controls
+              preload="metadata"
               src={inlinePreviewUrl}
-              title={`PDF preview: ${entry?.name ?? previewPath}`}
+              aria-label={`Audio preview: ${entry?.name ?? previewPath}`}
             />
-          ) : null}
-          {!loading && !error && pdfTooLarge ? (
+          </div>
+        ) : null}
+        {!loading &&
+        !error &&
+        preview?.binary &&
+        !preview.image_data_url &&
+        !hasMediaPreview ? (
+          <div className="file-preview-state">
+            Binary file cannot be previewed.
+          </div>
+        ) : null}
+        {!loading && !error && hasHtmlPreview && renderRichPreview ? (
+          htmlTooLarge ? (
             <div className="file-preview-state">
-              PDF is too large to preview. Use Download from the file menu.
+              HTML is too large to render. Use Source or Download from the file
+              menu.
             </div>
-          ) : null}
-          {!loading && !error && audioTooLarge ? (
-            <div className="file-preview-state">
-              Audio is too large to preview (25 MiB maximum). Use Download from
-              the file menu.
-            </div>
-          ) : null}
-          {!loading &&
-          !error &&
-          hasAudioPreview &&
-          !audioTooLarge &&
-          inlinePreviewUrl ? (
-            <div className="file-preview-audio">
-              <audio
-                key={inlinePreviewUrl}
-                controls
-                preload="metadata"
-                src={inlinePreviewUrl}
-                aria-label={`Audio preview: ${entry?.name ?? previewPath}`}
-              />
-            </div>
-          ) : null}
-          {!loading &&
-          !error &&
-          preview?.binary &&
-          !preview.image_data_url &&
-          !hasMediaPreview ? (
-            <div className="file-preview-state">
-              Binary file cannot be previewed.
-            </div>
-          ) : null}
-          {!loading && !error && hasHtmlPreview && renderRichPreview ? (
-            htmlTooLarge ? (
-              <div className="file-preview-state">
-                HTML is too large to render. Use Source or Download from the
-                file menu.
+          ) : inlinePreviewUrl ? (
+            <>
+              <div className="file-preview-banner">
+                Static HTML preview. Scripts are blocked; HTTPS stylesheets can
+                access the network.
               </div>
-            ) : inlinePreviewUrl ? (
-              <>
-                <div className="file-preview-banner">
-                  Static HTML preview. Scripts are blocked; HTTPS stylesheets
-                  can access the network.
-                </div>
-                <iframe
-                  key={inlinePreviewUrl}
-                  className="file-preview-html"
-                  sandbox=""
-                  referrerPolicy="no-referrer"
-                  src={inlinePreviewUrl}
-                  aria-label={`HTML preview: ${entry?.name ?? previewPath}`}
-                />
-              </>
-            ) : null
-          ) : null}
-          {!loading &&
-          !error &&
-          preview?.truncated &&
-          !hasMediaPreview &&
-          !(hasHtmlPreview && renderRichPreview) ? (
-            <div className="file-preview-banner">
-              Preview truncated at 512 KB.
-            </div>
-          ) : null}
-          {!loading && !error && lineBeyondPreview ? (
-            <div className="file-preview-banner" role="status">
-              Match at line {line} is outside this preview. The beginning of the
-              file is shown below.
-              {snippet ? (
-                <code className="file-preview-search-snippet">{snippet}</code>
-              ) : null}
-            </div>
-          ) : null}
-          {!loading && !error && hasMarkdownPreview && renderRichPreview ? (
-            <MarkdownPreview
-              text={previewText}
-              imageUrlResolver={markdownImageUrlResolver}
-              documentPath={onOpenFile ? markdownDocumentPath : undefined}
-              linkUrlResolver={markdownLinkUrlResolver}
-              fragment={fragment}
-              onOpenDocument={onOpenFile}
-              onSelectionChange={
-                onCreateAnnotation ? setMarkdownSelection : undefined
-              }
-            />
-          ) : null}
-          {!loading && !error && hasMermaidPreview && renderRichPreview ? (
-            <MermaidDiagram
-              key={previewPath}
-              code={previewText}
-              className="file-preview-mermaid"
-            />
-          ) : null}
-          {!loading &&
-          !error &&
-          hasPreviewText &&
-          !renderRichPreview &&
-          !hasMediaPreview ? (
-            <CodeMirrorPreview
-              text={previewText}
-              path={previewPath}
-              line={line}
-              theme={theme}
-              annotations={lineAnnotations}
-              editorViewRef={editorViewRef}
-              onRequestAnnotation={
-                onCreateAnnotation
-                  ? ({ line, endLine, quote, x, y }) =>
-                      setPendingAnnotation({
-                        kind: "line",
-                        path: previewPath,
-                        line,
-                        endLine,
-                        quote,
-                        x,
-                        y,
-                      })
-                  : undefined
-              }
-            />
-          ) : null}
-        </div>
-      )}
+              <iframe
+                key={inlinePreviewUrl}
+                className="file-preview-html"
+                sandbox=""
+                referrerPolicy="no-referrer"
+                src={inlinePreviewUrl}
+                aria-label={`HTML preview: ${entry?.name ?? previewPath}`}
+              />
+            </>
+          ) : null
+        ) : null}
+        {!loading &&
+        !error &&
+        preview?.truncated &&
+        !hasMediaPreview &&
+        !(hasHtmlPreview && renderRichPreview) ? (
+          <div className="file-preview-banner">
+            Preview truncated at 512 KB.
+          </div>
+        ) : null}
+        {!loading && !error && lineBeyondPreview ? (
+          <div className="file-preview-banner" role="status">
+            Match at line {line} is outside this preview. The beginning of the
+            file is shown below.
+            {snippet ? (
+              <code className="file-preview-search-snippet">{snippet}</code>
+            ) : null}
+          </div>
+        ) : null}
+        {!loading && !error && hasMarkdownPreview && renderRichPreview ? (
+          <MarkdownPreview
+            text={previewText}
+            imageUrlResolver={markdownImageUrlResolver}
+            documentPath={onOpenFile ? markdownDocumentPath : undefined}
+            linkUrlResolver={markdownLinkUrlResolver}
+            fragment={fragment}
+            onOpenDocument={onOpenFile}
+            onSelectionChange={
+              onCreateAnnotation ? setMarkdownSelection : undefined
+            }
+          />
+        ) : null}
+        {!loading && !error && hasMermaidPreview && renderRichPreview ? (
+          <MermaidDiagram
+            key={previewPath}
+            code={previewText}
+            className="file-preview-mermaid"
+          />
+        ) : null}
+        {!loading &&
+        !error &&
+        hasPreviewText &&
+        !renderRichPreview &&
+        !hasMediaPreview ? (
+          <CodeMirrorPreview
+            text={previewText}
+            path={previewPath}
+            line={line}
+            theme={theme}
+            annotations={lineAnnotations}
+            editorViewRef={editorViewRef}
+            onRequestAnnotation={
+              onCreateAnnotation
+                ? ({ line, endLine, quote, x, y }) =>
+                    setPendingAnnotation({
+                      kind: "line",
+                      path: previewPath,
+                      line,
+                      endLine,
+                      quote,
+                      x,
+                      y,
+                    })
+                : undefined
+            }
+          />
+        ) : null}
+      </div>
       {markdownSelection &&
       onCreateAnnotation &&
       hasMarkdownPreview &&
-      renderRichPreview &&
-      !showingChanges
+      renderRichPreview
         ? createPortal(
             <button
               type="button"

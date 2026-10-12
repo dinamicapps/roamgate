@@ -9,7 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { store } from "../store";
-import type { InspectorView } from "../workspaceResource";
+import type { WorkspaceResourceView } from "../workspaceResource";
 import {
   lifecycleAutoSyncLabel,
   lifecycleGitChangeCount,
@@ -41,7 +41,10 @@ export function WorktreeLifecycleRow({
   ) => void;
   onFocus: (workspaceId: string) => void;
   onOpen: (row: LifecycleRow) => Promise<unknown>;
-  onOpenResource: (row: LifecycleRow, view: InspectorView) => Promise<unknown>;
+  onOpenResource: (
+    row: LifecycleRow,
+    view: WorkspaceResourceView,
+  ) => Promise<unknown>;
   onRemove: (row: LifecycleRow) => void;
 }) {
   const workspace = row.workspace;

@@ -100,12 +100,8 @@ import {
 import { clearDiffContentResourceState } from "./components/diffContentState";
 import {
   clearFileExplorerResourceCache,
-  emptyFilePreviewSelection,
-  fileEntryForPath,
-  loadFilePreviewSelection,
   prefetchFileExplorerWorkspace,
 } from "./components/fileExplorerResources";
-import { type ActiveFilePreviewSelection } from "./components/FilePreviewContent";
 import { AnnotationPanel } from "./components/AnnotationPanel";
 import { assistantActionExecuting, useAssistantState } from "./assistant";
 import type { AssistantSource } from "../../shared/assistant";
@@ -119,6 +115,7 @@ import {
 } from "./components/TabBar";
 import type { TerminalWorkspaceFileRequest } from "./components/TerminalView";
 import type { FilesTabFileRequest } from "./components/FilesTabSurface";
+import type { InspectorChangesRequest } from "./components/WorkspaceInspectorHost";
 import { WorkspaceTree } from "./components/WorkspaceTree";
 import { isIosDevice } from "./downloadFile";
 import { lazyWithReload } from "./lazyWithReload";
@@ -210,7 +207,6 @@ import {
   openResourceFileTab,
   preferencesStorageKey,
   readInspectorPreferences,
-  readResourceFileSelection,
   relativePathWithinCheckout,
   resolveWorkspaceForScope,
   resourceOwnerKey,
@@ -382,10 +378,6 @@ type MobileView =
   | "assistant"
   | InspectorView;
 type OpenInspectorOptions = {
-  entry?: FileExplorerEntry;
-  path?: string;
-  fragment?: string;
-  initialDirectory?: string;
   originPaneId?: string;
   focusInspector?: boolean;
 };
@@ -1489,23 +1481,10 @@ export default function App() {
   const [activeDiff, setActiveDiff] = useState<ActiveDiffSelection>(
     emptyActiveDiffSelection,
   );
-  const [activeFilePreview, setActiveFilePreviewState] =
-    useState<ActiveFilePreviewSelection>(emptyFilePreviewSelection);
-  const setActiveFilePreview = useCallback(
-    (selection: ActiveFilePreviewSelection) => {
-      const scope = inspectorStateRef.current?.scope;
-      if (scope && selection.entry) {
-        writeResourceFileSelection(
-          roamgateLocalStorage,
-          scope,
-          selection.entry.path,
-        );
-      }
-      setActiveFilePreviewState(selection);
-    },
-    [],
-  );
-  const fileQuickOpenRequestRef = useRef(0);
+  const [inspectorChangesRequest, setInspectorChangesRequest] = useState<
+    (InspectorChangesRequest & { stateKey: string }) | null
+  >(null);
+  const inspectorChangesRequestIdRef = useRef(0);
   const resourceRuntimeKeyRef = useRef(resourceUiKey);
   const focusedWorkspace = s.workspaces.find((w) => w.focused);
   const focusedWorkspaceTabCount = focusedWorkspace
@@ -1707,18 +1686,6 @@ export default function App() {
       document.querySelector<HTMLElement>(".workspace-tree-panel")?.focus();
     });
   }, [mobile]);
-  const loadInspectorFilePreview = useCallback(
-    (workspaceId: string, entry: FileExplorerEntry, fragment?: string) =>
-      loadFilePreviewSelection(
-        connectionClient,
-        workspaceId,
-        entry,
-        fragment,
-        fileQuickOpenRequestRef,
-        setActiveFilePreview,
-      ),
-    [connectionClient, setActiveFilePreview],
-  );
   const openInspector = useCallback(
     (
       view: InspectorView,
@@ -1735,13 +1702,11 @@ export default function App() {
         store.notify({
           kind: "error",
           message: `Cannot open ${
-            view === "files"
-              ? "Files"
-              : view === "changes"
-                ? "Changes"
-                : view === "commits"
-                  ? "Commits"
-                  : "History"
+            view === "changes"
+              ? "Changes"
+              : view === "commits"
+                ? "Commits"
+                : "History"
           }`,
           detail: "The target workspace is no longer open.",
         });
@@ -1807,15 +1772,10 @@ export default function App() {
         expanded: sameOwner ? current.expanded : preferences.expanded,
         returnTabId,
         originPaneId: options.originPaneId,
-        initialDirectory: options.initialDirectory,
       };
 
       if (!workspace.focused) void store.focusWorkspace(workspace.workspace_id);
-      if (!sameOwner) {
-        fileQuickOpenRequestRef.current += 1;
-        setActiveDiff(emptyActiveDiffSelection());
-        setActiveFilePreview(emptyFilePreviewSelection());
-      }
+      if (!sameOwner) setActiveDiff(emptyActiveDiffSelection());
       inspectorFocusRequestRef.current = focusInspector
         ? { state: nextState, source: document.activeElement }
         : null;
@@ -1823,26 +1783,11 @@ export default function App() {
       writeInspectorPreferences(roamgateLocalStorage, nextState);
       if (mobile) setMobileView(view);
       if (focusInspector) requestAnimationFrame(finishInspectorFocus);
-
-      const selectedPath =
-        options.path ??
-        (view === "files" && options.initialDirectory === undefined
-          ? readResourceFileSelection(roamgateLocalStorage, scope)
-          : undefined);
-      if (view === "files" && !selectedPath) {
-        fileQuickOpenRequestRef.current += 1;
-        setActiveFilePreview(emptyFilePreviewSelection());
-      }
-      if (view !== "files" || !selectedPath) return;
-      const entry = options.entry ?? fileEntryForPath(selectedPath);
-      loadInspectorFilePreview(workspace.workspace_id, entry, options.fragment);
     },
     [
       commitInspectorState,
       connectionClient.connectionId,
       finishInspectorFocus,
-      loadInspectorFilePreview,
-      setActiveFilePreview,
       mobile,
       annotationsOpen,
       annotationScopeRef,
@@ -1973,13 +1918,6 @@ export default function App() {
       );
     },
     [connectionClient, updateAnnotationDraft],
-  );
-  const reanchorFileAnnotations = useCallback(
-    (path: string, text: string) => {
-      if (inspectorState)
-        reanchorScopedFileAnnotations(inspectorState.scope, path, text);
-    },
-    [inspectorState, reanchorScopedFileAnnotations],
   );
   const reanchorDiffAnnotations = useCallback(
     (path: string, kind: GitDiffEntry["kind"], patch: string) => {
@@ -2139,21 +2077,6 @@ export default function App() {
     connectionClient,
     deliveredPaneId,
   ]);
-  const openFileExplorerFile = useCallback(
-    (
-      workspaceId: string,
-      entry: FileExplorerEntry,
-      originPaneId?: string,
-      fragment?: string,
-    ) =>
-      openInspector("files", workspaceId, {
-        entry,
-        path: entry.path,
-        originPaneId,
-        fragment,
-      }),
-    [openInspector],
-  );
   const openDiffViewer = useCallback(
     (workspaceId?: string, focusInspector = true) =>
       openInspector("changes", workspaceId, { focusInspector }),
@@ -2247,7 +2170,7 @@ export default function App() {
       (!paneHasAgentHistory(historyPane) ||
         historyPane?.workspace_id !== workspace.workspace_id)
     ) {
-      openInspector("files", workspace.workspace_id);
+      openInspector("changes", workspace.workspace_id);
       return;
     }
     openInspector(view, workspace.workspace_id, {
@@ -2291,7 +2214,7 @@ export default function App() {
         ? routedPane
         : workspacePanes.find(paneHasAgentHistory);
       const view =
-        current.view === "history" && !historyPane ? "files" : current.view;
+        current.view === "history" && !historyPane ? "changes" : current.view;
       openInspector(view, workspaceId, {
         focusInspector: false,
         originPaneId:
@@ -2329,14 +2252,6 @@ export default function App() {
       setActiveDiff(selection);
     },
     [],
-  );
-  const handleFilePreviewChange = useCallback(
-    (stateKey: string, selection: ActiveFilePreviewSelection) => {
-      const current = inspectorStateRef.current;
-      if (!current || resourceStateKey(current.scope) !== stateKey) return;
-      setActiveFilePreview(selection);
-    },
-    [setActiveFilePreview],
   );
   const [filesTabLinks, setFilesTabLinks] = useState<FilesTabLinks>({});
   const [filesSurfaceOwnerTabId, setFilesSurfaceOwnerTabId] = useState<
@@ -2634,6 +2549,25 @@ export default function App() {
     },
     [filesTabScope, reanchorScopedFileAnnotations],
   );
+  // The files tab stays on the surface; Changes opens beside it.
+  const openFilesTabChanges = useCallback(
+    (entries: GitDiffEntry[]) => {
+      if (!filesTabWorkspace || !filesTabScope) return;
+      openInspector("changes", filesTabWorkspace.workspace_id);
+      inspectorChangesRequestIdRef.current += 1;
+      setInspectorChangesRequest({
+        id: inspectorChangesRequestIdRef.current,
+        stateKey: resourceStateKey(filesTabScope),
+        entries,
+      });
+    },
+    [filesTabScope, filesTabWorkspace, openInspector],
+  );
+  const handleInspectorChangesRequestHandled = useCallback((id: number) => {
+    setInspectorChangesRequest((current) =>
+      current?.id === id ? null : current,
+    );
+  }, []);
   const reviewChangesForPane = useCallback(
     (pane: Pane) =>
       openInspector("changes", pane.workspace_id, {
@@ -2791,7 +2725,8 @@ export default function App() {
         return;
       }
       pendingInspectorRequestRef.current = null;
-      openInspector(detail.view, detail.workspaceId);
+      if (detail.view === "files") openFilesTabForWorkspace(detail.workspaceId);
+      else openInspector(detail.view, detail.workspaceId);
     };
     window.addEventListener(
       WORKSPACE_INSPECTOR_REQUEST_EVENT,
@@ -2802,7 +2737,7 @@ export default function App() {
         WORKSPACE_INSPECTOR_REQUEST_EVENT,
         handleInspectorRequest,
       );
-  }, [connectionClient, openInspector]);
+  }, [connectionClient, openFilesTabForWorkspace, openInspector]);
   useEffect(() => {
     const handleAnnotationRequest = (event: Event) => {
       const detail = (event as CustomEvent<WorkspaceAnnotationRequest>).detail;
@@ -2880,8 +2815,9 @@ export default function App() {
       return;
     }
     pendingInspectorRequestRef.current = null;
-    openInspector(pending.view, pending.workspaceId);
-  }, [connectionClient, openInspector, s.workspaces]);
+    if (pending.view === "files") openFilesTabForWorkspace(pending.workspaceId);
+    else openInspector(pending.view, pending.workspaceId);
+  }, [connectionClient, openFilesTabForWorkspace, openInspector, s.workspaces]);
   useEffect(() => {
     const handleWorktreeRemoved = (event: Event) => {
       const detail = (event as CustomEvent<WorktreeRemovedTarget>).detail;
@@ -2912,17 +2848,15 @@ export default function App() {
       writeResourceFileSelection(roamgateLocalStorage, scope, null);
       const current = inspectorStateRef.current;
       if (!current || !sameResourceOwner(current.scope, scope)) return;
-      fileQuickOpenRequestRef.current += 1;
       inspectorReturnFocusRef.current = null;
       commitInspectorState(null);
       setActiveDiff(emptyActiveDiffSelection());
-      setActiveFilePreview(emptyFilePreviewSelection());
       setMobileView("session");
     };
     window.addEventListener(WORKTREE_REMOVED_EVENT, handleWorktreeRemoved);
     return () =>
       window.removeEventListener(WORKTREE_REMOVED_EVENT, handleWorktreeRemoved);
-  }, [commitInspectorState, connectionClient, setActiveFilePreview]);
+  }, [commitInspectorState, connectionClient]);
   const closePaneJump = useCallback((restoreFocus = false) => {
     const target = paneJumpReturnFocusRef.current;
     const source = document.activeElement;
@@ -2991,7 +2925,6 @@ export default function App() {
   useLayoutEffect(() => {
     if (resourceRuntimeKeyRef.current === resourceUiKey) return;
     resourceRuntimeKeyRef.current = resourceUiKey;
-    fileQuickOpenRequestRef.current += 1;
     pendingInspectorRequestRef.current = null;
     inspectorReturnFocusRef.current = null;
     commitInspectorState(null);
@@ -2999,7 +2932,7 @@ export default function App() {
     setFilesTabOpenRequest(null);
     setFilesTabLinks({});
     setActiveDiff(emptyActiveDiffSelection());
-    setActiveFilePreview(emptyFilePreviewSelection());
+    setInspectorChangesRequest(null);
     annotationAwaitingFocusRef.current = null;
     setAnnotationPreferredPaneId(undefined);
     setAnnotationDeliveryBusy(false);
@@ -3011,12 +2944,7 @@ export default function App() {
     setPaneJumpIndex(0);
     setPaneJumpSearch(null);
     setMobileView((current) => (current === "assistant" ? current : "session"));
-  }, [
-    commitFilesSurfaceOwner,
-    commitInspectorState,
-    resourceUiKey,
-    setActiveFilePreview,
-  ]);
+  }, [commitFilesSurfaceOwner, commitInspectorState, resourceUiKey]);
 
   useEffect(() => {
     store.init();
@@ -3171,11 +3099,9 @@ export default function App() {
     const workspace = resolveWorkspaceForScope(current.scope, s.workspaces);
     if (!workspace) {
       if (s.status === "connected" && s.lastRefresh > 0) {
-        fileQuickOpenRequestRef.current += 1;
         inspectorReturnFocusRef.current = null;
         commitInspectorState(null);
         setActiveDiff(emptyActiveDiffSelection());
-        setActiveFilePreview(emptyFilePreviewSelection());
         setMobileView("session");
       }
       return;
@@ -3186,15 +3112,9 @@ export default function App() {
       workspace,
     );
     commitInspectorState({ ...current, scope });
-    if (current.view === "files" && activeFilePreview.entry) {
-      loadInspectorFilePreview(workspace.workspace_id, activeFilePreview.entry);
-    }
   }, [
-    activeFilePreview.entry,
     commitInspectorState,
     connectionClient,
-    loadInspectorFilePreview,
-    setActiveFilePreview,
     s.lastRefresh,
     s.status,
     s.workspaces,
@@ -3869,12 +3789,7 @@ export default function App() {
     commitInspectorState(next);
     writeInspectorPreferences(roamgateLocalStorage, next);
   };
-  const clearInspectorDetail = () => {
-    const current = inspectorStateRef.current;
-    if (current?.view !== "files") {
-      setActiveDiff(emptyActiveDiffSelection());
-    }
-  };
+  const clearInspectorDetail = () => setActiveDiff(emptyActiveDiffSelection());
   const resizeInspectorWithKeyboard = (e: React.KeyboardEvent) => {
     const current = inspectorStateRef.current;
     const stage = inspectorStageRef.current;
@@ -4502,6 +4417,7 @@ export default function App() {
                       annotations={readAnnotationDraft(filesTabScope)}
                       onCreateAnnotation={addFilesTabAnnotation}
                       onReanchorAnnotations={reanchorFilesTabAnnotations}
+                      onOpenFileChanges={openFilesTabChanges}
                       onNavigationRatioCommit={commitFilesTabNavigationRatio}
                       onShowConsole={showConsoleSurface}
                       filesRevision={filesTabFilesRevision}
@@ -4553,7 +4469,6 @@ export default function App() {
                       onReady={finishInspectorFocus}
                       annotations={readAnnotationDraft(inspectorState.scope)}
                       onCreateAnnotation={addAnnotation}
-                      onReanchorFileAnnotations={reanchorFileAnnotations}
                       onReanchorDiffAnnotations={reanchorDiffAnnotations}
                       onEditAnnotation={(id) => {
                         if (!connectionClient.isCurrent()) return;
@@ -4565,47 +4480,24 @@ export default function App() {
                       visible={!mobile || mobileView === inspectorState.view}
                       workspace={inspectorWorkspace}
                       historyPane={inspectorHistoryPane}
-                      fileSelection={activeFilePreview}
-                      onSelectFileTab={(path) => {
-                        if (inspectorWorkspace)
-                          loadInspectorFilePreview(
-                            inspectorWorkspace.workspace_id,
-                            fileEntryForPath(path),
-                          );
-                      }}
-                      previewRequestRef={fileQuickOpenRequestRef}
                       diffSelection={activeDiff}
-                      connectionClient={connectionClient}
-                      onFileSelectionChange={(selection) =>
-                        handleFilePreviewChange(
-                          resourceStateKey(inspectorState.scope),
-                          selection,
-                        )
+                      changesRequest={
+                        inspectorChangesRequest?.stateKey ===
+                        resourceStateKey(inspectorState.scope)
+                          ? inspectorChangesRequest
+                          : null
                       }
+                      onChangesRequestHandled={
+                        handleInspectorChangesRequestHandled
+                      }
+                      connectionClient={connectionClient}
                       onDiffSelectionChange={(selection) =>
                         handleDiffSelectionChange(
                           resourceStateKey(inspectorState.scope),
                           selection,
                         )
                       }
-                      onRefreshFile={() => {
-                        if (inspectorWorkspace && activeFilePreview.entry)
-                          loadInspectorFilePreview(
-                            inspectorWorkspace.workspace_id,
-                            activeFilePreview.entry,
-                            activeFilePreview.fragment,
-                          );
-                      }}
                       onOpenDiffFile={openDiffFileInExplorer}
-                      onOpenDocument={(path, fragment) => {
-                        if (inspectorWorkspace)
-                          openFileExplorerFile(
-                            inspectorWorkspace.workspace_id,
-                            fileEntryForPath(path),
-                            undefined,
-                            fragment,
-                          );
-                      }}
                       onViewChange={setInspectorView}
                       onDockChange={setInspectorDock}
                       onExpandedChange={setInspectorExpanded}

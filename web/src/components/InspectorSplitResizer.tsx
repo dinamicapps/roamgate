@@ -7,6 +7,7 @@ import {
   DEFAULT_INSPECTOR_NAVIGATION_RATIO,
   inspectorNavigationRatioAtPosition,
 } from "../workspaceResource";
+import "./InspectorSplitResizer.css";
 
 export const INSPECTOR_RESOURCE_HORIZONTAL_PADDING = 16;
 

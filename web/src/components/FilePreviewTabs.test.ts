@@ -14,6 +14,7 @@ import { FilePreviewTabs } from "./FilePreviewTabs";
 import { AnnotationComposerPopover } from "./AnnotationComposerPopover";
 import {
   closeResourceFileTab,
+  openResourceFileTab,
   type ResourceFileTabs,
 } from "../workspaceResource";
 
@@ -271,7 +272,7 @@ function registerDomTests() {
     });
   });
 
-  test("Inspector restores Files and preserves a newer selection during deletion", async () => {
+  test("Files restores the active tab and preserves a newer selection during deletion", async () => {
     let deleteFixture = () => {};
     mock.module("./FileExplorerDialog", () => ({
       FileExplorerPanel: ({
@@ -293,120 +294,75 @@ function registerDomTests() {
         );
       },
     }));
-    const { WorkspaceInspectorHost } = await import("./WorkspaceInspectorHost");
+    const { WorkspaceFilesView } = await import("./WorkspaceFilesView");
     const { roamgateLocalStorage } = await import("../browserStorage");
-    const {
-      readResourceFileTabs,
-      writeResourceFileTabs,
-      writeResourceFileSelection,
-    } = await import("../workspaceResource");
+    const { readResourceFileTabs, writeResourceFileTabs } = await import(
+      "../workspaceResource"
+    );
     const scope = {
       kind: "workspace" as const,
       connectionId: "legacy-default",
       workspaceId: "tabs-test",
     };
-    writeResourceFileTabs(roamgateLocalStorage, scope, {
+    const tabsStore = {
+      read: () => readResourceFileTabs(roamgateLocalStorage, scope),
+      write: (tabs: ResourceFileTabs) =>
+        writeResourceFileTabs(roamgateLocalStorage, scope, tabs),
+    };
+    tabsStore.write({
       paths: ["a.ts", "b.ts"],
       activePath: "a.ts",
       previewPath: null,
     });
     const request = { current: 4 };
     const selections: string[] = [];
-    function InspectorHarness({
-      initialDirectory,
-    }: {
-      initialDirectory?: string;
-    }) {
-      const [view, setView] = useState<"files" | "changes">(
-        initialDirectory === undefined ? "changes" : "files",
-      );
+    function FilesHarness({ initialDirectory }: { initialDirectory?: string }) {
+      const [drillIn, setDrillIn] = useState(false);
       const [selection, setSelection] = useState<
         import("./FilePreviewContent").ActiveFilePreviewSelection
       >({ entry: null, preview: null, loading: false, error: null });
-      return createElement(WorkspaceInspectorHost, {
-        state: {
+      return createElement(
+        "div",
+        { "data-drill-in": String(drillIn) },
+        createElement(WorkspaceFilesView, {
+          workspaceId: "tabs-test",
           scope,
+          tabsStore,
+          compact: false,
           initialDirectory,
-          open: true,
-          view,
-          dock: "right",
-          size: 520,
-          expanded: false,
-        },
-        visible: false,
-        workspace: {
-          workspace_id: "tabs-test",
-          number: 1,
-          label: "Test",
-          focused: false,
-          pane_count: 0,
-          tab_count: 0,
-          agent_status: "unknown",
-        },
-        fileSelection: selection,
-        previewRequestRef: request,
-        diffSelection: {
-          entry: null,
-          file: null,
-          loading: false,
-          error: null,
-          entries: [],
-          files: {},
-          fileErrors: {},
-          summaryLoading: false,
-        },
-        connectionClient: {
-          connectionId: "legacy-default",
-          generation: 1,
-          serverRuntimeGeneration: null,
-          isCurrent: () => false,
-          acceptsServerGeneration: () => false,
-          call: async () => null,
-        },
-        onSelectFileTab: (path) => {
-          selections.push(path);
-          request.current += 1;
-          writeResourceFileSelection(roamgateLocalStorage, scope, path);
-          setSelection({
-            entry: {
-              path,
-              name: path,
-              type: "file",
-              size: 0,
-              mtime_ms: 0,
-              hidden: false,
-            },
-            preview: null,
-            loading: true,
-            error: null,
-          });
-        },
-        onFileSelectionChange: setSelection,
-        onViewChange: (next) => setView(next === "files" ? "files" : "changes"),
-        onDiffSelectionChange: () => {},
-        onOpenDocument: () => {},
-        onRefreshFile: () => {},
-        onOpenDiffFile: () => {},
-        annotations: [],
-        onCreateAnnotation: () => {},
-        onReanchorFileAnnotations: () => {},
-        onReanchorDiffAnnotations: () => {},
-        onEditAnnotation: () => {},
-        onDockChange: () => {},
-        onExpandedChange: () => {},
-        onClose: () => {},
-        onBack: () => {},
-      });
+          drillIn,
+          onDrillInChange: setDrillIn,
+          fileSelection: selection,
+          onSelectFileTab: (path) => {
+            selections.push(path);
+            request.current += 1;
+            tabsStore.write(openResourceFileTab(tabsStore.read(), path));
+            setSelection({
+              entry: {
+                path,
+                name: path,
+                type: "file",
+                size: 0,
+                mtime_ms: 0,
+                hidden: false,
+              },
+              preview: null,
+              loading: true,
+              error: null,
+            });
+          },
+          previewRequestRef: request,
+          onFileSelectionChange: setSelection,
+          onOpenDocument: () => {},
+          onRefreshFile: () => {},
+          annotations: [],
+          onCreateAnnotation: () => {},
+          onReanchorAnnotations: () => {},
+          onClose: () => {},
+        }),
+      );
     }
-    await mount(createElement(InspectorHarness, {}));
-    expect(selections).toEqual([]);
-    await act(async () =>
-      container
-        .querySelector<HTMLButtonElement>(
-          '.workspace-inspector-tabs [role="tab"]',
-        )!
-        .click(),
-    );
+    await mount(createElement(FilesHarness, {}));
     expect(selections).toEqual(["a.ts"]);
     const pendingDelete = deleteFixture;
     await act(async () => key(tab("a.ts"), "ArrowRight"));
@@ -427,14 +383,14 @@ function registerDomTests() {
       previewPath: null,
     });
     expect(selections).toEqual(["a.ts", "b.ts"]);
-    writeResourceFileTabs(roamgateLocalStorage, scope, {
+    tabsStore.write({
       paths: ["a.ts"],
       activePath: "a.ts",
       previewPath: null,
     });
     await act(async () =>
       root.render(
-        createElement(InspectorHarness, {
+        createElement(FilesHarness, {
           key: "directory",
           initialDirectory: "src",
         }),
@@ -442,9 +398,72 @@ function registerDomTests() {
     );
     expect(tab("a.ts").getAttribute("aria-selected")).toBe("true");
     expect(
-      container
-        .querySelector(".workspace-inspector")
-        ?.classList.contains("has-detail"),
-    ).toBe(false);
+      container.querySelector("[data-drill-in]")?.getAttribute("data-drill-in"),
+    ).toBe("false");
+  });
+
+  test("Inspector offers only Changes, Commits and History", async () => {
+    const { WorkspaceInspectorHost } = await import("./WorkspaceInspectorHost");
+    await mount(
+      createElement(WorkspaceInspectorHost, {
+        state: {
+          scope: {
+            kind: "workspace",
+            connectionId: "legacy-default",
+            workspaceId: "tabs-test",
+          },
+          open: true,
+          view: "changes",
+          dock: "right",
+          size: 520,
+          expanded: false,
+        },
+        visible: false,
+        workspace: {
+          workspace_id: "tabs-test",
+          number: 1,
+          label: "Test",
+          focused: false,
+          pane_count: 0,
+          tab_count: 0,
+          agent_status: "unknown",
+        },
+        diffSelection: {
+          entry: null,
+          file: null,
+          loading: false,
+          error: null,
+          entries: [],
+          files: {},
+          fileErrors: {},
+          summaryLoading: false,
+        },
+        connectionClient: {
+          connectionId: "legacy-default",
+          generation: 1,
+          serverRuntimeGeneration: null,
+          isCurrent: () => false,
+          acceptsServerGeneration: () => false,
+          call: async () => null,
+        },
+        onDiffSelectionChange: () => {},
+        onOpenDiffFile: () => {},
+        annotations: [],
+        onCreateAnnotation: () => {},
+        onReanchorDiffAnnotations: () => {},
+        onEditAnnotation: () => {},
+        onViewChange: () => {},
+        onDockChange: () => {},
+        onExpandedChange: () => {},
+        onClose: () => {},
+        onBack: () => {},
+      }),
+    );
+    expect(
+      [
+        ...container.querySelectorAll('.workspace-inspector-tabs [role="tab"]'),
+      ].map((button) => button.textContent?.trim()),
+    ).toEqual(["Changes", "Commits", "History"]);
+    expect(container.querySelector(".inspector-files-resource")).toBeNull();
   });
 }

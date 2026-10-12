@@ -147,59 +147,6 @@
   overflow: hidden;
 }
 
-.workspace-inspector-resource {
-  min-width: 0;
-  min-height: 0;
-  flex: 1 1 auto;
-  display: grid;
-  grid-template-columns: minmax(240px, 0.8fr) minmax(300px, 1.2fr);
-  gap: 8px;
-  padding: 8px;
-  overflow: hidden;
-}
-
-.workspace-inspector-resource.has-split-resizer {
-  grid-template-columns:
-    clamp(
-      240px,
-      var(--workspace-inspector-navigation-width, 40%),
-      calc(100% - 308px)
-    )
-    8px minmax(300px, 1fr);
-  gap: 0;
-}
-
-.workspace-inspector-split-resizer {
-  position: relative;
-  z-index: 2;
-  width: 8px;
-  min-width: 8px;
-  cursor: col-resize;
-  touch-action: none;
-  user-select: none;
-}
-
-.workspace-inspector-split-resizer::before {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 3px;
-  width: 2px;
-  border-radius: 2px;
-  background: var(--viewer-border);
-  content: "";
-  transition: background 120ms ease;
-}
-
-.workspace-inspector-split-resizer:hover::before,
-.workspace-inspector-split-resizer:focus-visible::before {
-  background: var(--accent);
-}
-
-.workspace-inspector-split-resizer:focus-visible {
-  outline: none;
-}
-
 .workspace-inspector-resource.is-hidden {
   display: none;
 }
@@ -219,19 +166,6 @@
 
 .workspace-inspector-resource.inspector-history-resource.is-hidden {
   display: none;
-}
-
-.workspace-inspector-navigation,
-.workspace-inspector-detail {
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  overflow: hidden;
-}
-
-.workspace-inspector-navigation > *,
-.workspace-inspector-detail > * {
-  flex: 1 1 auto;
 }
 
 .workspace-inspector-unavailable {
@@ -349,17 +283,10 @@
     display: none;
   }
 
-  /* The bottom mobile nav already switches between Files/Changes/Commits/History
+  /* The bottom mobile nav already switches between Changes/Commits/History
      and highlights the active view, so the in-inspector tab bar only costs
      vertical space on phones. */
   .workspace-inspector-tabs {
     display: none;
   }
-}
-
-.workspace-inspector-file-detail {
-  flex-direction: column;
-}
-.workspace-inspector-file-detail > .file-preview-tabs {
-  flex: 0 0 auto;
 }

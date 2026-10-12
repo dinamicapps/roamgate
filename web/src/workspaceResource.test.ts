@@ -17,6 +17,7 @@ import {
   inspectorMaximumSize,
   inspectorNavigationRatioAtPosition,
   isWorkspaceInspectorShortcut as resolveShortcut,
+  preferencesStorageKey,
   INSPECTOR_SEPARATOR_SIZE,
   readInspectorPreferences,
   readResourceFileSelection,
@@ -161,11 +162,11 @@ describe("workspace resource scope", () => {
       expanded: false,
     });
     expect(readInspectorPreferences(storage, main)).toMatchObject({
-      view: "files",
+      view: "changes",
       dock: "right",
     });
     expect(readInspectorPreferences(storage, docs)).toMatchObject({
-      view: "files",
+      view: "changes",
       dock: "right",
     });
   });
@@ -258,7 +259,7 @@ describe("workspace resource scope", () => {
       size: 410,
       expanded: false,
     });
-    writeInspectorNavigationRatio(storage, scopeA, "files", 0.56);
+    writeInspectorNavigationRatio(storage, scopeA, 0.56);
     expect(
       writeReviewAnnotations(storage, annotationDraftStorageKey(scopeA), [
         draft,
@@ -272,9 +273,9 @@ describe("workspace resource scope", () => {
     for (const isolated of [scopeB, sibling]) {
       expect(readResourceFileSelection(storage, isolated)).toBeUndefined();
       expect(readInspectorPreferences(storage, isolated)).toMatchObject({
-        view: "files",
+        view: "changes",
         dock: "right",
-        filesNavigationRatio: 0.4,
+        changesNavigationRatio: 0.4,
       });
       expect(
         readReviewAnnotations(storage, annotationDraftStorageKey(isolated)),
@@ -284,7 +285,7 @@ describe("workspace resource scope", () => {
     }
     expect(resolveWorkspaceForScope(scopeA, [hostB])).toBeUndefined();
     writeResourceFileSelection(storage, scopeB, "host-b.md");
-    writeInspectorNavigationRatio(storage, scopeB, "files", 0.65);
+    writeInspectorNavigationRatio(storage, scopeB, 0.65);
     writeReviewAnnotations(storage, annotationDraftStorageKey(scopeB), [
       { ...draft, id: "host-b-draft", comment: "Review on host B" },
     ]);
@@ -302,16 +303,16 @@ describe("workspace resource scope", () => {
         view: "changes",
         dock: "bottom",
         bottomSize: 410,
-        filesNavigationRatio: 0.56,
+        changesNavigationRatio: 0.56,
       });
       expect(
         readReviewAnnotations(storage, annotationDraftStorageKey(restored)),
       ).toEqual([draft]);
     }
     expect(readResourceFileSelection(storage, scopeB)).toBe("host-b.md");
-    expect(readInspectorPreferences(storage, scopeB).filesNavigationRatio).toBe(
-      0.65,
-    );
+    expect(
+      readInspectorPreferences(storage, scopeB).changesNavigationRatio,
+    ).toBe(0.65);
     expect(
       readReviewAnnotations(storage, annotationDraftStorageKey(scopeB))[0]
         ?.comment,
@@ -347,7 +348,7 @@ describe("workspace resource scope", () => {
     expect(readResourceFileSelection(storage, scope)).toBeUndefined();
     expect(readInspectorPreferences(storage, scope)).toMatchObject({
       dock: "right",
-      view: "files",
+      view: "changes",
     });
     expect(
       storage.getItem("workspaceInspectorFile:checkout:local:repo-key"),
@@ -410,22 +411,21 @@ describe("workspace resource scope", () => {
     );
   });
 
-  test("restores maximized state without losing dock sizes or either list width", () => {
+  test("restores maximized state without losing dock sizes or both list widths", () => {
     const storage = memoryStorage();
     const scope = resourceScopeForWorkspace("local", workspace("w1"));
     const state: WorkspaceInspectorState = {
       scope,
       open: true,
-      view: "files",
+      view: "changes",
       dock: "right",
       size: 610,
       expanded: false,
     };
     writeInspectorPreferences(storage, state);
-    writeInspectorNavigationRatio(storage, scope, "files", 0.55);
+    writeInspectorNavigationRatio(storage, scope, 0.55);
     writeInspectorPreferences(storage, { ...state, expanded: true });
-    writeInspectorNavigationRatio(storage, scope, "files", 0.27, true);
-    writeInspectorNavigationRatio(storage, scope, "changes", 0.3, true);
+    writeInspectorNavigationRatio(storage, scope, 0.3, true);
     writeInspectorPreferences(storage, {
       ...state,
       open: false,
@@ -434,15 +434,15 @@ describe("workspace resource scope", () => {
     expect(readInspectorPreferences(storage, scope)).toMatchObject({
       expanded: true,
       rightSize: 610,
-      filesNavigationRatio: 0.55,
-      expandedNavigationRatios: { files: 0.27, changes: 0.3 },
+      changesNavigationRatio: 0.55,
+      expandedNavigationRatios: { changes: 0.3 },
     });
     writeInspectorPreferences(storage, { ...state, dock: "bottom", size: 380 });
     expect(readInspectorPreferences(storage, scope)).toMatchObject({
       expanded: false,
       rightSize: 610,
       bottomSize: 380,
-      expandedNavigationRatios: { files: 0.27, changes: 0.3 },
+      expandedNavigationRatios: { changes: 0.3 },
     });
     const other = resourceScopeForWorkspace("remote", workspace("w1"));
     expect(readInspectorPreferences(storage, other)).toMatchObject({
@@ -520,17 +520,41 @@ describe("workspace resource scope", () => {
         .bottomSize,
     ).toBe(360);
 
-    writeInspectorNavigationRatio(storage, scope, "files", 0.56);
-    expect(readInspectorPreferences(storage, scope).filesNavigationRatio).toBe(
-      0.56,
-    );
+    writeInspectorNavigationRatio(storage, scope, 0.56);
+    expect(
+      readInspectorPreferences(storage, scope).changesNavigationRatio,
+    ).toBe(0.56);
 
     writeInspectorPreferences(storage, { ...state, view: "history" });
     expect(readInspectorPreferences(storage, scope)).toMatchObject({
       view: "history",
-      filesNavigationRatio: 0.56,
-      changesNavigationRatio: 0.4,
+      filesNavigationRatio: 0.4,
+      changesNavigationRatio: 0.56,
     });
+  });
+
+  test("reads a stored Files view as Changes without rewriting storage", () => {
+    const storage = memoryStorage();
+    const scope = resourceScopeForWorkspace("local", workspace("w1"));
+    const stored = JSON.stringify({
+      view: "files",
+      dock: "bottom",
+      filesNavigationRatio: 0.6,
+      expandedNavigationRatios: { files: 0.25, changes: 0.35 },
+    });
+    storage.setItem(preferencesStorageKey(scope), stored);
+    expect(readInspectorPreferences(storage, scope)).toMatchObject({
+      view: "changes",
+      dock: "bottom",
+      filesNavigationRatio: 0.6,
+      expandedNavigationRatios: { changes: 0.35 },
+    });
+    expect(storage.getItem(preferencesStorageKey(scope))).toBe(stored);
+
+    writeInspectorNavigationRatio(storage, scope, 0.45);
+    expect(
+      JSON.parse(storage.getItem(preferencesStorageKey(scope)) ?? "{}"),
+    ).toMatchObject({ view: "changes", filesNavigationRatio: 0.6 });
   });
 
   test("restores the commits tab only for its checkout", () => {
@@ -553,7 +577,7 @@ describe("workspace resource scope", () => {
         storage,
         resourceScopeForWorkspace("remote", workspace("w1", "/repo", "repo")),
       ).view,
-    ).toBe("files");
+    ).toBe("changes");
   });
 });
 

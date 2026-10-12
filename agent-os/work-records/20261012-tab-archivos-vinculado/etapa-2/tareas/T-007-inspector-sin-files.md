@@ -28,7 +28,7 @@ cas:
   - CA-26
 depende_de:
   - T-004
-ejecutor: null
+ejecutor: amelia
 evidencia_requerida:
   api: false
   bd: false
@@ -37,7 +37,7 @@ evidencia_requerida:
 fase: 5
 file_type: tarea-etapa-2
 standards_cargados: []
-status: pending
+status: done
 tipo_tarea: codigo
 verificador: null
 ---
@@ -70,3 +70,25 @@ Retirar la vista Files del Inspector una vez que el tab de archivos ya cubre tod
 | CA-24 | ESC_P5_toggle_sin_files: el Inspector no ofrece Files | DEC_D3_quitar_files_inspector_view |
 | CA-25 | ESC_P5_worktree_files: la accion de archivos del ciclo de worktree abre el tab de archivos | DEC_D3_quitar_files_inspector_view |
 | CA-26 | ESC_P2_ver_cambios: ver cambios de un archivo abre el Inspector en Changes al costado | DEC_D8_inspector_changes |
+
+## Ejecutor: amelia
+
+### Que hizo
+
+- InspectorView queda en changes/commits/history; readInspectorPreferences sanea files a changes al leer sin reescribir (REG_saneo_view_files).
+- El Inspector ya no monta WorkspaceFilesView; se retiraron el store de pestanas, el drill-in y los ratios de Files y sus props.
+- Worktrees: WORKSPACE_INSPECTOR_REQUEST_EVENT con files abre el tab de archivos de la consola activa (CA-25).
+- Ver cambios: el boton Changes del preview abre el Inspector en Changes con el archivo seleccionado via changesRequest; el tab sigue visible (CA-26).
+- CSS del split en una sola copia (InspectorSplitResizer.css); superficie mobile sin borde ni radio; restos muertos eliminados en App.tsx.
+- Pruebas: saneo files->changes, Inspector con 3 vistas y WorkspaceFilesView montado directo; suite 1267 pass, 9 fail previas.
+- Navegador (anfitriona): Inspector con Changes/Commits/History y Changes desde el preview selecciona el archivo; capturas CA-24-antes/despues.
+
+### Hallazgos
+
+| # | Hallazgo | Solucion | Decidio |
+|---|----------|----------|---------|
+| 1 | El diff en Changes muestra invalid Git patch size (server/src/workspace/git-diff.ts:408): el script sh del servidor falla en este Windows | Previo y fuera de alcance (no se toco server/); se registra en post-works | amelia |
+| 2 | La prop embedded de DiffContentView (DiffContentView.tsx:826,856,874,1019; diffContentState.ts:39-50) quedo sin llamador en true | Codigo muerto fuera de los archivos de la tarea; se registra en post-works | amelia |
+| 3 | Al borrar un worktree se escribe aun workspaceInspectorFile:{owner} (App.tsx:2848), clave ya legada | Inocuo; se registra en post-works junto con read/writeResourceFileSelection | amelia |
+| 4 | Archivos reales 17 vs 6 declarados (CSS consolidado, FilePreviewContent, worktrees) | Derivados del mandato (puntos 5 y 6) y de quitar codigo sin uso; sin lote paralelo | amelia |
+| 5 | CA-23 y CA-25 no ejercitados en navegador | CA-23 cubierto por prueba unitaria; CA-25 en verificacion manual de E4 | amelia |
