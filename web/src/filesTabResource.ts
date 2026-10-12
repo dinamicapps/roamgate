@@ -6,6 +6,7 @@ import {
 import {
   finiteNavigationRatio,
   readResourceFileTabs,
+  relativePathWithinCheckout,
   writeResourceFileTabs,
   type ResourceFileTabs,
   type ResourceScope,
@@ -19,6 +20,11 @@ export const MAX_FILES_TAB_FILES = 20;
 export interface FilesTabLink {
   workspaceId: string;
   scopeOwner: string;
+  /**
+   * The console's absolute cwd at creation. Its root is only known once the
+   * server answers, so `initialDirectory` is derived from it then, once.
+   */
+  initialCwd?: string;
   initialDirectory: string | null;
   navigationRatio: number;
   expandedNavigationRatio?: number;
@@ -101,6 +107,7 @@ function sanitizeFilesTabLink(value: unknown): FilesTabLink | null {
         : null,
     navigationRatio: finiteNavigationRatio(entry.navigationRatio),
   };
+  if (nonEmptyString(entry.initialCwd)) link.initialCwd = entry.initialCwd;
   if (
     typeof entry.expandedNavigationRatio === "number" &&
     Number.isFinite(entry.expandedNavigationRatio)
@@ -207,6 +214,30 @@ export function updateFilesTabLinkRatios(
               ratios.expandedNavigationRatio,
             ),
           }),
+    };
+    return true;
+  });
+  return links?.[ownerTabId] ?? null;
+}
+
+/**
+ * Settles a pending start directory against the console's root: the cwd
+ * relative to it, or the root itself when the cwd lies outside.
+ */
+export function resolveFilesTabLinkInitialDirectory(
+  storage: StorageWriter,
+  connectionId: string,
+  ownerTabId: string,
+  checkoutPath: string,
+): FilesTabLink | null {
+  const links = mergeFilesTabLinks(storage, connectionId, (current) => {
+    const link = current[ownerTabId];
+    if (!link?.initialCwd || !checkoutPath) return false;
+    const { initialCwd, ...rest } = link;
+    current[ownerTabId] = {
+      ...rest,
+      initialDirectory:
+        relativePathWithinCheckout(checkoutPath, initialCwd) ?? null,
     };
     return true;
   });

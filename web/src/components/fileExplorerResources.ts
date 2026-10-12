@@ -75,6 +75,24 @@ const MAX_PREVIEW_CACHE_BYTES = 16 * 1024 * 1024;
 let previewCacheBytes = 0;
 let previewResourceRevision = 0;
 export const FILE_SHOW_HIDDEN_PREFIX = "fileExplorerShowHidden:";
+const EXPLORER_TAB_ROOT_SEPARATOR = "#tab:";
+
+/**
+ * A files tab roots its explorer at its own console (`tab_id`), so its tree
+ * lives apart from the workspace's and from every other console's.
+ */
+export function explorerRootResourceKey(
+  resourceKey: string | undefined,
+  rootTabId?: string,
+) {
+  return rootTabId && resourceKey
+    ? `${resourceKey}${EXPLORER_TAB_ROOT_SEPARATOR}${rootTabId}`
+    : resourceKey;
+}
+
+export function explorerRootParams(rootTabId?: string) {
+  return rootTabId ? { tab_id: rootTabId } : {};
+}
 
 export function explorerRuntimeContextKey(
   client: Pick<ConnectionClient, "connectionId" | "generation">,
@@ -127,6 +145,21 @@ export function clearFileExplorerResourceCache(
   for (const showHidden of [false, true]) {
     const key = explorerCacheKey(client, undefined, showHidden, resourceKey);
     retireExplorerCache(key);
+  }
+  const tabRootPrefix = `${resourceKey}${EXPLORER_TAB_ROOT_SEPARATOR}`;
+  for (const key of new Set([
+    ...explorerCache.keys(),
+    ...explorerCacheRevisions.keys(),
+  ])) {
+    const parts = JSON.parse(key) as unknown[];
+    if (
+      parts[0] === client.connectionId &&
+      parts[1] === client.generation &&
+      parts[2] === "explorer" &&
+      typeof parts[3] === "string" &&
+      parts[3].startsWith(tabRootPrefix)
+    )
+      retireExplorerCache(key);
   }
   retireGitDiffSummaryResource(client, resourceKey);
   storage.removeItem(
@@ -194,12 +227,14 @@ export function filePreviewCacheKey(
   client: Pick<ConnectionClient, "connectionId" | "generation">,
   workspaceId: string | undefined,
   path: string,
+  rootTabId?: string,
 ) {
   return connectionClientScopeKey(
     client,
     "preview",
     workspaceId ?? "focused",
     path,
+    ...(rootTabId ? [rootTabId] : []),
   );
 }
 
@@ -518,13 +553,13 @@ export function buildGitStatusMaps(
 export function requestFilePreview(
   workspaceId: string,
   path: string,
-  options: { refresh?: boolean; client: ConnectionClient },
+  options: { refresh?: boolean; client: ConnectionClient; rootTabId?: string },
 ) {
   const client = options.client;
   if (!client.isCurrent()) {
     return Promise.reject(new Error("connection changed during file preview"));
   }
-  const key = filePreviewCacheKey(client, workspaceId, path);
+  const key = filePreviewCacheKey(client, workspaceId, path, options.rootTabId);
   const cached = readCachedPreview(key);
   if (cached && !options.refresh) return Promise.resolve(cached);
   const running = previewRequests.get(key);
@@ -535,6 +570,7 @@ export function requestFilePreview(
   const task = client.call("file.read", {
     workspace_id: workspaceId,
     path,
+    ...explorerRootParams(options.rootTabId),
   }) as Promise<FilePreview>;
   const scopedTask = task
     .then((preview) => {
@@ -596,6 +632,7 @@ export function loadFilePreviewSelection(
   fragment: string | undefined,
   requestRef: { current: number },
   apply: (selection: ActiveFilePreviewSelection) => void,
+  rootTabId?: string,
 ): void {
   const requestId = requestRef.current + 1;
   requestRef.current = requestId;
@@ -604,7 +641,11 @@ export function loadFilePreviewSelection(
     if (!client.isCurrent() || requestRef.current !== requestId) return;
     apply({ ...selection, entry, fragment });
   };
-  void requestFilePreview(workspaceId, entry.path, { client, refresh: true })
+  void requestFilePreview(workspaceId, entry.path, {
+    client,
+    refresh: true,
+    rootTabId,
+  })
     .then((preview) => settle({ preview, loading: false, error: null }))
     .catch((error) =>
       settle({
@@ -620,6 +661,7 @@ export async function uploadExplorerFile(
   workspaceId: string,
   directory: string,
   file: File,
+  rootTabId?: string,
 ) {
   if (!client.isCurrent()) throw new Error("connection changed during upload");
   const url = new URL(
@@ -633,6 +675,7 @@ export async function uploadExplorerFile(
   if (url.origin !== window.location.origin)
     throw new Error("invalid upload origin");
   url.searchParams.set("workspace_id", workspaceId);
+  if (rootTabId) url.searchParams.set("tab_id", rootTabId);
   url.searchParams.set("directory", directory);
   url.searchParams.set("filename", file.name);
   const response = await fetch(url, {
@@ -663,6 +706,7 @@ export async function deleteExplorerEntry(
   client: ConnectionClient,
   workspaceId: string,
   path: string,
+  rootTabId?: string,
 ) {
   if (!client.isCurrent()) throw new Error("connection changed during delete");
   const url = new URL(
@@ -676,6 +720,7 @@ export async function deleteExplorerEntry(
   if (url.origin !== window.location.origin)
     throw new Error("invalid delete origin");
   url.searchParams.set("workspace_id", workspaceId);
+  if (rootTabId) url.searchParams.set("tab_id", rootTabId);
   url.searchParams.set("path", path);
   const response = await fetch(url, { method: "POST" });
   const text = await response.text();

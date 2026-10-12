@@ -292,11 +292,16 @@ export function FilePreviewContent({
       connectionClient,
       preview.workspace_id,
       previewPath,
-      { inline: true, revision: preview.resource_revision },
+      {
+        inline: true,
+        revision: preview.resource_revision,
+        tabId: preview.tab_id,
+      },
     );
   }, [
     connectionClient,
     preview?.resource_revision,
+    preview?.tab_id,
     preview?.workspace_id,
     previewPath,
   ]);
@@ -309,10 +314,12 @@ export function FilePreviewContent({
         connectionClient,
         preview.workspace_id,
         preview.resource_revision,
+        preview.tab_id,
       );
   }, [
     connectionClient,
     preview?.resource_revision,
+    preview?.tab_id,
     preview?.workspace_id,
     previewPath,
     markdownDocumentPath,
@@ -320,8 +327,10 @@ export function FilePreviewContent({
   const markdownLinkUrlResolver = useMemo(() => {
     if (!preview?.workspace_id) return undefined;
     return (path: string) =>
-      workspaceFileUrl(connectionClient, preview.workspace_id, path);
-  }, [connectionClient, preview?.workspace_id]);
+      workspaceFileUrl(connectionClient, preview.workspace_id, path, {
+        tabId: preview.tab_id,
+      });
+  }, [connectionClient, preview?.tab_id, preview?.workspace_id]);
   const directoryPath = directoryPreviewPath(preview);
   const directoryWorkspaceRoot = directoryPath
     ? workspaces.some((workspace) => {

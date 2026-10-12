@@ -46,6 +46,8 @@ export type WorkspaceFilesViewProps = {
   // whenever it changes.
   tabsStore: FileTabsStore;
   compact: boolean;
+  rootTabId?: string;
+  onRootChange?: (checkoutPath: string) => void;
   initialDirectory?: string;
   split?: WorkspaceFilesSplit;
   drillIn: boolean;
@@ -71,6 +73,8 @@ export function WorkspaceFilesView({
   scope,
   tabsStore,
   compact,
+  rootTabId,
+  onRootChange,
   initialDirectory,
   split,
   drillIn,
@@ -177,6 +181,8 @@ export function WorkspaceFilesView({
           open
           workspaceId={workspaceId}
           resourceKey={resourceKey}
+          rootTabId={rootTabId}
+          onRootChange={onRootChange}
           initialDirectory={initialDirectory}
           activePath={fileSelection.entry?.path}
           previewRequestRef={previewRequestRef}

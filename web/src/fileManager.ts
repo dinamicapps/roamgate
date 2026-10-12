@@ -48,10 +48,12 @@ export async function revealInFileManager(
   workspaceId: string,
   path: string,
   source?: "changes",
+  rootTabId?: string,
 ) {
   try {
     await client.call("file.reveal", {
       workspace_id: workspaceId,
+      ...(rootTabId ? { tab_id: rootTabId } : {}),
       path,
       ...(source === "changes"
         ? { source }

@@ -10,6 +10,7 @@ import {
   readFilesTabLinks,
   reconcileFilesTabLinks,
   removeFilesTabLink,
+  resolveFilesTabLinkInitialDirectory,
   subscribeFilesTabStorage,
   updateFilesTabLinkRatios,
   writeFilesTabFiles,
@@ -154,6 +155,67 @@ describe("filesTabLinks storage", () => {
     expect(second).toEqual({ link: first.link, created: false });
     expect(second.link.initialDirectory).toBe("src");
     expect(calls).toBe(1);
+  });
+
+  test("derives the start directory from the console root once", () => {
+    const storage = memoryStorage();
+    obtainFilesTabLink(
+      storage,
+      "alpha",
+      "w1:t1",
+      init({ initialCwd: "C:\\repo\\web\\src", initialDirectory: null }),
+    );
+    obtainFilesTabLink(
+      storage,
+      "alpha",
+      "w1:t2",
+      init({ initialCwd: "/tmp/scratch", initialDirectory: null }),
+    );
+    expect(readFilesTabLinks(storage, "alpha")["w1:t1"]).toMatchObject({
+      initialCwd: "C:\\repo\\web\\src",
+      initialDirectory: null,
+    });
+
+    const resolved = resolveFilesTabLinkInitialDirectory(
+      storage,
+      "alpha",
+      "w1:t1",
+      "C:/repo",
+    );
+    expect(resolved?.initialDirectory).toBe("web/src");
+    expect(resolved).not.toHaveProperty("initialCwd");
+    // Settled: a later root (focus moved, repository changed) is ignored.
+    expect(
+      resolveFilesTabLinkInitialDirectory(storage, "alpha", "w1:t1", "C:/"),
+    ).toEqual(resolved);
+    expect(readFilesTabLinks(storage, "alpha")["w1:t1"]).toEqual(resolved!);
+
+    // A cwd outside the root opens the root.
+    expect(
+      resolveFilesTabLinkInitialDirectory(storage, "alpha", "w1:t2", "/repo"),
+    ).toMatchObject({ initialDirectory: null });
+  });
+
+  test("reads links persisted before initialCwd existed", () => {
+    const storage = memoryStorage({
+      [filesTabLinksStorageKey("alpha")]: JSON.stringify({
+        version: 1,
+        links: {
+          "w1:t1": {
+            workspaceId: "w1",
+            scopeOwner: "workspace:w1",
+            initialDirectory: "docs",
+            navigationRatio: 0.3,
+          },
+        },
+      }),
+    });
+    const link = readFilesTabLinks(storage, "alpha")["w1:t1"];
+    expect(link).toMatchObject({ initialDirectory: "docs" });
+    expect(link).not.toHaveProperty("initialCwd");
+    expect(
+      resolveFilesTabLinkInitialDirectory(storage, "alpha", "w1:t1", "/repo"),
+    ).toEqual(link!);
   });
 
   test("explicit close removes the link and its file tabs", () => {

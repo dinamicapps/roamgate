@@ -55,6 +55,7 @@ export function FilesTabSurface({
   onReanchorAnnotations,
   onOpenFileChanges,
   onNavigationRatioCommit,
+  onInitialDirectoryRoot,
   onShowConsole,
   filesRevision,
   openRequest,
@@ -71,6 +72,8 @@ export function FilesTabSurface({
   onReanchorAnnotations: (path: string, text: string) => void;
   onOpenFileChanges: (entries: GitDiffEntry[]) => void;
   onNavigationRatioCommit: (ratio: number) => void;
+  /** Receives the console's root while the link's start directory is pending. */
+  onInitialDirectoryRoot: (ownerTabId: string, checkoutPath: string) => void;
   onShowConsole: () => void;
   /** Bumped when another browser tab rewrote this link's file tabs. */
   filesRevision: number;
@@ -122,8 +125,13 @@ export function FilesTabSurface({
         fragment,
         previewRequestRef,
         applySelection,
+        ownerTabId,
       ),
-    [applySelection, connectionClient, workspaceId],
+    [applySelection, connectionClient, ownerTabId, workspaceId],
+  );
+  const settleInitialDirectory = useCallback(
+    (checkoutPath: string) => onInitialDirectoryRoot(ownerTabId, checkoutPath),
+    [onInitialDirectoryRoot, ownerTabId],
   );
   const selectFileTab = useCallback(
     (path: string) => loadPreview(fileEntryForPath(path)),
@@ -191,6 +199,8 @@ export function FilesTabSurface({
         scope={scope}
         tabsStore={tabsStore}
         compact={compact}
+        rootTabId={ownerTabId}
+        onRootChange={link.initialCwd ? settleInitialDirectory : undefined}
         initialDirectory={link.initialDirectory ?? undefined}
         split={
           splitEnabled

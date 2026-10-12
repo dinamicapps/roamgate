@@ -1354,6 +1354,7 @@ async function handleConnectionHttpRequest(
       try {
         response = await connection.files.downloadWorkspaceFile({
           workspace_id: url.searchParams.get("workspace_id"),
+          tab_id: url.searchParams.get("tab_id"),
           path: url.searchParams.get("path"),
           scope: url.searchParams.get("scope"),
           inline: url.searchParams.get("inline") === "1",
@@ -1368,6 +1369,7 @@ async function handleConnectionHttpRequest(
         const result = await connection.files.uploadWorkspaceFile(
           {
             workspace_id: url.searchParams.get("workspace_id"),
+            tab_id: url.searchParams.get("tab_id"),
             directory: url.searchParams.get("directory"),
             filename: url.searchParams.get("filename"),
           },
@@ -1384,6 +1386,7 @@ async function handleConnectionHttpRequest(
       try {
         const result = await connection.files.deleteWorkspaceFile({
           workspace_id: url.searchParams.get("workspace_id"),
+          tab_id: url.searchParams.get("tab_id"),
           path: url.searchParams.get("path"),
         });
         response = Response.json(result);

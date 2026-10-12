@@ -153,6 +153,8 @@ export interface FileExplorerList {
 
 export interface FilePreview {
   workspace_id: string;
+  /** The console whose root resolved this preview, when a files tab asked. */
+  tab_id?: string;
   repo_name?: string;
   checkout_path: string;
   root: string;

@@ -5,11 +5,14 @@ import {
   buildGitStatusMaps,
   clearFileExplorerResourceCache,
   explorerCacheKey,
+  explorerRootResourceKey,
   explorerRuntimeContextKey,
   filePreviewCacheKey,
   invalidateFilePreviewCache,
   prefetchFileExplorerWorkspace,
+  readExplorerCache,
   requestFilePreview,
+  writeExplorerCache,
 } from "./fileExplorerResources";
 
 function preview(label: string): FilePreview {
@@ -149,6 +152,53 @@ describe("connection-scoped file prefetch", () => {
 
     resolvers[1]?.(list);
     await current;
+  });
+});
+
+describe("console-rooted files tab", () => {
+  test("keeps each console's tree apart from the workspace and other consoles", () => {
+    const scopedClient = client("tab-roots", 1, async () => ({}));
+    const owner = "workspace:w1";
+    const first = explorerRootResourceKey(owner, "t1");
+    const second = explorerRootResourceKey(owner, "t2");
+    expect(explorerRootResourceKey(owner)).toBe(owner);
+    expect(new Set([owner, first, second]).size).toBe(3);
+    expect(explorerCacheKey(scopedClient, "w1", false, first)).not.toBe(
+      explorerCacheKey(scopedClient, "w1", false, second),
+    );
+    expect(explorerRuntimeContextKey(scopedClient, "w1", first)).not.toBe(
+      explorerRuntimeContextKey(scopedClient, "w1", second),
+    );
+    expect(filePreviewCacheKey(scopedClient, "w1", "a.ts", "t1")).not.toBe(
+      filePreviewCacheKey(scopedClient, "w1", "a.ts", "t2"),
+    );
+
+    writeExplorerCache(scopedClient, "w1", false, { search: "one" }, first);
+    expect(readExplorerCache(scopedClient, "w1", false, second).search).toBe(
+      "",
+    );
+    // Retiring the workspace resource retires its consoles' trees too.
+    clearFileExplorerResourceCache(scopedClient, owner, {
+      removeItem: () => undefined,
+    });
+    expect(readExplorerCache(scopedClient, "w1", false, first).search).toBe("");
+  });
+
+  test("asks the server for the preview under the console's root", async () => {
+    const calls: unknown[] = [];
+    const scopedClient = client("tab-preview", 1, async (_method, params) => {
+      calls.push(params);
+      return preview("tab");
+    });
+    await requestFilePreview("w1", "a.txt", {
+      client: scopedClient,
+      rootTabId: "t1",
+    });
+    await requestFilePreview("w1", "a.txt", { client: scopedClient });
+    expect(calls).toEqual([
+      { workspace_id: "w1", path: "a.txt", tab_id: "t1" },
+      { workspace_id: "w1", path: "a.txt" },
+    ]);
   });
 });
 

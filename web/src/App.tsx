@@ -172,6 +172,7 @@ import {
   readFilesTabFiles,
   subscribeFilesTabStorage,
   updateFilesTabLinkRatios,
+  resolveFilesTabLinkInitialDirectory,
   writeFilesTabFiles,
   type FilesTabLinks,
 } from "./filesTabResource";
@@ -207,7 +208,6 @@ import {
   openResourceFileTab,
   preferencesStorageKey,
   readInspectorPreferences,
-  relativePathWithinCheckout,
   resolveWorkspaceForScope,
   resourceOwnerKey,
   resourceScopeForWorkspace,
@@ -2367,17 +2367,12 @@ export default function App() {
             (candidate) => candidate.tab_id === ownerTabId && candidate.focused,
           ) ??
           snapshot.panes.find((candidate) => candidate.tab_id === ownerTabId);
-        const root = workspace.worktree?.checkout_path ?? workspace.cwd;
+        const initialCwd = pane?.foreground_cwd || pane?.cwd;
         return {
           workspaceId: workspace.workspace_id,
           scopeOwner: resourceOwnerKey(scope),
-          initialDirectory:
-            (root && pane
-              ? relativePathWithinCheckout(
-                  root,
-                  pane.foreground_cwd ?? pane.cwd,
-                )
-              : undefined) ?? null,
+          ...(initialCwd ? { initialCwd } : {}),
+          initialDirectory: null,
           navigationRatio: readInspectorPreferences(roamgateLocalStorage, scope)
             .filesNavigationRatio,
         };
@@ -2508,6 +2503,19 @@ export default function App() {
         session.connectionId,
         ownerTabId,
         { navigationRatio: ratio },
+      );
+      setFilesTabLinks(session.links());
+    },
+    [filesTabLinkSession],
+  );
+  const resolveFilesTabInitialDirectory = useCallback(
+    (ownerTabId: string, checkoutPath: string) => {
+      const { session } = filesTabLinkSession;
+      resolveFilesTabLinkInitialDirectory(
+        roamgateLocalStorage,
+        session.connectionId,
+        ownerTabId,
+        checkoutPath,
       );
       setFilesTabLinks(session.links());
     },
@@ -4420,6 +4428,7 @@ export default function App() {
                       onReanchorAnnotations={reanchorFilesTabAnnotations}
                       onOpenFileChanges={openFilesTabChanges}
                       onNavigationRatioCommit={commitFilesTabNavigationRatio}
+                      onInitialDirectoryRoot={resolveFilesTabInitialDirectory}
                       onShowConsole={showConsoleSurface}
                       filesRevision={filesTabFilesRevision}
                       openRequest={

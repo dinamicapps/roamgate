@@ -243,6 +243,159 @@ describe("workspace file handlers", () => {
     });
   });
 
+  describe("console-scoped explorer root", () => {
+    const notARepo = {
+      code: 128,
+      stdout: "",
+      stderr: "fatal: not a git repository",
+    };
+
+    // repo/        git toplevel of tab t1's pane (repo/web/src)
+    // scratch/     tab t2's pane cwd, outside any repository
+    async function withConsoles(
+      fn: (fixture: {
+        repo: string;
+        scratch: string;
+        handlers: ReturnType<typeof createFileHandlers>;
+        gitCalls: string[][];
+      }) => Promise<void>,
+      workspace?: (repo: string) => Record<string, unknown>,
+    ) {
+      await withTempDir(async (dir) => {
+        const repo = join(dir, "repo");
+        const scratch = join(dir, "scratch");
+        const nested = join(repo, "web", "src");
+        await mkdir(nested, { recursive: true });
+        await mkdir(scratch);
+        await writeFile(join(repo, "README.md"), "repo");
+        await writeFile(join(scratch, "notes.md"), "notes");
+        const panes = [
+          {
+            workspace_id: "w1",
+            tab_id: "t1",
+            pane_id: "p1",
+            focused: false,
+            foreground_cwd: nested,
+          },
+          {
+            workspace_id: "w1",
+            tab_id: "t2",
+            pane_id: "p2",
+            focused: true,
+            cwd: scratch,
+          },
+          { workspace_id: "w2", tab_id: "t3", pane_id: "p3", cwd: dir },
+        ];
+        const gitCalls: string[][] = [];
+        const handlers = createFileHandlers({
+          herdr: {
+            call: async (method: string) => {
+              if (method === "workspace.get") {
+                return {
+                  workspace: workspace?.(repo) ?? {
+                    workspace_id: "w1",
+                    label: "Repo",
+                  },
+                };
+              }
+              if (method === "pane.list") return { panes };
+              throw new Error(`unexpected call ${method}`);
+            },
+          } as any,
+          sshHost: () => undefined,
+          runProcessWithCodeTimeout: async (argv) => {
+            gitCalls.push(argv);
+            return argv[2] === nested
+              ? { code: 0, stdout: `${repo}\n`, stderr: "" }
+              : notARepo;
+          },
+          shQuote,
+        });
+        await fn({ repo, scratch, handlers, gitCalls });
+      });
+    }
+
+    test("roots at the git toplevel of the tab's pane, not the focused workspace pane", async () => {
+      await withConsoles(async ({ repo, handlers, gitCalls }) => {
+        const list = await handlers.listWorkspaceFiles({
+          workspace_id: "w1",
+          tab_id: "t1",
+        });
+        expect(list).toMatchObject({ checkout_path: repo, tab_id: "t1" });
+        expect(list.entries.map((entry) => entry.name)).toEqual([
+          "web",
+          "README.md",
+        ]);
+        const preview = await handlers.readWorkspaceFile({
+          workspace_id: "w1",
+          tab_id: "t1",
+          path: "README.md",
+        });
+        expect(preview).toMatchObject({
+          checkout_path: repo,
+          tab_id: "t1",
+          text: "repo",
+        });
+        // The toplevel lookup is cached per cwd.
+        expect(gitCalls).toHaveLength(1);
+      });
+    });
+
+    test("falls back to the pane cwd outside a repository", async () => {
+      await withConsoles(async ({ scratch, handlers, gitCalls }) => {
+        const list = await handlers.listWorkspaceFiles({
+          workspace_id: "w1",
+          tab_id: "t2",
+        });
+        expect(list).toMatchObject({ checkout_path: scratch, tab_id: "t2" });
+        expect(list.entries.map((entry) => entry.name)).toEqual(["notes.md"]);
+        expect(gitCalls).toHaveLength(1);
+      });
+    });
+
+    test("rejects a tab of another workspace", async () => {
+      await withConsoles(async ({ handlers, gitCalls }) => {
+        await expect(
+          handlers.listWorkspaceFiles({ workspace_id: "w1", tab_id: "t3" }),
+        ).rejects.toThrow("tab t3 does not belong to workspace w1");
+        await expect(
+          handlers.downloadWorkspaceFile({
+            workspace_id: "w1",
+            tab_id: "missing",
+            path: "README.md",
+          }),
+        ).rejects.toThrow("tab missing does not belong to workspace w1");
+        expect(gitCalls).toEqual([]);
+      });
+    });
+
+    test("keeps the worktree checkout as the root of every console", async () => {
+      await withConsoles(
+        async ({ repo, handlers, gitCalls }) => {
+          await expect(
+            handlers.listWorkspaceFiles({ workspace_id: "w1", tab_id: "t2" }),
+          ).resolves.toMatchObject({ checkout_path: repo });
+          await expect(
+            handlers.listWorkspaceFiles({ workspace_id: "w1", tab_id: "t3" }),
+          ).rejects.toThrow("does not belong to workspace");
+          expect(gitCalls).toEqual([]);
+        },
+        (repo) => ({
+          workspace_id: "w1",
+          worktree: { checkout_path: repo, repo_name: "Repo" },
+        }),
+      );
+    });
+
+    test("without tab_id keeps the focused workspace pane cwd", async () => {
+      await withConsoles(async ({ scratch, handlers, gitCalls }) => {
+        const list = await handlers.listWorkspaceFiles({ workspace_id: "w1" });
+        expect(list).toMatchObject({ checkout_path: scratch });
+        expect(list).not.toHaveProperty("tab_id");
+        expect(gitCalls).toEqual([]);
+      });
+    });
+  });
   test("validates required workspace ids", async () => {
     const handlers = createFileHandlers({
       herdr: { call: async () => ({}) } as any,

@@ -90,6 +90,8 @@ import {
   requestFilePreview,
   uploadExplorerFile,
   deleteExplorerEntry,
+  explorerRootParams,
+  explorerRootResourceKey,
 } from "./fileExplorerResources";
 import "./FileExplorerDialog.css";
 
@@ -140,6 +142,8 @@ export function FileExplorerPanel({
   open,
   workspaceId,
   resourceKey,
+  rootTabId,
+  onRootChange,
   initialDirectory,
   activePath,
   previewRequestRef,
@@ -152,6 +156,8 @@ export function FileExplorerPanel({
   open: boolean;
   workspaceId?: string;
   resourceKey?: string;
+  rootTabId?: string;
+  onRootChange?: (checkoutPath: string) => void;
   initialDirectory?: string;
   activePath?: string;
   previewRequestRef?: React.MutableRefObject<number>;
@@ -172,6 +178,8 @@ export function FileExplorerPanel({
         open={open}
         workspaceId={workspaceId}
         resourceKey={resourceKey}
+        rootTabId={rootTabId}
+        onRootChange={onRootChange}
         initialDirectory={initialDirectory}
         onClose={onClose}
         showCloseButton={false}
@@ -338,6 +346,8 @@ function FileExplorerContent({
   open,
   workspaceId,
   resourceKey,
+  rootTabId,
+  onRootChange,
   initialDirectory,
   onClose,
   showCloseButton,
@@ -352,6 +362,9 @@ function FileExplorerContent({
   open: boolean;
   workspaceId?: string;
   resourceKey?: string;
+  /** The files tab's console: the server roots the explorer at it. */
+  rootTabId?: string;
+  onRootChange?: (checkoutPath: string) => void;
   initialDirectory?: string;
   onClose: () => void;
   showCloseButton: boolean;
@@ -374,10 +387,12 @@ function FileExplorerContent({
     ? workspaces.find((w) => w.workspace_id === workspaceId)
     : focusedWorkspace;
   const cacheWorkspaceId = workspace?.workspace_id;
-  const cacheResourceKey = resourceKey ?? cacheWorkspaceId;
+  const ownerResourceKey = resourceKey ?? cacheWorkspaceId;
+  const cacheResourceKey = explorerRootResourceKey(ownerResourceKey, rootTabId);
+  const rootParams = explorerRootParams(rootTabId);
   const showHiddenStorageKey = connectionStorageKey(
     connectionClient.connectionId,
-    `${FILE_SHOW_HIDDEN_PREFIX}${cacheResourceKey ?? "focused"}`,
+    `${FILE_SHOW_HIDDEN_PREFIX}${ownerResourceKey ?? "focused"}`,
   );
   const [showHidden, setShowHidden] = useState(
     () => roamgateLocalStorage.getItem(showHiddenStorageKey) === "true",
@@ -459,7 +474,7 @@ function FileExplorerContent({
     connectionClient,
     cacheWorkspaceId,
     "working",
-    cacheResourceKey,
+    ownerResourceKey,
   );
   const gitStatusMaps = useMemo(
     () => buildGitStatusMaps(gitSummaryState.summary, rootInfo?.root),
@@ -488,6 +503,10 @@ function FileExplorerContent({
   useEffect(() => {
     onActiveDiffEntriesChange?.(activeDiffEntries);
   }, [activeDiffEntries, onActiveDiffEntriesChange]);
+
+  useEffect(() => {
+    if (rootInfo?.checkout_path) onRootChange?.(rootInfo.checkout_path);
+  }, [onRootChange, rootInfo?.checkout_path]);
 
   const updateCache = (patch: Partial<FileExplorerCache>) => {
     setCache((current) => {
@@ -527,6 +546,7 @@ function FileExplorerContent({
     try {
       const list = (await connectionClient.call("file.list", {
         workspace_id: workspace.workspace_id,
+        ...rootParams,
         path,
         show_hidden: showHidden,
       })) as FileExplorerList;
@@ -581,7 +601,7 @@ function FileExplorerContent({
         connectionClient,
         workspace.workspace_id,
         "working",
-        cacheResourceKey,
+        ownerResourceKey,
         { afterCurrent },
       );
     } catch {
@@ -771,6 +791,7 @@ function FileExplorerContent({
         try {
           const list = (await connectionClient.call("file.list", {
             workspace_id: workspaceId,
+            ...rootParams,
             path,
             show_hidden: showHidden,
           })) as FileExplorerList;
@@ -883,6 +904,7 @@ function FileExplorerContent({
       void connectionClient
         .call("file.search", {
           workspace_id: workspace.workspace_id,
+          ...rootParams,
           query,
           mode: searchMode,
           show_hidden: showHidden,
@@ -1010,7 +1032,12 @@ function FileExplorerContent({
       gitStatusMaps.fileStatuses.get(entry.path)?.entries ?? [],
     );
     const workspaceId = workspace.workspace_id;
-    const key = filePreviewCacheKey(connectionClient, workspaceId, entry.path);
+    const key = filePreviewCacheKey(
+      connectionClient,
+      workspaceId,
+      entry.path,
+      rootTabId,
+    );
     // Links, quick-open and tree selections must retire each other at start,
     // before either the cached preview or a deferred response can be published.
     const requestId = ++navigationRequestRef.current;
@@ -1061,6 +1088,7 @@ function FileExplorerContent({
       const next = await requestFilePreview(workspaceId, entry.path, {
         refresh: refresh || Boolean(cached),
         client: connectionClient,
+        rootTabId,
       });
       if (requestIsCurrent()) {
         setPreview(next);
@@ -1139,6 +1167,7 @@ function FileExplorerContent({
       window.location.origin,
     );
     url.searchParams.set("workspace_id", workspace.workspace_id);
+    if (rootTabId) url.searchParams.set("tab_id", rootTabId);
     url.searchParams.set("path", entry.path);
     if (/^(?:\/|[a-z]:[\\/])/i.test(entry.path))
       url.searchParams.set("scope", "filesystem");
@@ -1241,6 +1270,7 @@ function FileExplorerContent({
         connectionClient,
         workspace.workspace_id,
         entry.path,
+        rootTabId,
       );
       if (!runtimeContextIsCurrent(requestContext)) return;
       removeEntryFromCache(entry);
@@ -1310,6 +1340,7 @@ function FileExplorerContent({
             workspace.workspace_id,
             directory,
             file,
+            rootTabId,
           ),
         ),
       );
@@ -2051,6 +2082,8 @@ function FileExplorerContent({
                   connectionClient,
                   workspace.workspace_id,
                   entry.path,
+                  undefined,
+                  rootTabId,
                 )
             : undefined
         }

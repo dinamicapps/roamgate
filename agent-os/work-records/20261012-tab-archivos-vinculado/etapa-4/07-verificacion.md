@@ -10,14 +10,14 @@ status: in_progress
 **Anfitrion**: Quinn
 **Fecha**: 2026-10-12
 
-Fase 1 en verde tras T-009 (build de produccion dentro de presupuesto, typecheck limpio, suite sin fallas nuevas). Fase 2 ejecutada con Playwright sobre el Herdr real del usuario y un workspace aislado `fm-prueba` (creado y cerrado en la sesion). Veredicto provisional: la meta NO se cumple completa por el hallazgo H-E4-01 (raiz del tab de archivos), pendiente de decision del usuario; el resto del comportamiento verificado pasa.
+Fase 1 en verde tras T-009 (build de produccion dentro de presupuesto, typecheck limpio, suite sin fallas nuevas). Fase 2 ejecutada con Playwright sobre el Herdr real del usuario y un workspace aislado `fm-prueba` (creado y cerrado en la sesion). H-E4-01 (raiz del tab de archivos) se corrigio con T-010 por decision del usuario (ajuste acotado con [OVERRIDE]) y se re-verifico en un segundo workspace aislado `fm-prueba2`. Veredicto: meta cumplida en lo verificado; quedan CAs pendientes de prueba manual que no bloquean.
 
 ## Resumen ejecutivo
 
 | Criterio | Resultado |
 |----------|-----------|
-| Meta cumplida | CON_BRECHA (pendiente decision sobre H-E4-01) |
-| CAs declarados | 17 PASS, 1 FAIL, 1 no evaluable, 9 pendientes manuales (5 cubiertos por pruebas unitarias) |
+| Meta cumplida | SI (con pendientes manuales no bloqueantes) |
+| CAs declarados | 19 PASS, 9 pendientes manuales (CA-14 y CA-21 con pruebas unitarias) |
 | Smoke + suite automatizada | PASS (build 160/160 archivos; 1267 pass, 9 fail previas en terminalComposer.test.ts) |
 | Auditoria capa de seguridad | N/A (sin endpoints ni permisos) |
 | Auditoria de evidencia (EV-N) | Parcial: pares antes/despues en CA-01 y CA-24; despues en CA-09, CA-11, CA-13, CA-22 |
@@ -33,11 +33,11 @@ Fase 1 en verde tras T-009 (build de produccion dentro de presupuesto, typecheck
 | CA-05 | PASS (U) | filesTabResource.test.ts (barrido) |
 | CA-06 | PASS parcial | Recarga restaura vinculo y pestanas; reinicio de Herdr no ejercitado (afectaria al usuario) |
 | CA-07 | PASS | AGENTS.md restaurado al reabrir y al recargar |
-| CA-08 | PASS | Tabs de api y web con claves y vinculos separados |
+| CA-08 | PASS | Tras T-010: cada consola con su raiz, cache y vinculo separados |
 | CA-09 | PASS | Tab pegado a su consola, sin numero; CA-09-despues.png |
 | CA-10 | PENDIENTE | El composer de anotaciones no se ejercita con seleccion sintetica |
-| CA-11 | FAIL | H-E4-01: la raiz sigue al pane enfocado del workspace; CA-11-despues.png |
-| CA-12 | NO EVALUABLE | Depende del modelo de raiz de H-E4-01 |
+| CA-11 | PASS | Tras T-010: web abre en la raiz git con web/src expandido y la conserva al mover el foco; CA-11-despues.png |
+| CA-12 | PASS | Tras T-010: consola fuera de un repo abre en su cwd |
 | CA-13 | PASS | Boton Files y Ctrl+Alt+E alternan; CA-13-despues.png |
 | CA-14 | PENDIENTE (U) | filesTabOwner.test.ts; clic en link de xterm no reproducible con eventos sinteticos |
 | CA-15 | PASS | Browse files de otro workspace lo enfoca y abre el tab de su consola activa |
@@ -59,8 +59,9 @@ Fase 1 en verde tras T-009 (build de produccion dentro de presupuesto, typecheck
 
 | ID | Hallazgo | Rumbo propuesto |
 |----|----------|-----------------|
-| H-E4-01 | En workspaces sin worktree la raiz del explorador es el cwd del pane enfocado del workspace (server/src/workspace/files.ts:79-95), no el de la consola duena: el tab de web mostro web/src y luego la raiz del repo; en workspaces con consolas en repos distintos el tab puede mostrar el repo de otra consola. Previo al work (el Inspector se comportaba igual) pero contradice la intencion del diseno. Arreglarlo toca el contrato file.* (freno DEC_freno_operaciones_archivo) | Decision del usuario: retroceder a diseno o cerrar con brecha |
+| H-E4-01 | En workspaces sin worktree la raiz del explorador es el cwd del pane enfocado del workspace (server/src/workspace/files.ts:79-95), no el de la consola duena: el tab de web mostro web/src y luego la raiz del repo; en workspaces con consolas en repos distintos el tab puede mostrar el repo de otra consola. Previo al work (el Inspector se comportaba igual) pero contradice la intencion del diseno. Arreglarlo toca el contrato file.* (freno DEC_freno_operaciones_archivo) | Corregido en T-010 ([OVERRIDE] en Decisiones clave) |
 | H-E4-02 | git.diff_file falla con invalid Git patch size en este Windows (server/src/workspace/git-diff.ts:408) | post-works (previo, fuera de alcance) |
 | H-E4-03 | En mobile el strip no se desplaza hasta el tab de archivos activo | post-works (cosmetico) |
 | H-E4-04 | Prop embedded de DiffContentView sin llamador; escritura legada de workspaceInspectorFile al borrar worktree | post-works (limpieza) |
 | H-E4-05 | La captura roamgate-desktop-files muestra Files en el Inspector | post-works (regenerar captura) |
+| H-E4-06 | relativePathWithinCheckout distingue mayusculas en Windows; file.resolve de links de terminal no usa la consola duena; foco de teclado no va al directorio inicial | post-works |

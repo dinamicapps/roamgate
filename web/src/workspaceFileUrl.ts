@@ -11,7 +11,7 @@ export function workspaceFileUrl(
   client: FileUrlClient,
   workspaceId: string,
   path: string,
-  options: { inline?: boolean; revision?: number } = {},
+  options: { inline?: boolean; revision?: number; tabId?: string } = {},
 ) {
   const url = new URL(
     connectionHttpPath(
@@ -22,6 +22,7 @@ export function workspaceFileUrl(
     "http://herdr.local",
   );
   url.searchParams.set("workspace_id", workspaceId);
+  if (options.tabId) url.searchParams.set("tab_id", options.tabId);
   url.searchParams.set("path", path);
   if (/^(?:\/|[a-z]:[\\/])/i.test(path))
     url.searchParams.set("scope", "filesystem");
@@ -86,6 +87,7 @@ export function resolveWorkspaceMarkdownImageUrl(
   client: FileUrlClient,
   workspaceId: string,
   revision?: number,
+  tabId?: string,
 ) {
   const path = resolveWorkspaceMarkdownPath(source, markdownPath);
   if (path === undefined) return source;
@@ -93,6 +95,7 @@ export function resolveWorkspaceMarkdownImageUrl(
   return workspaceFileUrl(client, workspaceId, path, {
     inline: true,
     revision,
+    tabId,
   });
 }
 

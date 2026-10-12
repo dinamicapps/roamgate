@@ -497,9 +497,11 @@ _(ninguna: este work no intercambia datos con otros)_
 
 ## Decisiones clave
 
-| Fecha | Etapa | Decision | Resolucion |
-|-------|-------|----------|------------|
-|       |       |          |            |
+| Fecha | Decision | Razon | Decidio |
+|---|---|---|---|
+| 2026-10-12 | Elevar a Winston el plan E2 | Cambia frontera de modulo: Files sale del Inspector y nace filesTabResource.ts | anfitrion |
+| 2026-10-12 | T-009: el tab de archivos comparte el lazy boundary del Inspector | Presupuesto de assets 160/160 sin tocar el bundle inicial | anfitrion |
+| 2026-10-12 | [OVERRIDE] Levantar el freno DEC_freno_operaciones_archivo solo para la raiz del explorador: file.* acepta la consola duena (sin operaciones nuevas) y se agrega T-010 en este work, sin retroceso a diseno | H-E4-01: en workspaces sin worktree la raiz sigue al pane enfocado del workspace (server/src/workspace/files.ts:79-95) y contradice la intencion del diseno | usuario |
 
 ## Tareas
 
