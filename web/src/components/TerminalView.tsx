@@ -371,9 +371,10 @@ export function TerminalView({
   const terminalFileResolutionCache = useMemo(
     () =>
       new TerminalFileResolutionCache(
-        async (_scopeId, workspaceId, candidates) => {
+        async (_scopeId, workspaceId, candidates, paneId) => {
           const result = (await connectionClient.call("file.resolve", {
             workspace_id: workspaceId,
+            ...(paneId ? { pane_id: paneId } : {}),
             paths: candidates,
           })) as { files?: unknown };
           if (!connectionClient.isCurrent() || !Array.isArray(result?.files)) {
@@ -854,13 +855,16 @@ export function TerminalView({
     async (paths: string[]) => {
       const workspaceId = previewWorkspaceIdRef.current;
       if (!workspaceId) return new Map<string, string>();
+      const paneId = paneIdRef.current ?? undefined;
       const resolved = await terminalFileResolutionCache.resolve(
         connectionScopeKey,
         workspaceId,
         paths,
+        paneId,
       );
       return connectionClient.isCurrent() &&
-        previewWorkspaceIdRef.current === workspaceId
+        previewWorkspaceIdRef.current === workspaceId &&
+        (paneIdRef.current ?? undefined) === paneId
         ? resolved
         : new Map<string, string>();
     },

@@ -86,3 +86,27 @@ export function downloadContentDisposition(filename: string) {
 export function inlineContentDisposition(filename: string) {
   return contentDisposition(filename, "inline");
 }
+
+// Pane cwds come from the shell and git toplevels from git: they can disagree on
+// separators and, on Windows, on drive-letter case.
+export function pathBelowRoot(
+  root: string,
+  path: string,
+  ignoreCase: boolean,
+): string | null {
+  const normalize = (value: string) =>
+    value.replace(/\\/g, "/").replace(/\/+$/, "");
+  const rootPath = normalize(root);
+  const target = normalize(path);
+  if (!root || !target) return null;
+  const same = (a: string, b: string) =>
+    ignoreCase ? a.toLowerCase() === b.toLowerCase() : a === b;
+  if (same(rootPath, target)) return "";
+  const prefix = `${rootPath}/`;
+  if (!same(target.slice(0, prefix.length), prefix)) return null;
+  const below = target
+    .slice(prefix.length)
+    .split("/")
+    .filter((part) => part && part !== ".");
+  return below.includes("..") ? null : below.join("/");
+}

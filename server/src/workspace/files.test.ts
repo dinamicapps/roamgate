@@ -395,6 +395,76 @@ describe("workspace file handlers", () => {
         expect(gitCalls).toEqual([]);
       });
     });
+
+    test("resolves terminal links from the emitting pane's cwd before its root", async () => {
+      await withConsoles(async ({ repo, handlers }) => {
+        await writeFile(join(repo, "web", "src", "index.ts"), "nested");
+        await writeFile(join(repo, "index.ts"), "root");
+        const resolved = await handlers.resolveWorkspaceFiles({
+          workspace_id: "w1",
+          pane_id: "p1",
+          paths: ["index.ts", "./index.ts", "README.md", "missing.ts"],
+        });
+        expect(resolved).toEqual({
+          workspace_id: "w1",
+          checkout_path: repo,
+          files: [
+            { candidate: "index.ts", path: "web/src/index.ts" },
+            { candidate: "./index.ts", path: "web/src/index.ts" },
+            { candidate: "README.md", path: "README.md" },
+          ],
+        });
+      });
+    });
+
+    test("resolves root-relative and absolute links from the pane", async () => {
+      await withConsoles(async ({ repo, scratch, handlers }) => {
+        await writeFile(join(repo, "web", "src", "index.ts"), "nested");
+        const absolute = join(scratch, "notes.md");
+        await expect(
+          handlers.resolveWorkspaceFiles({
+            workspace_id: "w1",
+            pane_id: "p1",
+            paths: ["web/src/index.ts", absolute],
+          }),
+        ).resolves.toMatchObject({
+          checkout_path: repo,
+          files: [
+            { candidate: "web/src/index.ts", path: "web/src/index.ts" },
+            { candidate: absolute },
+          ],
+        });
+      });
+    });
+
+    test("rejects a pane of another workspace when resolving links", async () => {
+      await withConsoles(async ({ handlers, gitCalls }) => {
+        await expect(
+          handlers.resolveWorkspaceFiles({
+            workspace_id: "w1",
+            pane_id: "p3",
+            paths: ["README.md"],
+          }),
+        ).rejects.toThrow("pane p3 does not belong to workspace w1");
+        expect(gitCalls).toEqual([]);
+      });
+    });
+
+    test("without pane_id resolves against the focused workspace pane", async () => {
+      await withConsoles(async ({ scratch, handlers, gitCalls }) => {
+        await expect(
+          handlers.resolveWorkspaceFiles({
+            workspace_id: "w1",
+            paths: ["notes.md", "README.md"],
+          }),
+        ).resolves.toEqual({
+          workspace_id: "w1",
+          checkout_path: scratch,
+          files: [{ candidate: "notes.md", path: "notes.md" }],
+        });
+        expect(gitCalls).toEqual([]);
+      });
+    });
   });
   test("validates required workspace ids", async () => {
     const handlers = createFileHandlers({

@@ -73,10 +73,13 @@ export function findTerminalFileLinkCandidates(
 }
 
 type CacheEntry = { path: string | null; expiresAt: number };
+// paneId is the pane that printed the candidates: relative paths resolve from
+// its cwd, so the same text can name different files in different panes.
 type BatchResolver = (
   scopeId: string,
   workspaceId: string,
   candidates: string[],
+  paneId: string | undefined,
 ) => Promise<ResolvedTerminalFile[]>;
 
 export class TerminalFileResolutionCache {
@@ -94,8 +97,13 @@ export class TerminalFileResolutionCache {
     } = {},
   ) {}
 
-  private key(scopeId: string, workspaceId: string, candidate: string) {
-    return `${scopeId}\0${workspaceId}\0${candidate}`;
+  private key(
+    scopeId: string,
+    workspaceId: string,
+    paneId: string | undefined,
+    candidate: string,
+  ) {
+    return `${scopeId}\0${workspaceId}\0${paneId ?? ""}\0${candidate}`;
   }
 
   private remember(key: string, path: string | null) {
@@ -113,7 +121,12 @@ export class TerminalFileResolutionCache {
     }
   }
 
-  async resolve(scopeId: string, workspaceId: string, rawCandidates: string[]) {
+  async resolve(
+    scopeId: string,
+    workspaceId: string,
+    rawCandidates: string[],
+    paneId?: string,
+  ) {
     const candidates = Array.from(new Set(rawCandidates)).slice(
       0,
       MAX_CANDIDATES_PER_LINE,
@@ -124,7 +137,7 @@ export class TerminalFileResolutionCache {
     const now = this.options.now?.() ?? Date.now();
 
     for (const candidate of candidates) {
-      const key = this.key(scopeId, workspaceId, candidate);
+      const key = this.key(scopeId, workspaceId, paneId, candidate);
       const cached = this.entries.get(key);
       if (cached && cached.expiresAt > now) {
         if (cached.path) resolved.set(candidate, cached.path);
@@ -137,7 +150,12 @@ export class TerminalFileResolutionCache {
     }
 
     if (missing.length > 0) {
-      const request = this.resolveBatch(scopeId, workspaceId, missing).then(
+      const request = this.resolveBatch(
+        scopeId,
+        workspaceId,
+        missing,
+        paneId,
+      ).then(
         (files) => {
           if (this.options.isScopeCurrent?.(scopeId) === false) {
             return new Map<string, string>();
@@ -149,7 +167,7 @@ export class TerminalFileResolutionCache {
           );
           for (const candidate of missing) {
             this.remember(
-              this.key(scopeId, workspaceId, candidate),
+              this.key(scopeId, workspaceId, paneId, candidate),
               byCandidate.get(candidate) ?? null,
             );
           }
@@ -157,7 +175,7 @@ export class TerminalFileResolutionCache {
         },
       );
       for (const candidate of missing) {
-        const key = this.key(scopeId, workspaceId, candidate);
+        const key = this.key(scopeId, workspaceId, paneId, candidate);
         const item = request.then((files) => files.get(candidate) ?? null);
         this.inFlight.set(key, item);
         item.then(

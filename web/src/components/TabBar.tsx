@@ -410,6 +410,11 @@ export function TabBar({
                   key={t.tab_id}
                   {...dragTarget}
                   className="tabbar-tab-group"
+                  // The group captures the pointer for reordering, so a click
+                  // on the console tab is delivered to the group itself.
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) selectConsole(t.tab_id);
+                  }}
                 >
                   {consoleTab}
                   <div

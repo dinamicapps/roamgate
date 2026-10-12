@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   downloadContentDisposition,
   inlineContentDisposition,
+  pathBelowRoot,
   relativeExplorerPath,
   sanitizeExplorerPath,
   sanitizePreviewPath,
@@ -53,5 +54,19 @@ describe("workspace file path helpers", () => {
     expect(inlineContentDisposition("guide.pdf")).toBe(
       "inline; filename=\"guide.pdf\"; filename*=UTF-8''guide.pdf",
     );
+  });
+
+  test("expresses a cwd relative to the root it sits in", () => {
+    expect(pathBelowRoot("/repo", "/repo/server/src", false)).toBe(
+      "server/src",
+    );
+    expect(pathBelowRoot("/repo/", "/repo", false)).toBe("");
+    expect(pathBelowRoot("/repo", "/repository/src", false)).toBeNull();
+    expect(pathBelowRoot("/repo", "/other", false)).toBeNull();
+    expect(pathBelowRoot("/Repo", "/repo/src", false)).toBeNull();
+    expect(
+      pathBelowRoot("E:/Dev/roamgate", "e:\\Dev\\roamgate\\server\\src", true),
+    ).toBe("server/src");
+    expect(pathBelowRoot("/repo", "", false)).toBeNull();
   });
 });

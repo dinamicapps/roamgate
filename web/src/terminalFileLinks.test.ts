@@ -89,6 +89,33 @@ describe("terminal file links", () => {
     expect(calls).toBe(3);
   });
 
+  test("caches resolutions per emitting pane and forwards the pane", async () => {
+    const requests: Array<[string | undefined, string[]]> = [];
+    const cache = new TerminalFileResolutionCache(
+      async (_scopeId, _workspaceId, paths, paneId) => {
+        requests.push([paneId, paths]);
+        return paths.map((path) => ({
+          candidate: path,
+          path: paneId === "p2" ? `server/src/${path}` : path,
+        }));
+      },
+    );
+
+    expect(await cache.resolve("alpha", "w1", ["index.ts"], "p1")).toEqual(
+      new Map([["index.ts", "index.ts"]]),
+    );
+    expect(await cache.resolve("alpha", "w1", ["index.ts"], "p2")).toEqual(
+      new Map([["index.ts", "server/src/index.ts"]]),
+    );
+    await cache.resolve("alpha", "w1", ["index.ts"], "p2");
+    await cache.resolve("alpha", "w1", ["index.ts"]);
+    expect(requests).toEqual([
+      ["p1", ["index.ts"]],
+      ["p2", ["index.ts"]],
+      [undefined, ["index.ts"]],
+    ]);
+  });
+
   test("expires negative results sooner than positive results", async () => {
     let now = 0;
     let exists = false;

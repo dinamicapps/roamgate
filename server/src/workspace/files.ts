@@ -4,6 +4,7 @@ import { checkoutPath as getCheckoutPath } from "./utils";
 import {
   downloadContentDisposition,
   inlineContentDisposition,
+  pathBelowRoot,
   sanitizeExplorerPath,
   sanitizeFilesystemPath,
   sanitizePreviewPath,
@@ -60,6 +61,7 @@ import { searchWorkspaceFiles } from "./search";
 const MAX_FILE_RESOLUTION_CANDIDATES = 32;
 const MAX_FILE_RESOLUTION_PATH_LENGTH = 4096;
 const CONSOLE_ROOT_CACHE_MS = 5_000;
+const ABSOLUTE_RESOLUTION_PATH_RE = /^(?:[A-Za-z]:)?\//;
 
 export function createFileHandlers({
   herdr,
@@ -117,6 +119,28 @@ export function createFileHandlers({
     return tabId ? { tab_id: tabId } : {};
   }
 
+  function paneCwd(pane: any): string {
+    return (
+      (typeof pane?.foreground_cwd === "string" && pane.foreground_cwd) ||
+      (typeof pane?.cwd === "string" && pane.cwd) ||
+      ""
+    );
+  }
+
+  async function workspacePanes(workspaceId: string): Promise<any[]> {
+    const paneResult = await herdr.call("pane.list");
+    const panes = Array.isArray((paneResult as any)?.panes)
+      ? (paneResult as any).panes
+      : [];
+    return panes.filter((p: any) => p?.workspace_id === workspaceId);
+  }
+
+  async function paneRoot(pane: any, checkoutPath: string): Promise<string> {
+    if (checkoutPath) return checkoutPath;
+    const cwd = paneCwd(pane);
+    return cwd ? consoleRoot(cwd) : "";
+  }
+
   async function explorerRoot(
     workspaceId: string,
     workspace: any,
@@ -125,27 +149,56 @@ export function createFileHandlers({
     const tabId = explorerTabId(params);
     const checkoutPath = getCheckoutPath(workspace);
     if (checkoutPath && !tabId) return checkoutPath;
-    const paneResult = await herdr.call("pane.list");
-    const panes = Array.isArray((paneResult as any)?.panes)
-      ? (paneResult as any).panes
-      : [];
-    const candidates = tabId
-      ? panes.filter(
-          (p: any) => p?.workspace_id === workspaceId && p?.tab_id === tabId,
-        )
-      : panes.filter((p: any) => p?.workspace_id === workspaceId);
-    if (tabId && candidates.length === 0) {
+    const panes = await workspacePanes(workspaceId);
+    if (!tabId) {
+      return paneCwd(panes.find((p: any) => p?.focused) ?? panes[0]);
+    }
+    const tabPanes = panes.filter((p: any) => p?.tab_id === tabId);
+    if (tabPanes.length === 0) {
       throw new Error(
         `tab ${tabId} does not belong to workspace ${workspaceId}`,
       );
     }
-    if (checkoutPath) return checkoutPath;
-    const pane = candidates.find((p: any) => p?.focused) ?? candidates[0];
-    const cwd =
-      (typeof pane?.foreground_cwd === "string" && pane.foreground_cwd) ||
-      (typeof pane?.cwd === "string" && pane.cwd) ||
-      "";
-    return tabId && cwd ? consoleRoot(cwd) : cwd;
+    return paneRoot(
+      tabPanes.find((p: any) => p?.focused) ?? tabPanes[0],
+      checkoutPath,
+    );
+  }
+
+  // A terminal prints paths relative to its own cwd, which may sit below the
+  // root: the cwd-relative reading is tried before the root-relative one.
+  async function resolutionRoot(
+    workspaceId: string,
+    workspace: any,
+    params: Record<string, unknown>,
+  ): Promise<{ root: string; cwdBelowRoot: string | null }> {
+    const paneId =
+      typeof params.pane_id === "string" && params.pane_id
+        ? params.pane_id
+        : undefined;
+    if (!paneId) {
+      return {
+        root: await explorerRoot(workspaceId, workspace, params),
+        cwdBelowRoot: null,
+      };
+    }
+    const pane = (await workspacePanes(workspaceId)).find(
+      (p: any) => p?.pane_id === paneId,
+    );
+    if (!pane) {
+      throw new Error(
+        `pane ${paneId} does not belong to workspace ${workspaceId}`,
+      );
+    }
+    const root = await paneRoot(pane, getCheckoutPath(workspace));
+    const cwdBelowRoot = root
+      ? pathBelowRoot(
+          root,
+          paneCwd(pane),
+          !sshHost() && process.platform === "win32",
+        )
+      : null;
+    return { root, cwdBelowRoot: cwdBelowRoot || null };
   }
 
   async function getWorkspace(workspaceId: string) {
@@ -381,9 +434,21 @@ export function createFileHandlers({
       return { workspace_id: workspaceId, files: [] };
     }
     const workspace = await getWorkspace(workspaceId);
-    const checkoutPath = await explorerRoot(workspaceId, workspace, params);
+    const { root: checkoutPath, cwdBelowRoot } = await resolutionRoot(
+      workspaceId,
+      workspace,
+      params,
+    );
     if (!checkoutPath) throw new Error("workspace has no directory path");
-    const paths = Array.from(new Set(candidates.map((entry) => entry.path)));
+    const readings = new Map(
+      candidates.map((entry) => [
+        entry,
+        cwdBelowRoot && !ABSOLUTE_RESOLUTION_PATH_RE.test(entry.path)
+          ? [`${cwdBelowRoot}/${entry.path}`, entry.path]
+          : [entry.path],
+      ]),
+    );
+    const paths = Array.from(new Set(Array.from(readings.values()).flat()));
     const host = sshHost();
     const existing = host
       ? await resolveRemoteFilePaths({
@@ -398,7 +463,12 @@ export function createFileHandlers({
     return {
       workspace_id: workspaceId,
       checkout_path: checkoutPath,
-      files: candidates.filter((entry) => existingPaths.has(entry.path)),
+      files: candidates.flatMap((entry): FileResolution[] => {
+        const path = readings
+          .get(entry)!
+          .find((reading) => existingPaths.has(reading));
+        return path ? [{ candidate: entry.candidate, path }] : [];
+      }),
     };
   }
 
