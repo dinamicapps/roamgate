@@ -16,11 +16,11 @@ import {
   useEffect,
   useId,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
-  type PointerEvent as ReactPointerEvent,
 } from "react";
 import type { ConnectionClient } from "../api";
 import { connectionClientScopeKey } from "../useConnectionClient";
@@ -42,7 +42,6 @@ import {
   writeInspectorNavigationRatio,
   readResourceFileTabs,
   writeResourceFileTabs,
-  closeResourceFileTab,
   type InspectorDock,
   type InspectorSplitView,
   type InspectorView,
@@ -56,12 +55,13 @@ import {
   type DiffViewerPanelHandle,
   type DiffViewerPanelProps,
 } from "./DiffViewerPanel";
-import { FileExplorerPanel } from "./FileExplorerDialog";
+import type { FileExplorerPanel } from "./FileExplorerDialog";
+import type { ActiveFilePreviewSelection } from "./FilePreviewContent";
 import {
-  type ActiveFilePreviewSelection,
-  FilePreviewContent,
-} from "./FilePreviewContent";
-import { FilePreviewTabs } from "./FilePreviewTabs";
+  INSPECTOR_RESOURCE_HORIZONTAL_PADDING,
+  InspectorSplitResizer,
+} from "./InspectorSplitResizer";
+import { type FileTabsStore, WorkspaceFilesView } from "./WorkspaceFilesView";
 import { workspaceInspectorLayout } from "./workspaceInspectorLayout";
 import { PullRequestCard } from "./PullRequestCard";
 import "./WorkspaceInspectorHost.css";
@@ -91,115 +91,6 @@ function checkoutLabel(workspace?: Workspace) {
     workspace.worktree?.repo_name ||
     workspace.label ||
     workspace.workspace_id
-  );
-}
-
-const INSPECTOR_RESOURCE_HORIZONTAL_PADDING = 16;
-
-function navigationRatioForPointer(
-  event: Pick<ReactPointerEvent<HTMLDivElement>, "clientX" | "currentTarget">,
-) {
-  const resource = event.currentTarget.parentElement;
-  if (!resource) return DEFAULT_INSPECTOR_NAVIGATION_RATIO;
-  const bounds = resource.getBoundingClientRect();
-  return inspectorNavigationRatioAtPosition(
-    event.clientX - bounds.left - INSPECTOR_RESOURCE_HORIZONTAL_PADDING / 2,
-    bounds.width - INSPECTOR_RESOURCE_HORIZONTAL_PADDING,
-  );
-}
-
-function InspectorSplitResizer({
-  ratio,
-  resetRatio = DEFAULT_INSPECTOR_NAVIGATION_RATIO,
-  navigationId,
-  detailId,
-  onChange,
-  onCommit,
-}: {
-  ratio: number;
-  resetRatio?: number;
-  navigationId: string;
-  detailId: string;
-  onChange: (ratio: number) => void;
-  onCommit: (ratio: number) => void;
-}) {
-  const dragRatioRef = useRef(ratio);
-  dragRatioRef.current = ratio;
-
-  const updateFromPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const next = navigationRatioForPointer(event);
-    dragRatioRef.current = next;
-    onChange(next);
-  };
-
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (
-      event.key !== "ArrowLeft" &&
-      event.key !== "ArrowRight" &&
-      event.key !== "Home" &&
-      event.key !== "End"
-    ) {
-      return;
-    }
-    event.preventDefault();
-    const resource = event.currentTarget.parentElement;
-    if (!resource) return;
-    const availableWidth =
-      resource.getBoundingClientRect().width -
-      INSPECTOR_RESOURCE_HORIZONTAL_PADDING;
-    const currentOffset = dragRatioRef.current * availableWidth;
-    const next = inspectorNavigationRatioAtPosition(
-      event.key === "Home"
-        ? 0
-        : event.key === "End"
-          ? availableWidth
-          : currentOffset + (event.key === "ArrowLeft" ? -16 : 16),
-      availableWidth,
-    );
-    dragRatioRef.current = next;
-    onChange(next);
-    onCommit(next);
-  };
-
-  return (
-    <div
-      className="workspace-inspector-split-resizer"
-      role="separator"
-      tabIndex={0}
-      aria-label="Resize file navigation"
-      aria-orientation="vertical"
-      aria-controls={`${navigationId} ${detailId}`}
-      aria-valuemin={15}
-      aria-valuemax={75}
-      aria-valuenow={Math.round(ratio * 100)}
-      title="Drag to resize; double-click to reset"
-      onPointerDown={(event) => {
-        event.preventDefault();
-        event.currentTarget.setPointerCapture(event.pointerId);
-        updateFromPointer(event);
-      }}
-      onPointerMove={(event) => {
-        if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-        updateFromPointer(event);
-      }}
-      onPointerUp={(event) => {
-        if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-        event.currentTarget.releasePointerCapture(event.pointerId);
-        onCommit(dragRatioRef.current);
-      }}
-      onPointerCancel={(event) => {
-        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-          event.currentTarget.releasePointerCapture(event.pointerId);
-        }
-        onCommit(dragRatioRef.current);
-      }}
-      onDoubleClick={() => {
-        dragRatioRef.current = resetRatio;
-        onChange(resetRatio);
-        onCommit(resetRatio);
-      }}
-      onKeyDown={handleKeyDown}
-    />
   );
 }
 
@@ -263,41 +154,14 @@ export function WorkspaceInspectorHost({
   onBack: () => void;
 }) {
   const hostRef = useRef<HTMLElement | null>(null);
-  const [fileTabs, setFileTabs] = useState(() =>
-    readResourceFileTabs(roamgateLocalStorage, state.scope),
+  const fileTabsStore = useMemo<FileTabsStore>(
+    () => ({
+      read: () => readResourceFileTabs(roamgateLocalStorage, state.scope),
+      write: (tabs) =>
+        writeResourceFileTabs(roamgateLocalStorage, state.scope, tabs),
+    }),
+    [state.scope],
   );
-  useLayoutEffect(() => {
-    setFileTabs(readResourceFileTabs(roamgateLocalStorage, state.scope));
-  }, [fileSelection.entry?.path, state.scope]);
-  // A scope can first open on Changes or History. Restore its active file when
-  // entering Files, without requiring another explorer selection.
-  useEffect(() => {
-    if (state.view === "files" && !fileSelection.entry && fileTabs.activePath)
-      onSelectFileTab(fileTabs.activePath);
-  }, [state.view, fileSelection.entry, fileTabs.activePath, onSelectFileTab]);
-  const onCloseFileTab = (path: string, directory = false) => {
-    const current = readResourceFileTabs(roamgateLocalStorage, state.scope);
-    const tabs = closeResourceFileTab(current, path, directory);
-    writeResourceFileTabs(roamgateLocalStorage, state.scope, tabs);
-    setFileTabs(tabs);
-    if (current.activePath === tabs.activePath) return;
-    previewRequestRef.current += 1;
-    if (tabs.activePath) onSelectFileTab(tabs.activePath);
-    else
-      onFileSelectionChange?.({
-        entry: null,
-        preview: null,
-        loading: false,
-        error: null,
-      });
-  };
-  const onPinFileTab = (path: string) => {
-    const current = readResourceFileTabs(roamgateLocalStorage, state.scope);
-    if (current.previewPath !== path) return;
-    const tabs = { ...current, previewPath: null };
-    writeResourceFileTabs(roamgateLocalStorage, state.scope, tabs);
-    setFileTabs(tabs);
-  };
 
   useLayoutEffect(() => {
     onReady?.();
@@ -309,10 +173,6 @@ export function WorkspaceInspectorHost({
   const diffViewerRef = useRef<DiffViewerPanelHandle | null>(null);
   const splitId = useId();
   const [hostWidth, setHostWidth] = useState(0);
-  const [fileDiffState, setFileDiffState] = useState<{
-    resourceKey: string;
-    entries: GitDiffEntry[];
-  }>(() => ({ resourceKey: "", entries: [] }));
   const [drillInByView, setDrillInByView] = useState<
     Record<InspectorView, boolean>
   >(() => ({
@@ -324,21 +184,16 @@ export function WorkspaceInspectorHost({
     commits: false,
     history: false,
   }));
+  const setFilesDrillIn = useCallback(
+    (files: boolean) => setDrillInByView((current) => ({ ...current, files })),
+    [],
+  );
   const resourceKey = resourceOwnerKey(state.scope);
   const contentResourceKey = resourceStateKey(state.scope);
   const [commitsVisitedKey, setCommitsVisitedKey] = useState("");
   useEffect(() => {
     if (state.view === "commits") setCommitsVisitedKey(contentResourceKey);
   }, [contentResourceKey, state.view]);
-  const fileDiffEntries =
-    fileDiffState.resourceKey === contentResourceKey
-      ? fileDiffState.entries
-      : [];
-  const setFileDiffEntries = useCallback(
-    (entries: GitDiffEntry[]) =>
-      setFileDiffState({ resourceKey: contentResourceKey, entries }),
-    [contentResourceKey],
-  );
   const [navigationPreferences, setNavigationPreferences] = useState(() =>
     readInspectorPreferences(roamgateLocalStorage, state.scope),
   );
@@ -364,11 +219,9 @@ export function WorkspaceInspectorHost({
   // side, not only in the expanded layout, so docked inspectors can resize
   // the Files/Changes list too.
   const navigationIds = {
-    files: `${splitId}-files-navigation`,
     changes: `${splitId}-changes-navigation`,
   };
   const detailIds = {
-    files: `${splitId}-files-detail`,
     changes: `${splitId}-changes-detail`,
   };
 
@@ -412,34 +265,6 @@ export function WorkspaceInspectorHost({
         ? !!diffSelection.entry
         : false;
   const hasDetail = detailAvailable && drillInByView[state.view];
-  const fileChangesEntries = fileSelection.entry
-    ? fileDiffEntries.filter(
-        (entry) => entry.path === fileSelection.entry?.path,
-      )
-    : [];
-  const primaryFileChangesEntry =
-    fileChangesEntries[fileChangesEntries.length - 1] ?? null;
-  const fileDiffSelectionMatches = fileChangesEntries.some(
-    (entry) =>
-      diffSelection.entry?.path === entry.path &&
-      diffSelection.entry.kind === entry.kind,
-  );
-  const fileChangesKey = fileChangesEntries
-    .map((entry) => `${entry.kind}:${entry.status}:${entry.path}`)
-    .join("|");
-
-  useEffect(() => {
-    if (state.view !== "files") return;
-    if (state.initialDirectory !== undefined) {
-      // Explicit directory navigation returns compact layouts to the tree,
-      // while the saved preview and tabs remain available on desktop.
-      if (!fileSelection.entry)
-        setDrillInByView((current) => ({ ...current, files: false }));
-      return;
-    }
-    if (fileSelection.entry)
-      setDrillInByView((current) => ({ ...current, files: true }));
-  }, [fileSelection.entry, state.view, state.initialDirectory]);
 
   const handleTabKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
     if (event.key === "ArrowDown" && state.view === "files") {
@@ -664,170 +489,88 @@ export function WorkspaceInspectorHost({
         </div>
       ) : (
         <div className="workspace-inspector-body">
-          <div
-            className={`workspace-inspector-resource inspector-files-resource ${
-              state.view === "files" ? "" : "is-hidden"
-            } ${splitEnabled ? "has-split-resizer" : ""}`}
-            style={splitEnabled ? splitStyle("files") : undefined}
-          >
-            <div
-              id={navigationIds.files}
-              className="workspace-inspector-navigation"
-            >
-              <FileExplorerPanel
-                open
-                workspaceId={workspace.workspace_id}
-                resourceKey={resourceKey}
-                initialDirectory={state.initialDirectory}
-                activePath={fileSelection.entry?.path}
-                previewRequestRef={previewRequestRef}
-                keyboardActive={
-                  state.view === "files" && (!compact || !hasDetail)
-                }
-                onClose={onClose}
-                onPreviewChange={(selection, meta) => {
-                  if (meta?.deletedEntry) {
-                    onCloseFileTab(
-                      meta.deletedEntry.path,
-                      meta.deletedEntry.type === "directory",
-                    );
-                    return;
+          <WorkspaceFilesView
+            workspaceId={workspace.workspace_id}
+            scope={state.scope}
+            tabsStore={fileTabsStore}
+            active={state.view === "files"}
+            compact={compact}
+            initialDirectory={state.initialDirectory}
+            split={
+              splitEnabled
+                ? {
+                    ratio: navigationRatios.files,
+                    resetRatio: defaultNavigationRatio,
+                    onChange: (ratio) => setNavigationRatio("files", ratio),
+                    onCommit: (ratio) => commitNavigationRatio("files", ratio),
                   }
-                  if (selection.entry && meta?.userInitiated) {
-                    setDrillInByView((current) => ({
-                      ...current,
-                      files: true,
-                    }));
+                : undefined
+            }
+            drillIn={drillInByView.files}
+            onDrillInChange={setFilesDrillIn}
+            fileSelection={fileSelection}
+            onSelectFileTab={onSelectFileTab}
+            previewRequestRef={previewRequestRef}
+            onFileSelectionChange={onFileSelectionChange}
+            onOpenDocument={onOpenDocument}
+            onRefreshFile={onRefreshFile}
+            annotations={annotations}
+            onCreateAnnotation={onCreateAnnotation}
+            onReanchorAnnotations={onReanchorFileAnnotations}
+            onOpenFileChanges={(entries) =>
+              diffViewerRef.current?.selectWorkingEntries(entries)
+            }
+            renderFileChanges={({ entries, changesKey }) => {
+              const fileDiffSelectionMatches = entries.some(
+                (entry) =>
+                  diffSelection.entry?.path === entry.path &&
+                  diffSelection.entry.kind === entry.kind,
+              );
+              return (
+                <Suspense
+                  fallback={
+                    <div className="diff-content-state">
+                      <span className="file-loading-spinner" />
+                      Loading diff viewer
+                    </div>
                   }
-                  onFileSelectionChange?.(selection, meta);
-                }}
-                onPinFileTab={onPinFileTab}
-                onActiveDiffEntriesChange={setFileDiffEntries}
-              />
-            </div>
-            {splitEnabled ? (
-              <InspectorSplitResizer
-                ratio={navigationRatios.files}
-                resetRatio={defaultNavigationRatio}
-                navigationId={navigationIds.files}
-                detailId={detailIds.files}
-                onChange={(ratio) => setNavigationRatio("files", ratio)}
-                onCommit={(ratio) => commitNavigationRatio("files", ratio)}
-              />
-            ) : null}
-            <div
-              id={detailIds.files}
-              className="workspace-inspector-detail workspace-inspector-file-detail"
-              role="tabpanel"
-              aria-label={fileTabs.activePath ?? "File preview"}
-              tabIndex={-1}
-            >
-              <FilePreviewTabs
-                tabs={fileTabs}
-                panelId={detailIds.files}
-                onSelect={(path) => {
-                  setDrillInByView((current) => ({ ...current, files: true }));
-                  onSelectFileTab(path);
-                }}
-                onPin={onPinFileTab}
-                onClose={onCloseFileTab}
-                onEmptyFocus={() =>
-                  (
-                    hostRef.current?.querySelector<HTMLElement>(
-                      ".inspector-files-resource .file-row[role='treeitem'][tabindex='0']",
-                    ) ?? filesTabRef.current
-                  )?.focus()
-                }
-              />
-              <FilePreviewContent
-                entry={fileSelection.entry}
-                preview={fileSelection.preview}
-                loading={fileSelection.loading}
-                error={fileSelection.error}
-                fragment={fileSelection.fragment}
-                line={fileSelection.line}
-                snippet={fileSelection.snippet}
-                onOpenFile={onOpenDocument}
-                onRefresh={onRefreshFile}
-                backAction={
-                  compact && drillInByView.files && fileSelection.entry
-                    ? {
-                        label: "Files",
-                        onClick: () => {
-                          setDrillInByView((current) => ({
-                            ...current,
-                            files: false,
-                          }));
-                          onBack();
-                        },
-                      }
-                    : undefined
-                }
-                annotations={annotations}
-                onCreateAnnotation={onCreateAnnotation}
-                onReanchorAnnotations={onReanchorFileAnnotations}
-                onOpenChanges={
-                  primaryFileChangesEntry
-                    ? () =>
-                        diffViewerRef.current?.selectWorkingEntries(
-                          fileChangesEntries,
-                        )
-                    : undefined
-                }
-                changesKey={fileChangesKey || undefined}
-                changesContent={
-                  primaryFileChangesEntry ? (
-                    <Suspense
-                      fallback={
-                        <div className="diff-content-state">
-                          <span className="file-loading-spinner" />
-                          Loading diff viewer
-                        </div>
-                      }
-                    >
-                      <DiffContentView
-                        key={`${contentResourceKey}:file-changes`}
-                        entry={
-                          fileDiffSelectionMatches
-                            ? diffSelection.entry
-                            : primaryFileChangesEntry
-                        }
-                        file={
-                          fileDiffSelectionMatches ? diffSelection.file : null
-                        }
-                        loading={
-                          !fileDiffSelectionMatches || diffSelection.loading
-                        }
-                        error={
-                          fileDiffSelectionMatches ? diffSelection.error : null
-                        }
-                        entries={fileChangesEntries}
-                        files={
-                          fileDiffSelectionMatches ? diffSelection.files : {}
-                        }
-                        fileErrors={
-                          fileDiffSelectionMatches
-                            ? diffSelection.fileErrors
-                            : {}
-                        }
-                        resourceKey={`${contentResourceKey}:file:${fileChangesKey}`}
-                        mobile={compact}
-                        connectionClient={connectionClient}
-                        annotations={annotations}
-                        onCreateAnnotation={onCreateAnnotation}
-                        onReanchorAnnotations={onReanchorDiffAnnotations}
-                        onEditAnnotation={onEditAnnotation}
-                        onSelectFile={(entry) =>
-                          diffViewerRef.current?.selectWorkingEntry(entry)
-                        }
-                        embedded
-                      />
-                    </Suspense>
-                  ) : undefined
-                }
-              />
-            </div>
-          </div>
+                >
+                  <DiffContentView
+                    key={`${contentResourceKey}:file-changes`}
+                    entry={
+                      fileDiffSelectionMatches
+                        ? diffSelection.entry
+                        : entries[entries.length - 1]
+                    }
+                    file={fileDiffSelectionMatches ? diffSelection.file : null}
+                    loading={!fileDiffSelectionMatches || diffSelection.loading}
+                    error={
+                      fileDiffSelectionMatches ? diffSelection.error : null
+                    }
+                    entries={entries}
+                    files={fileDiffSelectionMatches ? diffSelection.files : {}}
+                    fileErrors={
+                      fileDiffSelectionMatches ? diffSelection.fileErrors : {}
+                    }
+                    resourceKey={`${contentResourceKey}:file:${changesKey}`}
+                    mobile={compact}
+                    connectionClient={connectionClient}
+                    annotations={annotations}
+                    onCreateAnnotation={onCreateAnnotation}
+                    onReanchorAnnotations={onReanchorDiffAnnotations}
+                    onEditAnnotation={onEditAnnotation}
+                    onSelectFile={(entry) =>
+                      diffViewerRef.current?.selectWorkingEntry(entry)
+                    }
+                    embedded
+                  />
+                </Suspense>
+              );
+            }}
+            onEmptyFocusFallback={() => filesTabRef.current?.focus()}
+            onClose={onClose}
+            onBack={onBack}
+          />
           <div
             className={`workspace-inspector-resource inspector-changes-resource ${
               state.view === "changes" ? "" : "is-hidden"

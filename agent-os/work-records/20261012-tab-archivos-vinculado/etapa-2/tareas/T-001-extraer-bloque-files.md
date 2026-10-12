@@ -6,7 +6,7 @@ archivos:
     ruta: web/src/components/WorkspaceInspectorHost.tsx
 cas:
   - CA-01
-ejecutor: null
+ejecutor: amelia
 evidencia_requerida:
   api: false
   bd: false
@@ -15,7 +15,7 @@ evidencia_requerida:
 fase: 1
 file_type: tarea-etapa-2
 standards_cargados: []
-status: in_progress
+status: done
 tipo_tarea: codigo
 verificador: null
 ---
@@ -47,3 +47,23 @@ Sacar de WorkspaceInspectorHost el bloque Files (arbol FileExplorerPanel, FilePr
 | ID | Criterio | Origen |
 |---|---|---|
 | CA-01 | N1 sin regresion: el Inspector sigue mostrando Files igual que hoy usando el componente extraido; anotaciones (lectura, creacion, reanclaje) intactas; diffViewerRef queda en el host; ninguna escucha de Esc en window | REG_anotaciones_conservadas, INV-PUENTE-08 |
+
+## Ejecutor: amelia
+
+### Que hizo
+
+- Extrajo el bloque Files a web/src/components/WorkspaceFilesView.tsx (arbol, FilePreviewTabs, preview, pestanas, drill-in); el Inspector lo monta en el mismo lugar.
+- diffViewerRef, DiffContentView, ratios del split y Changes/Commits/History se quedan en el host (INV-PUENTE-08); la sub-vista de cambios entra por renderFileChanges.
+- Props explicitas para montarlo fuera del Inspector: active, compact, tabsStore, drillIn controlado, split opcional, onOpenFileChanges.
+- Movio InspectorSplitResizer sin cambios a su archivo para evitar importacion circular host-vista.
+- Sin escuchas nuevas de Esc; anotaciones del preview pasan igual. Typecheck limpio; suite 1241 pass, 9 fail previas (terminalComposer).
+- Baseline CA-01-antes.png y CA-01-despues.png: arbol de accesibilidad identico y preview con pestana funcionando.
+
+### Hallazgos
+
+| # | Hallazgo | Solucion | Decidio |
+|---|----------|----------|---------|
+| 1 | Archivo no declarado: web/src/components/InspectorSplitResizer.tsx (movido sin cambios) | Aceptado como drift menor: evita importacion circular y no solapa con T-002 | amelia |
+| 2 | Estilos de Files dependen del ancestro .workspace-inspector.is-compact.has-detail (WorkspaceInspectorHost.css:329,333,360-363) | T-003 debe co-locar o reproducir esas clases en el contenedor del tab | amelia |
+| 3 | AnnotationComposerPopover.tsx:88 ubica la navegacion por .inspector-files-resource .workspace-inspector-navigation | T-003 conserva esas clases en el tab o actualiza el selector (INV-PUENTE-06) | amelia |
+| 4 | Anotaciones no se ejercitaron en navegador en esta tarea (solo paso de props sin cambios) | Se verifican manualmente con CA-10 en T-003 | amelia |
