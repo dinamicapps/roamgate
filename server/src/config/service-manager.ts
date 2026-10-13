@@ -737,6 +737,9 @@ function installService(
       code = runCommand(["launchctl", "bootstrap", domain, paths.definition]);
     }
   } else {
+    // endWindowsTask finds the running program by the action it was started
+    // with; once a new definition replaces that action it could not be found.
+    endWindowsTask(windowsTaskName(paths), runCommand);
     code = registerWindowsTask(paths.definition, runCommand);
     if (code === 0) {
       code = restartWindowsTask(windowsTaskName(paths), runCommand);

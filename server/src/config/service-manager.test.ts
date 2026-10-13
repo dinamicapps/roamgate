@@ -1054,6 +1054,49 @@ process.exit(typeof code === "number" ? code : 2);`,
     }
   }
 
+  test("ends a running Windows task before replacing its definition", () => {
+    const homeDir = tempHome();
+    const appDataDir = join(homeDir, "AppData", "Roaming");
+    const runtimeFor = (executable: string) => ({
+      platform: "win32",
+      homeDir,
+      appDataDir,
+      execPath: executable,
+      argv: [executable],
+    });
+    let taskExists = false;
+    const commands: string[][] = [];
+    const runCommand = (argv: string[]) => {
+      commands.push(argv);
+      if (isWindowsTaskQuery(argv)) return taskExists ? 0 : 3;
+      if (argv.includes("-File")) taskExists = true;
+      return 0;
+    };
+    expect(
+      runServiceCommand(["service", "install"], {
+        runtime: runtimeFor(join(homeDir, "old", "roamgate.exe")),
+        runCommand,
+        log: () => undefined,
+      }),
+    ).toBe(0);
+    commands.length = 0;
+
+    // Reinstalling from another folder changes the task action. The running
+    // conhost is only found by the action it was started with, so the task
+    // must be ended before the new definition replaces it.
+    expect(
+      runServiceCommand(["service", "install"], {
+        runtime: runtimeFor(join(homeDir, "new", "roamgate.exe")),
+        runCommand,
+        log: () => undefined,
+      }),
+    ).toBe(0);
+    const firstEnd = commands.findIndex(isWindowsTaskEnd);
+    const registration = commands.findIndex((argv) => argv.includes("-File"));
+    expect(firstEnd).toBeGreaterThanOrEqual(0);
+    expect(firstEnd).toBeLessThan(registration);
+  });
+
   test("manages a Windows login task", () => {
     const homeDir = tempHome();
     const appDataDir = join(homeDir, "AppData", "Roaming");
