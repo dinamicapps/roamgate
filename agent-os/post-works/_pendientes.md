@@ -52,6 +52,10 @@ Usar `/post-works status` para ver conteos y antiguedad agregada.
 | FM-20 | `scripts/prepare-release.ts:26,83-85` solo acepta versiones X.Y.Z y aborta con el sufijo del fork; el flujo de release del upstream no corre en este repo | 20261012-dist-windows-roamgate | 2026-10-12 | baja | pendiente |
 | FM-21 | `build:windows-x64` (`package.json:41`) no tiene postbuild de limpieza de `*.bun-build`, a diferencia de linux y darwin | 20261012-dist-windows-roamgate | 2026-10-12 | baja | pendiente |
 | FM-22 | `action()` (`web/src/store.ts`) no limpia `state.error` cuando una accion tiene exito: quien lea `state.error` tras un `undefined` puede ver un error viejo (p.ej. `WorktreeLifecycleDialog.tsx:290-291`, `WorktreeHooksDialog.tsx:98-101`). Revisar el patron `undefined` + `state.error` en los demas llamadores | 20261012-bugfix-worktree-error-real | 2026-10-12 | baja | pendiente |
+| FM-23 | Crear un worktree desde Roamgate en navegacion local mueve el foco real de Herdr al workspace nuevo aunque el cliente envia `focus: false` (`web/src/store.ts:3214`; `server/src/worktree/worktree-hooks.ts:331` ya anota que Herdr muta el foco al crear) | 20261012-sidebar-riel-workspaces | 2026-10-12 | media | pendiente |
+| FM-24 | `terminalComposer.test.ts` falla 9 pruebas ("terminal composer drafts") al correr `bun test web/src` completo, tambien en HEAD; aislado pasa 20/20: dependencia de orden entre archivos de prueba | 20261012-sidebar-riel-workspaces | 2026-10-12 | media | pendiente |
+| FM-25 | Presupuesto de assets web sin margen: JS inicial 790,2 de 800 KiB (241,1 de 256 gzip) y 160 de 160 archivos (`scripts/check-web-assets.mjs:7-11`); la proxima feature eager lo rompe | 20261012-sidebar-riel-workspaces | 2026-10-12 | media | pendiente |
+| FM-26 | Observado, sin investigar: el ContextMenu de un repo con un worktree git existente (creado por CLI, no abierto) no ofrecio "Open worktree…". Ademas, un worktree abierto fuera de Roamgate no se anida bajo su repo: el padre solo se registra al abrir o crear desde Roamgate (`server/src/worktree/parents.ts:48-91`) | 20261012-sidebar-riel-workspaces | 2026-10-12 | baja | pendiente |
 
 ## Items archivados
 
