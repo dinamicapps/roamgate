@@ -36,7 +36,7 @@ describe("terminalFocusBlockedByOverlay", () => {
     expect(
       terminalFocusBlockedByOverlay(
         elementMatching([
-          '[data-radix-popper-content-wrapper], .modal-backdrop, .workspace-tree-panel, .workspace-inspector, .files-tab-surface, .annotation-panel, .assistant-panel, .tabbar-utilities, .mobile-nav, .pane-jump-backdrop, .popup-overlay-backdrop, .pane-drag-handle, [role="dialog"], [role="menu"]',
+          '[data-radix-popper-content-wrapper], .modal-backdrop, .workspace-tree-panel, .workspace-rail, .workspace-inspector, .files-tab-surface, .annotation-panel, .assistant-panel, .tabbar-utilities, .mobile-nav, .pane-jump-backdrop, .popup-overlay-backdrop, .pane-drag-handle, [role="dialog"], [role="menu"]',
         ]),
         doc,
       ),
@@ -66,6 +66,18 @@ describe("terminalFocusBlockedByOverlay", () => {
     };
     expect(
       terminalFocusBlockedByOverlay(filesTabElement, docWithOpenPopper(false)),
+    ).toBe(true);
+  });
+
+  test("blocks while the collapsed workspace rail owns focus", () => {
+    const railElement = {
+      closest: (selector: string) =>
+        selector.split(", ").includes(".workspace-rail")
+          ? ({} as Element)
+          : null,
+    };
+    expect(
+      terminalFocusBlockedByOverlay(railElement, docWithOpenPopper(false)),
     ).toBe(true);
   });
 

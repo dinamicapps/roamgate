@@ -17,6 +17,8 @@ import {
   ChevronRight,
   GitBranch,
   Layers,
+  PanelLeftClose,
+  PanelLeftOpen,
   Pin,
   Plus,
 } from "lucide-react";
@@ -36,8 +38,10 @@ import {
   setWorktreeGroupCollapsed,
 } from "../workspaceTreeCollapse";
 import {
+  gitStatusTitle,
   showWorkspaceBranchBadge,
   workspaceDisplayName,
+  workspaceLocationTitle,
 } from "../workspaceTreeBadges";
 import { pruneClosedWorkspacePreferenceKeys } from "../workspacePreferences";
 import { connectionStorageKey } from "../connectionStorage";
@@ -79,6 +83,12 @@ import {
   workspaceTreeItemIsTabStop,
 } from "./treeKeyboard";
 import { TREE_DEPTH_INDENT } from "./treeIndent";
+import {
+  buildRailItems,
+  isActiveAgentPane,
+  workspaceSubtreeContainsActiveItem,
+} from "./workspaceRail";
+import { WorkspaceRailList } from "./WorkspaceRailList";
 import "./WorkspaceTree.css";
 
 const LONG_PRESS_MS = 550;
@@ -94,22 +104,6 @@ function stringArraysEqual(left: readonly string[], right: readonly string[]) {
 
 function gitChangedCount(status: GitStatusSummary) {
   return status.staged + status.unstaged + status.untracked + status.conflicted;
-}
-
-function gitStatusTitle(status?: GitStatusSummary) {
-  if (!status) return "";
-  if (status.error) return `git status unavailable: ${status.error}`;
-  const parts = [
-    status.branch ? `branch: ${status.branch}` : null,
-    status.upstream ? `upstream: ${status.upstream}` : null,
-    status.ahead ? `ahead: ${status.ahead}` : null,
-    status.behind ? `behind: ${status.behind}` : null,
-    status.staged ? `staged: ${status.staged}` : null,
-    status.unstaged ? `unstaged: ${status.unstaged}` : null,
-    status.untracked ? `untracked: ${status.untracked}` : null,
-    status.conflicted ? `conflicted: ${status.conflicted}` : null,
-  ].filter(Boolean);
-  return parts.join(" · ");
 }
 
 function AgentLayoutControl({
@@ -203,6 +197,8 @@ export function WorkspaceTree({
   onBrowseFilesForAgent,
   onReviewChangesForAgent,
   onViewAgentHistory,
+  rail = false,
+  onRailChange,
 }: {
   agentsFirst?: boolean;
   onSelect?: (workspace: Workspace) => void;
@@ -212,6 +208,8 @@ export function WorkspaceTree({
   onBrowseFilesForAgent?: (pane: Pane) => void;
   onReviewChangesForAgent?: (pane: Pane) => void;
   onViewAgentHistory?: (pane: Pane) => void;
+  rail?: boolean;
+  onRailChange?: (rail: boolean) => void;
 }) {
   const s = useStoreSelector(
     (state) => ({
@@ -550,7 +548,59 @@ export function WorkspaceTree({
     );
   };
 
+  const collapseButton =
+    onRailChange && !rail ? (
+      <button
+        type="button"
+        className="panel-add panel-action-icon"
+        title="Collapse sidebar"
+        aria-label="Collapse sidebar"
+        onClick={() => onRailChange(true)}
+      >
+        <PanelLeftClose size={14} />
+      </button>
+    ) : null;
+  const railNav = rail ? (
+    <nav key="rail" className="workspace-rail" aria-label="Workspaces">
+      <button
+        type="button"
+        className="panel-add panel-action-icon"
+        title="Expand sidebar"
+        aria-label="Expand sidebar"
+        onClick={() => onRailChange?.(false)}
+      >
+        <PanelLeftOpen size={14} />
+      </button>
+      <WorkspaceRailList
+        items={buildRailItems({
+          workspaces: s.workspaces,
+          panes: s.panes,
+          pinnedWorkspaceKeys: pinnedWorkspaceSet,
+          activePaneId,
+        })}
+        tabs={s.tabs}
+        onSelect={onSelect}
+        onSelectAgent={onSelectAgent}
+        onWorkspaceContextMenu={(workspace, x, y) =>
+          setMenu({ workspace, x, y })
+        }
+        onAgentContextMenu={(pane, x, y) => setAgentMenu({ pane, x, y })}
+      />
+    </nav>
+  ) : null;
+
   if (s.workspaces.length === 0) {
+    if (railNav) {
+      return (
+        <>
+          {railNav}
+          <CreateWorkspaceDialog
+            open={createOpen}
+            onClose={() => setCreateOpen(false)}
+          />
+        </>
+      );
+    }
     return (
       <>
         <div
@@ -560,13 +610,16 @@ export function WorkspaceTree({
         >
           <div className="panel-head">
             <h2>Workspaces</h2>
-            <button
-              className="panel-add panel-action-icon"
-              title="New workspace"
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus size={14} />
-            </button>
+            <div className="panel-actions">
+              <button
+                className="panel-add panel-action-icon"
+                title="New workspace"
+                onClick={() => setCreateOpen(true)}
+              >
+                <Plus size={14} />
+              </button>
+              {collapseButton}
+            </div>
           </div>
           <div className="workspace-tree-content">
             <p className="muted">
@@ -622,6 +675,7 @@ export function WorkspaceTree({
           >
             <Plus size={14} />
           </button>
+          {collapseButton}
         </div>
       </div>
       <div
@@ -802,8 +856,12 @@ export function WorkspaceTree({
 
   return (
     <>
-      {agentsFirst ? agentsPanel : workspacePanel}
-      {agentsFirst ? workspacePanel : agentsPanel}
+      {railNav ?? (
+        <>
+          {agentsFirst ? agentsPanel : workspacePanel}
+          {agentsFirst ? workspacePanel : agentsPanel}
+        </>
+      )}
       <ContextMenu
         state={menu}
         pinnedWorkspaceKeys={pinnedWorkspaceSet}
@@ -874,32 +932,6 @@ type WorkspaceDragProps = {
   onDragEnd: () => void;
 };
 
-function workspaceSubtreeContainsActiveItem(
-  workspace: Workspace,
-  childrenByParent: ReadonlyMap<string, Workspace[]>,
-  agentsByWorkspace: ReadonlyMap<string, Pane[]>,
-  activePaneId: string | null,
-): boolean {
-  if (workspace.focused) return true;
-  const agents = agentsByWorkspace.get(workspace.workspace_id) ?? [];
-  if (
-    agents.some(
-      (pane) =>
-        pane.pane_id === activePaneId || (!activePaneId && pane.focused),
-    )
-  ) {
-    return true;
-  }
-  return (childrenByParent.get(workspace.workspace_id) ?? []).some((child) =>
-    workspaceSubtreeContainsActiveItem(
-      child,
-      childrenByParent,
-      agentsByWorkspace,
-      activePaneId,
-    ),
-  );
-}
-
 function WorkspaceRow({
   w,
   depth,
@@ -948,8 +980,8 @@ function WorkspaceRow({
   const isChild = depth > 0;
   const hasChildren = children.length > 0;
   const hasNestedItems = hasChildren || agents.length > 0;
-  const hasActiveAgent = agents.some(
-    (pane) => pane.pane_id === activePaneId || (!activePaneId && pane.focused),
+  const hasActiveAgent = agents.some((pane) =>
+    isActiveAgentPane(pane, activePaneId),
   );
   const hiddenDescendantActive = children.some((child) =>
     workspaceSubtreeContainsActiveItem(
@@ -1105,16 +1137,7 @@ function WorkspaceRow({
           e.preventDefault();
           openMenu(e.clientX, e.clientY);
         }}
-        title={
-          w.worktree
-            ? [
-                `${w.worktree.repo_name} · ${w.worktree.checkout_path}`,
-                gitStatusTitle(w.worktree.git_status),
-              ]
-                .filter(Boolean)
-                .join("\n")
-            : w.workspace_id
-        }
+        title={workspaceLocationTitle(w)}
       >
         {hasNestedItems ? (
           <button

@@ -209,4 +209,91 @@ if (process.env.ROAMGATE_WORKSPACE_STORAGE_DOM_TEST !== "1") {
       await browser.happyDOM.close();
     }
   });
+
+  test("rail mode swaps the panels for a rail and toggles via its buttons", async () => {
+    const browser = new Window({ url: "http://localhost" });
+    const originals = new Map<string, PropertyDescriptor | undefined>();
+    for (const [key, value] of Object.entries({
+      window: browser,
+      document: browser.document,
+      navigator: browser.navigator,
+      HTMLElement: browser.HTMLElement,
+      Element: browser.Element,
+      Node: browser.Node,
+      localStorage: browser.localStorage,
+      sessionStorage: browser.sessionStorage,
+      IS_REACT_ACT_ENVIRONMENT: true,
+    })) {
+      originals.set(key, Object.getOwnPropertyDescriptor(globalThis, key));
+      Object.defineProperty(globalThis, key, {
+        value,
+        configurable: true,
+        writable: true,
+      });
+    }
+    const previousState = store.get();
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    const changes: boolean[] = [];
+    const render = (props: Record<string, unknown>) =>
+      act(async () => root.render(createElement(WorkspaceTree, props)));
+    const click = (selector: string) =>
+      act(async () => {
+        (container.querySelector(selector) as HTMLElement | null)?.click();
+      });
+    try {
+      __storeTesting.replaceState({
+        ...previousState,
+        activeConnectionId: "alpha",
+        workspaces: [
+          {
+            workspace_id: "w1",
+            number: 1,
+            label: "Workspace",
+            focused: false,
+            pane_count: 0,
+            tab_count: 1,
+            agent_status: "idle",
+          },
+        ],
+        panes: [],
+      });
+      const onRailChange = (rail: boolean) => changes.push(rail);
+
+      await render({});
+      expect(container.querySelector('[title="Collapse sidebar"]')).toBeNull();
+
+      await render({ onRailChange });
+      expect(container.querySelector(".workspace-rail")).toBeNull();
+      await click('[title="Collapse sidebar"]');
+
+      await render({ rail: true, onRailChange });
+      expect(container.querySelector(".workspace-tree-panel")).toBeNull();
+      expect(
+        container.querySelector(".workspace-agent-layout-control"),
+      ).toBeNull();
+      expect(
+        container
+          .querySelector("nav.workspace-rail")
+          ?.getAttribute("aria-label"),
+      ).toBe("Workspaces");
+      await click('.workspace-rail [title="Expand sidebar"]');
+      expect(changes).toEqual([true, false]);
+
+      __storeTesting.replaceState({ ...store.get(), workspaces: [] });
+      await render({ rail: true, onRailChange });
+      expect(container.querySelector(".workspace-rail")).not.toBeNull();
+      expect(container.querySelector(".workspace-tree-panel")).toBeNull();
+    } finally {
+      await act(async () => root.unmount());
+      container.remove();
+      __storeTesting.replaceState(previousState);
+      for (const [key, descriptor] of originals) {
+        if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+        else delete (globalThis as Record<string, unknown>)[key];
+      }
+      await browser.happyDOM.close();
+    }
+  });
 }

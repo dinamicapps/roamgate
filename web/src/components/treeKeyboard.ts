@@ -43,15 +43,14 @@ export function workspaceTreeItemIsTabStop({
   return workspaceFocused && !directAgentActive;
 }
 
-export function focusTreeItem(
+export type RovingFocusAction = "next" | "previous" | "first" | "last";
+
+/** Move a roving tab stop between `items`, without wrapping. */
+export function focusRovingItem(
+  items: readonly HTMLElement[],
   current: HTMLElement,
-  action: "next" | "previous" | "first" | "last",
+  action: RovingFocusAction,
 ): boolean {
-  const tree = current.closest<HTMLElement>("[role='tree']");
-  if (!tree) return false;
-  const items = Array.from(
-    tree.querySelectorAll<HTMLElement>("[role='treeitem']"),
-  ).filter((item) => item.getAttribute("aria-hidden") !== "true");
   const index = items.indexOf(current);
   if (index < 0 || items.length === 0) return false;
   let targetIndex = index;
@@ -76,6 +75,18 @@ export function focusTreeItem(
   target.focus({ preventScroll: true });
   target.scrollIntoView({ block: "nearest" });
   return true;
+}
+
+export function focusTreeItem(
+  current: HTMLElement,
+  action: RovingFocusAction,
+): boolean {
+  const tree = current.closest<HTMLElement>("[role='tree']");
+  if (!tree) return false;
+  const items = Array.from(
+    tree.querySelectorAll<HTMLElement>("[role='treeitem']"),
+  ).filter((item) => item.getAttribute("aria-hidden") !== "true");
+  return focusRovingItem(items, current, action);
 }
 
 export function keyboardContextMenuPoint(element: HTMLElement) {

@@ -1,0 +1,120 @@
+/* ===== rail items ===== */
+.workspace-rail-item {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--border-soft);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--panel-2) 58%, transparent);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+}
+
+.workspace-rail-item:hover,
+.workspace-rail-item.is-expanded {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.workspace-rail-item.is-active {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--text-strong);
+}
+
+.workspace-rail-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, transparent);
+  outline-offset: 1px;
+}
+
+.workspace-rail-initials {
+  line-height: 1;
+}
+
+.workspace-rail-pin {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  color: var(--muted);
+  transform: rotate(-18deg);
+}
+
+/* Same palette as the agent status icon dot. */
+.workspace-rail-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.workspace-rail-dot.is-working {
+  background: var(--yellow);
+}
+
+.workspace-rail-dot.is-blocked {
+  background: var(--red);
+}
+
+.workspace-rail-dot.is-done {
+  background: var(--blue);
+}
+
+.workspace-rail-dot.is-idle {
+  background: var(--green);
+}
+
+.workspace-rail-item-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  border: 1px solid var(--shell-panel);
+}
+
+/* ===== flyout ===== */
+.rail-flyout {
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 16px));
+  max-height: calc(var(--app-viewport-height, 100vh) - 16px);
+  overflow-y: auto;
+}
+
+.rail-flyout-item {
+  justify-content: flex-start;
+  min-height: 30px;
+  padding: 5px 9px;
+}
+
+.rail-flyout-label {
+  flex: 1 1 auto;
+}
+
+.rail-flyout-workspace .rail-flyout-label {
+  color: var(--text-strong);
+}
+
+.rail-flyout-item.is-expanded {
+  background: var(--panel-2);
+}
+
+.rail-flyout-item.is-active {
+  background: color-mix(in srgb, var(--accent-soft) 72%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.rail-flyout-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, transparent);
+  outline-offset: -2px;
+}
+
+.rail-flyout-item > svg {
+  flex: 0 0 auto;
+  color: var(--muted);
+}

@@ -45,7 +45,7 @@ function meaningfulTabLabel(label: string): string {
   return /^(?:Tab )?\d+$/.test(trimmed) ? "" : trimmed;
 }
 
-function nestedAgentTitle(pane: Pane, tabLabel: string): string[] {
+export function nestedAgentTitle(pane: Pane, tabLabel: string): string[] {
   const location = agentLocationName(pane);
   const agent = pane.agent?.trim() || "Agent";
   const primary = meaningfulTabLabel(tabLabel) || location || agent;

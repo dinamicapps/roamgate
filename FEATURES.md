@@ -26,6 +26,12 @@ A Web/PWA client for a running [Herdr](https://herdr.dev) server.
 - Desktop **Zen mode** hides app chrome and runs the terminal flush to every
   edge. Hover **Exit Zen** at the top to pull the topbar back, or click it to
   leave; the sidebar restores its previous state on exit.
+- On desktop, **Collapse sidebar** shrinks Workspaces to a rail of workspace
+  initials with agent status and pins. Hover or click an initial for a menu of
+  its nested workspace, agents, and worktrees; arrow keys, Shift+F10, and the
+  context menu work there too. **Expand sidebar** restores the previous width.
+  The rail always shows agents nested, keeps your layout preference, and is
+  browser-local; the Sidebar shortcut still hides it.
 
 Endpoint connections use **Local navigation** per browser/connection; legacy
 connections use **Shared navigation**. Reconnect preserves selections; reload

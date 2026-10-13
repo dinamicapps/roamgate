@@ -30,6 +30,11 @@
   background: var(--accent-active);
 }
 
+.resizer.is-inert {
+  cursor: default;
+  background: none;
+}
+
 .main {
   min-width: 0;
   min-height: 0;

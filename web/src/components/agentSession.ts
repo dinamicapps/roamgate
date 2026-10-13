@@ -50,7 +50,7 @@ export function shouldShowAgentStatusLabel(status?: string): boolean {
   return kind !== "idle" && kind !== "unknown";
 }
 
-const AGENT_STATE_PRIORITY: Record<AgentStateKind, number> = {
+export const AGENT_STATE_PRIORITY: Record<AgentStateKind, number> = {
   blocked: 5,
   working: 4,
   idle: 3,

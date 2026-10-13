@@ -30,6 +30,31 @@
   overflow: auto;
 }
 
+/* ===== collapsed rail (desktop) ===== */
+.workspace-rail {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  background: var(--shell-panel);
+  border: 1px solid var(--shell-border);
+  border-radius: 12px;
+  overflow: hidden auto;
+}
+
+.workspace-rail-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .tree-row {
   position: relative;
   display: flex;

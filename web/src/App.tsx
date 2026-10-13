@@ -23,6 +23,11 @@ import {
 } from "./annotations";
 import { roamgateLocalStorage, subscribeLocalStorage } from "./browserStorage";
 import {
+  parseSidebarRail,
+  SIDEBAR_RAIL_KEY,
+  serializeSidebarRail,
+} from "./sidebarRail";
+import {
   MOBILE_CONTROLS_PLACEMENT_STORAGE_KEY,
   readMobileControlsPlacement,
   writeMobileControlsPlacement,
@@ -252,6 +257,7 @@ const WorkspaceInspectorHost = lazyWithReload("workspace-inspector", () =>
 const MIN_SIDEBAR = 180;
 const MAX_SIDEBAR = 560;
 const DEFAULT_SIDEBAR = 284;
+const SIDEBAR_RAIL_WIDTH = 52;
 const THEME_KEY = "theme";
 const ACCENT_COLOR_KEY = "accentColor";
 const UI_SCALE_KEY = "uiScale";
@@ -393,6 +399,10 @@ function loadSidebarWidth(): number {
   return normalizeSidebarWidth(
     Number(roamgateLocalStorage.getItem("sidebarWidth")),
   );
+}
+
+function loadSidebarRail(): boolean {
+  return parseSidebarRail(roamgateLocalStorage.getItem(SIDEBAR_RAIL_KEY));
 }
 
 function loadTheme(): Theme {
@@ -1318,6 +1328,8 @@ export default function App() {
     );
   }, [s.activeConnectionId, s.connectionGeneration]);
   const [sidebarWidth, setSidebarWidth] = useState(loadSidebarWidth);
+  const [sidebarRail, setSidebarRail] = useState(loadSidebarRail);
+  const railActive = sidebarRail && !mobile;
   const [mobileView, setMobileView] = useState<MobileView>("session");
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [assistantMounted, setAssistantMounted] = useState(false);
@@ -3656,6 +3668,8 @@ export default function App() {
         if (key === null || key === ZEN_MODE_KEY) applyZenMode(loadZenMode());
         if (key === null || key === "sidebarWidth")
           setSidebarWidth(loadSidebarWidth());
+        if (key === null || key === SIDEBAR_RAIL_KEY)
+          setSidebarRail(loadSidebarRail());
         if (key === null || key === "annotationPanelMode")
           setAnnotationsFloating(
             roamgateLocalStorage.getItem("annotationPanelMode") !== "fixed",
@@ -3753,7 +3767,7 @@ export default function App() {
     // this discrete toggle through the same immediate-resize signal used for
     // mobile/desktop layout switches instead.
     window.dispatchEvent(new Event(LAYOUT_CHANGE_EVENT));
-  }, [sidebarHidden]);
+  }, [sidebarHidden, railActive]);
   useEffect(() => {
     const normalizedWidth = normalizeSidebarWidth(sidebarWidth);
     if (normalizedWidth !== sidebarWidth) {
@@ -3762,6 +3776,12 @@ export default function App() {
     }
     roamgateLocalStorage.setItem("sidebarWidth", String(normalizedWidth));
   }, [sidebarWidth]);
+  useEffect(() => {
+    roamgateLocalStorage.setItem(
+      SIDEBAR_RAIL_KEY,
+      serializeSidebarRail(sidebarRail),
+    );
+  }, [sidebarRail]);
 
   const setInspectorView = (view: InspectorView) => {
     const current = inspectorStateRef.current;
@@ -4327,7 +4347,9 @@ export default function App() {
 
       <div
         className={`body mobile-view-${mobileView}`}
-        style={{ gridTemplateColumns: `${sidebarWidth}px 6px minmax(0, 1fr)` }}
+        style={{
+          gridTemplateColumns: `${railActive ? SIDEBAR_RAIL_WIDTH : sidebarWidth}px 6px minmax(0, 1fr)`,
+        }}
       >
         <div className="sidebar">
           <div className="sidebar-content">
@@ -4355,14 +4377,20 @@ export default function App() {
               onViewAgentHistory={(pane) =>
                 setAgentHistoryInspectorOpen(true, pane)
               }
+              rail={railActive}
+              onRailChange={mobile ? undefined : setSidebarRail}
             />
           </div>
         </div>
-        <div
-          className="resizer"
-          onPointerDown={startResize}
-          title="Drag to resize sidebar"
-        />
+        {railActive ? (
+          <div className="resizer is-inert" aria-hidden="true" />
+        ) : (
+          <div
+            className="resizer"
+            onPointerDown={startResize}
+            title="Drag to resize sidebar"
+          />
+        )}
         <main className="main">
           <TabBar
             key={`${resourceUiKey}:tabs`}
