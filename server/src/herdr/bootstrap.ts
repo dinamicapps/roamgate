@@ -4,7 +4,7 @@ import { delimiter, join } from "node:path";
 import { HerdrClient } from "../bridge/herdr-client";
 import { assertSupportedHerdrProtocol } from "../bridge/protocol-compat";
 import { herdrManagedBinaryPath, installVerifiedHerdr } from "./release";
-import { installHerdrService } from "./service";
+import { installHerdrService, registerHerdrWindowsAutostart } from "./service";
 
 export type HerdrSetupState =
   | { state: "running"; version: string; protocol: number }
@@ -12,7 +12,13 @@ export type HerdrSetupState =
   | { state: "missing" };
 
 export type HerdrSetupResult =
-  | { outcome: "already-running"; version: string; protocol: number }
+  | {
+      outcome: "already-running";
+      version: string;
+      protocol: number;
+      /** Windows only: whether setup registered the missing logon task. */
+      autostartRegistered?: boolean;
+    }
   | {
       outcome: "started" | "installed-and-started";
       binaryPath: string;
@@ -38,6 +44,7 @@ export interface HerdrBootstrapDeps {
   ping?: () => Promise<{ version: string; protocol: number }>;
   installRelease?: () => Promise<{ binaryPath: string }>;
   installService?: (binaryPath: string) => void;
+  registerAutostart?: (binaryPath: string) => boolean;
   startTimeoutMs?: number;
   pollIntervalMs?: number;
   sleep?: (ms: number) => Promise<void>;
@@ -133,11 +140,25 @@ export async function setupHerdr(
 
   const state = await detectHerdrSetup({ ...deps, ping });
   if (state.state === "running") {
-    return {
-      outcome: "already-running",
+    const running = {
+      outcome: "already-running" as const,
       version: state.version,
       protocol: state.protocol,
     };
+    // A Herdr started by hand still needs to come back at the next logon.
+    const binaryPath =
+      (deps.platform ?? process.platform) === "win32"
+        ? findHerdrBinary(deps)
+        : null;
+    if (!binaryPath) return running;
+    const registerAutostart =
+      deps.registerAutostart ??
+      ((path: string) =>
+        registerHerdrWindowsAutostart(path, {
+          homeDir: deps.homeDir,
+          appDataDir: deps.appDataDir,
+        }));
+    return { ...running, autostartRegistered: registerAutostart(binaryPath) };
   }
 
   const binaryPath =

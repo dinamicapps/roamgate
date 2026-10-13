@@ -119,6 +119,11 @@ export async function runHerdrCommand(
       log(
         `Herdr is already running (version ${result.version}, protocol ${result.protocol}).`,
       );
+      if (result.autostartRegistered) {
+        log(
+          "Registered Herdr to start at logon; the running server was not restarted.",
+        );
+      }
     } else {
       log(
         result.outcome === "started"

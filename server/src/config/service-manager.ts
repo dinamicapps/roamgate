@@ -227,11 +227,27 @@ function waitForWindowsTaskStop(
   ]);
 }
 
+/**
+ * End a running task. Tasks run their program through `conhost --headless`,
+ * and `schtasks /End` only ends conhost: the hosted program would keep
+ * running, holding its port and the binary. The children of the task's
+ * conhost are listed before /End (while their parent is still alive) and
+ * stopped after it.
+ */
+export function endWindowsTask(taskName: string, runCommand: RunCommand) {
+  const task = powershellLiteral(taskName);
+  const script = `$ErrorActionPreference = 'SilentlyContinue'; $children = @(); $task = Get-ScheduledTask -TaskName ${task}; if ($task) { foreach ($action in $task.Actions) { $exe = [Environment]::ExpandEnvironmentVariables([string]$action.Execute); if ($exe -notlike '*\\conhost.exe') { continue }; $arguments = ([string]$action.Arguments).Trim(); foreach ($hostProcess in Get-CimInstance Win32_Process -Filter 'Name = ''conhost.exe''') { if ($hostProcess.CommandLine -and $hostProcess.CommandLine.TrimEnd().EndsWith($arguments, [StringComparison]::OrdinalIgnoreCase)) { $children += @(Get-CimInstance Win32_Process -Filter ('ParentProcessId = ' + $hostProcess.ProcessId) | ForEach-Object { $_.ProcessId }) } } } }; schtasks.exe /End /TN ${task} | Out-Null; foreach ($child in $children) { Stop-Process -Id $child -Force }; exit 0`;
+  runCommand(
+    ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script],
+    { quiet: true },
+  );
+}
+
 export function restartWindowsTask(
   taskName: string,
   runCommand: RunCommand,
 ): number {
-  runCommand(["schtasks.exe", "/End", "/TN", taskName], { quiet: true });
+  endWindowsTask(taskName, runCommand);
   const waitCode = waitForWindowsTaskStop(taskName, runCommand);
   if (waitCode !== 0) return waitCode;
   return runCommand(["schtasks.exe", "/Run", "/TN", taskName]);
@@ -545,7 +561,7 @@ function isPublishedLegacyDefinition(
     platform === "systemd"
       ? renderSystemdService(binary, paths.config)
       : platform === "windows-task"
-        ? renderWindowsTaskDefinition(binary, paths)
+        ? renderWindowsTaskDefinition(binary, paths, { direct: true })
         : renderLaunchdService(binary, {
             ...paths,
             stdoutLog: join(
@@ -811,9 +827,7 @@ function uninstallService(
       return 0;
     }
     if (taskExists) {
-      runCommand(["schtasks.exe", "/End", "/TN", taskName], {
-        quiet: true,
-      });
+      endWindowsTask(taskName, runCommand);
       const waitCode = waitForWindowsTaskStop(taskName, runCommand);
       if (waitCode !== 0) return waitCode;
       const deleteCode = runCommand([

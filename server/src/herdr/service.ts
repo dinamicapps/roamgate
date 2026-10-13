@@ -12,8 +12,10 @@ import { dirname, join } from "node:path";
 import { dirname as win32Dirname } from "node:path/win32";
 import {
   escapeSystemdExecPath,
+  powershellSingleQuotedString,
   resolveServicePlatform,
   type ServicePlatform,
+  windowsHeadlessTaskAction,
   xmlEscape,
 } from "../config/service-definitions";
 import {
@@ -142,27 +144,18 @@ ${programArguments}
 `;
 }
 
-function powershellSingleQuotedString(value: string): string {
-  return `'${value.replaceAll("'", "''")}'`;
-}
-
 export function renderHerdrWindowsTask(
   binaryPath: string,
   paths: HerdrServicePaths,
 ): string {
   if (!paths.taskName) throw new Error("Windows service task name is missing");
   const taskName = powershellSingleQuotedString(paths.taskName);
-  const executable = powershellSingleQuotedString(binaryPath);
-  const argument = powershellSingleQuotedString("server");
-  const workingDirectory = powershellSingleQuotedString(
-    win32Dirname(binaryPath),
-  );
 
   return `\uFEFF# ${HERDR_SERVICE_MARKER}
 $ErrorActionPreference = "Stop"
 $taskName = ${taskName}
 $user = [Security.Principal.WindowsIdentity]::GetCurrent().Name
-$action = New-ScheduledTaskAction -Execute ${executable} -Argument ${argument} -WorkingDirectory ${workingDirectory}
+${windowsHeadlessTaskAction(binaryPath, "server", win32Dirname(binaryPath))}
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $user
 $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Limited
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1)
@@ -279,6 +272,34 @@ export function installHerdrService(
     "scheduled task start",
   );
   return paths;
+}
+
+/**
+ * Register the Windows logon task for a Herdr server that is already running,
+ * without starting or restarting it: a restart would end the user's open
+ * terminals. An existing task is left as is. Returns whether it registered.
+ */
+export function registerHerdrWindowsAutostart(
+  binaryPath: string,
+  deps: HerdrServiceDeps = {},
+): boolean {
+  const { homeDir, appDataDir, runCommand } = resolveDeps(deps);
+  const paths = resolveHerdrServicePaths("windows-task", homeDir, appDataDir);
+  const task = queryWindowsTask(paths.taskName ?? "", runCommand);
+  if (task.status === "error") {
+    throw new Error(`scheduled task query failed (exit ${task.code})`);
+  }
+  if (task.status === "exists") return false;
+  assertHerdrDefinitionWritable(paths.definition);
+  writeHerdrDefinition(
+    paths.definition,
+    renderHerdrWindowsTask(binaryPath, paths),
+  );
+  assertRunSucceeded(
+    registerWindowsTask(paths.definition, runCommand),
+    "scheduled task registration",
+  );
+  return true;
 }
 
 export function herdrServiceStatus(deps: HerdrServiceDeps = {}): {

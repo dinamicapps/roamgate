@@ -139,6 +139,72 @@ describe("setupHerdr", () => {
     expect(installs).toBe(0);
   });
 
+  test("registers logon autostart for a running Windows Herdr without restarting it", async () => {
+    const homeDir = scratch();
+    const pathDir = scratch();
+    const binaryPath = join(pathDir, "herdr.exe");
+    writeFileSync(binaryPath, "path");
+    const registered: string[] = [];
+    let serviceInstalls = 0;
+    const result = await setupHerdr({
+      platform: "win32",
+      homeDir,
+      pathEnv: pathDir,
+      ping: reachablePing,
+      installService: () => {
+        serviceInstalls += 1;
+      },
+      registerAutostart: (path) => {
+        registered.push(path);
+        return true;
+      },
+    });
+    expect(result).toEqual({
+      outcome: "already-running",
+      version: VERIFIED_HERDR_VERSION,
+      protocol: 22,
+      autostartRegistered: true,
+    });
+    expect(registered).toEqual([binaryPath]);
+    expect(serviceInstalls).toBe(0);
+  });
+
+  test("leaves an existing Windows autostart task untouched", async () => {
+    const pathDir = scratch();
+    writeFileSync(join(pathDir, "herdr.exe"), "path");
+    const result = await setupHerdr({
+      platform: "win32",
+      homeDir: scratch(),
+      pathEnv: pathDir,
+      ping: reachablePing,
+      registerAutostart: () => false,
+    });
+    expect(result).toEqual({
+      outcome: "already-running",
+      version: VERIFIED_HERDR_VERSION,
+      protocol: 22,
+      autostartRegistered: false,
+    });
+  });
+
+  test("does not register autostart for a running Herdr outside Windows", async () => {
+    const pathDir = scratch();
+    writeFileSync(join(pathDir, "herdr"), "path");
+    let registrations = 0;
+    const result = await setupHerdr({
+      platform: "linux",
+      homeDir: scratch(),
+      pathEnv: pathDir,
+      ping: reachablePing,
+      registerAutostart: () => {
+        registrations += 1;
+        return true;
+      },
+    });
+    expect(result.outcome).toBe("already-running");
+    expect(registrations).toBe(0);
+  });
+
   test("starts an installed binary as a service without downloading", async () => {
     const homeDir = scratch();
     const pathDir = scratch();

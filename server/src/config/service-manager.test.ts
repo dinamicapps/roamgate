@@ -15,6 +15,7 @@ import legacyDefinitions from "./service-legacy-definitions.test.json";
 import { tmpdir } from "node:os";
 import {
   runServiceCommand as runServiceCommandWithLegacyCheck,
+  endWindowsTask,
   queryWindowsTask,
   SERVICE_COMMAND_CONTINUE,
 } from "./service-manager";
@@ -101,6 +102,16 @@ function isWindowsTaskQuery(argv: string[]): boolean {
   );
 }
 
+function isWindowsTaskEnd(argv: string[]): boolean {
+  const script = argv.at(-1) ?? "";
+  return (
+    argv[0] === "powershell.exe" &&
+    argv.includes("-Command") &&
+    script.includes("schtasks.exe /End /TN") &&
+    script.includes("Stop-Process")
+  );
+}
+
 function isWindowsTaskWait(argv: string[]): boolean {
   const script = argv.at(-1) ?? "";
   return (
@@ -115,6 +126,29 @@ afterEach(() => {
   for (const path of tempDirs.splice(0)) {
     rmSync(path, { recursive: true, force: true });
   }
+});
+
+test("ending a Windows task also ends the program its headless conhost hosts", () => {
+  const commands: string[][] = [];
+  endWindowsTask("dev.roamgate-o'test", (argv) => {
+    commands.push(argv);
+    return 0;
+  });
+
+  expect(commands).toHaveLength(1);
+  expect(isWindowsTaskEnd(commands[0])).toBeTrue();
+  const script = commands[0].at(-1) ?? "";
+  expect(script).toContain("-TaskName 'dev.roamgate-o''test'");
+  expect(script).toContain("schtasks.exe /End /TN 'dev.roamgate-o''test'");
+  // Only conhost hosts are walked, and their children are listed before
+  // /End so they can still be found by parent once conhost is gone.
+  expect(script).toContain("-notlike '*\\conhost.exe'");
+  expect(script.indexOf("ParentProcessId")).toBeLessThan(
+    script.indexOf("schtasks.exe /End"),
+  );
+  expect(script.indexOf("schtasks.exe /End")).toBeLessThan(
+    script.indexOf("Stop-Process"),
+  );
 });
 
 test("Windows task queries distinguish registration from running state", () => {
@@ -174,7 +208,7 @@ describe("service definition rendering", () => {
     expect(definition).toContain("exec &quot;$2&quot;");
   });
 
-  test("renders a direct-executable Windows login task", () => {
+  test("renders a headless Windows login task", () => {
     const definition = renderWindowsTaskDefinition(
       "C:\\Program Files\\Herdr's GUI\\roamgate.exe",
       {
@@ -186,10 +220,10 @@ describe("service definition rendering", () => {
 
     expect(definition.charCodeAt(0)).toBe(0xfeff);
     expect(definition).toContain(
-      "New-ScheduledTaskAction -Execute 'C:\\Program Files\\Herdr''s GUI\\roamgate.exe'",
+      "New-ScheduledTaskAction -Execute (Join-Path $env:SystemRoot 'System32\\conhost.exe')",
     );
     expect(definition).toContain(
-      'service run "C:\\Users\\tester\\AppData\\Roaming\\roamgate\\roamgate.env"',
+      `-Argument '--headless "C:\\Program Files\\Herdr''s GUI\\roamgate.exe" service run "C:\\Users\\tester\\AppData\\Roaming\\roamgate\\roamgate.env"'`,
     );
     expect(definition).toContain("$taskName = 'dev.roamgate-test-user'");
     expect(definition).toContain("-AllowStartIfOnBatteries");
@@ -1055,9 +1089,8 @@ process.exit(typeof code === "number" ? code : 2);`,
     const definition = readFileSync(definitionPath, "utf8");
     expect(definition.charCodeAt(0)).toBe(0xfeff);
     expect(definition).toContain(
-      `New-ScheduledTaskAction -Execute '${executable}'`,
+      `-Argument '--headless "${executable}" service run "${configPath}"'`,
     );
-    expect(definition).toContain(`service run "${configPath}"`);
     expect(readFileSync(configPath, "utf8")).toContain("HOST=0.0.0.0");
     expect(
       readFileSync(join(appDataDir, "roamgate", "auth-token"), "utf8").trim(),
@@ -1137,7 +1170,7 @@ process.exit(typeof code === "number" ? code : 2);`,
     });
 
     expect(code).toBe(0);
-    expect(commands.some((argv) => argv[1] === "/End")).toBeTrue();
+    expect(commands.some(isWindowsTaskEnd)).toBeTrue();
     expect(commands.some((argv) => argv[1] === "/Delete")).toBeTrue();
     expect(commands.filter(isWindowsTaskQuery)).toHaveLength(2);
     expect(taskExists).toBeFalse();
@@ -1252,7 +1285,7 @@ process.exit(typeof code === "number" ? code : 2);`,
         },
       }),
     ).toBe(7);
-    expect(commands.some((argv) => argv[1] === "/End")).toBeTrue();
+    expect(commands.some(isWindowsTaskEnd)).toBeTrue();
     expect(commands.some(isWindowsTaskWait)).toBeTrue();
     expect(commands.some((argv) => argv[1] === "/Run")).toBeFalse();
   });

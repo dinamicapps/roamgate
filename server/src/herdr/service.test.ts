@@ -74,15 +74,19 @@ describe("service definition renderers", () => {
     expect(plist).toContain("<key>KeepAlive</key>");
   });
 
-  test("windows task starts herdr server at logon from its install directory", () => {
+  test("windows task starts herdr server headless at logon from its install directory", () => {
     const script = renderHerdrWindowsTask("C:\\herdr\\herdr.exe", {
       definition: "C:\\cfg\\herdr-task.ps1",
       taskName: "dev.roamgate.herdr-abc123",
     });
     expect(script).toContain(HERDR_SERVICE_MARKER);
     expect(script).toContain("$taskName = 'dev.roamgate.herdr-abc123'");
-    expect(script).toContain("-Execute 'C:\\herdr\\herdr.exe'");
-    expect(script).toContain("-Argument 'server'");
+    expect(script).toContain(
+      "-Execute (Join-Path $env:SystemRoot 'System32\\conhost.exe')",
+    );
+    expect(script).toContain(
+      `-Argument '--headless "C:\\herdr\\herdr.exe" server'`,
+    );
     expect(script).toContain("-WorkingDirectory 'C:\\herdr'");
   });
 });

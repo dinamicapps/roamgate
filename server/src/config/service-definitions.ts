@@ -143,26 +143,46 @@ WantedBy=default.target
 `;
 }
 
-function powershellSingleQuotedString(value: string): string {
+export function powershellSingleQuotedString(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
 }
 
+// A console program started by an Interactive logon task opens a visible
+// window. conhost --headless hosts it without one, so the task runs in the
+// background like a service.
+export function windowsHeadlessTaskAction(
+  binaryPath: string,
+  args: string,
+  workingDirectory?: string,
+): string {
+  const argument = powershellSingleQuotedString(
+    `--headless "${binaryPath}" ${args}`,
+  );
+  const directory = workingDirectory
+    ? ` -WorkingDirectory ${powershellSingleQuotedString(workingDirectory)}`
+    : "";
+  return `$action = New-ScheduledTaskAction -Execute (Join-Path $env:SystemRoot 'System32\\conhost.exe') -Argument ${argument}${directory}`;
+}
+
+// `direct` reproduces the published 0.7.0 template, which ran the binary
+// itself; legacy detection compares installed definitions against it.
 export function renderWindowsTaskDefinition(
   binaryPath: string,
   paths: ServicePaths,
+  { direct = false }: { direct?: boolean } = {},
 ): string {
   if (!paths.taskName) throw new Error("Windows service task name is missing");
   const taskName = powershellSingleQuotedString(paths.taskName);
-  const executable = powershellSingleQuotedString(binaryPath);
-  const argumentsValue = powershellSingleQuotedString(
-    `service run "${paths.config}"`,
-  );
+  const runArguments = `service run "${paths.config}"`;
+  const action = direct
+    ? `$action = New-ScheduledTaskAction -Execute ${powershellSingleQuotedString(binaryPath)} -Argument ${powershellSingleQuotedString(runArguments)}`
+    : windowsHeadlessTaskAction(binaryPath, runArguments);
 
   return `\uFEFF# ${GENERATED_MARKER}
 $ErrorActionPreference = "Stop"
 $taskName = ${taskName}
 $user = [Security.Principal.WindowsIdentity]::GetCurrent().Name
-$action = New-ScheduledTaskAction -Execute ${executable} -Argument ${argumentsValue}
+${action}
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $user
 $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Limited
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1)
