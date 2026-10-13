@@ -33,3 +33,19 @@
     detalle: incompatibilidades de configuracion detectadas antes de que las reporten los devs
     tipo: outcome
   work: "20261012-dist-windows-roamgate"
+- arte: verificar
+  categoria: error-en-sistema
+  causa_atribuida: 'Las pruebas usan un runCommand falso: validan la secuencia de comandos, no el arbol de procesos real.'
+  disparador: 'Cuando se cambia COMO un supervisor (Task Scheduler, systemd, launchd) lanza un proceso: wrapper, shell intermedio, conhost.'
+  evidencia:
+    - ancla: server/src/config/service-manager.ts:237
+      tipo: codebase
+    - ancla: 20261013-instalador-todo-en-uno/T-001
+      tipo: work-record
+  fecha: "2026-10-13"
+  leccion_candidata: Al introducir un proceso intermedio en un supervisor, verifica en vivo que detener y reiniciar terminan al nieto, no solo al hijo directo.
+  observacion: Envolver la tarea en conhost --headless paso todas las pruebas unitarias, pero schtasks /End dejaba vivo al roamgate.exe hijo con el puerto tomado; solo se vio al reinstalar en vivo.
+  verificacion:
+    detalle: el operador ve en la verificacion una prueba de stop/restart que cuenta procesos del binario final
+    tipo: humana
+  work: "20261013-instalador-todo-en-uno"

@@ -1,0 +1,28 @@
+﻿
+  roamgate - instalador (dist dinamicapps)
+  ----------------------------------------
+  [ok]    Windows
+  [ok]    Herdr: C:\Users\julio\.herdr\packages\standalone\releases\0.9.1-x86_64-pc-windows-msvc\herdr.exe
+  [upd]   roamgate  v0.7.15-dinamicapps.3 -> v0.7.15-dinamicapps.4  (sha 7eea2c9)
+          -> E:\DinamicAPPS\roamgate-dist\roamgate.exe
+  [ok]    roamgate.exe --version: 0.7.15-dinamicapps.4
+  [ok]    configuracion: C:\Users\julio\AppData\Roaming\roamgate\roamgate.env  (HOST=100.82.222.117, PORT=8789)
+  [..]    Herdr: .\roamgate.exe herdr setup
+          Herdr is already running (version 0.9.1, protocol 22).
+  [..]    Roamgate: .\roamgate.exe service install
+          CORRECTO: se ha intentado ejecutar la tarea programada "dev.roamgate-82e89b83b57e2645".
+          Installed windows-task service: C:\Users\julio\AppData\Roaming\roamgate\roamgate-task.ps1
+          Preserved service config: C:\Users\julio\AppData\Roaming\roamgate\roamgate.env
+          Authentication: fixed password from the service config
+          Open: http://100.82.222.117:8789
+  [ok]    Roamgate escucha en 100.82.222.117:8789
+
+  Listo. Roamgate y Herdr arrancan solos al iniciar sesion.
+
+    Abre:        http://100.82.222.117:8789
+    Contrasena:  la de C:\Users\julio\AppData\Roaming\roamgate\roamgate.env (ROAMGATE_PASSWORD)
+
+    Estado:      .\roamgate.exe service status   |   .\roamgate.exe herdr status
+    Reiniciar:   .\roamgate.exe service restart  (tras editar roamgate.env)
+    Quitar:      .\roamgate.exe service uninstall
+

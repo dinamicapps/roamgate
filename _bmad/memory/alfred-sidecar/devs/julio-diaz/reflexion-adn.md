@@ -45,3 +45,17 @@
     detalle: el operador no vuelve a ver propuestas de diferir CAs verificables en el host
     tipo: humana
   work: "20261012-tab-archivos-vinculado"
+- arte: decidir
+  categoria: acierto-repetible
+  causa_atribuida: El abordaje con evidencia de Herdr (pipe en APPDATA, ConPTY) mostro que un servicio en sesion 0 no podia funcionar.
+  disparador: Cuando el usuario pide un servicio o arranque automatico y la evidencia muestra un mecanismo de usuario ya implementado.
+  evidencia:
+    - ancla: 20261013-instalador-todo-en-uno/W-01
+      tipo: work-record
+  fecha: "2026-10-13"
+  leccion_candidata: Antes de aceptar la palabra del usuario (servicio) como requisito tecnico, contrasta con la evidencia del contexto de ejecucion y propone el mecanismo que la evidencia sostiene.
+  observacion: 'La ruta acotado fue acertada: las piezas ya existian en el server (service install, herdr setup) y el work fue orquestarlas; descartar el servicio de Windows clasico en el abordaje evito un rediseno.'
+  verificacion:
+    detalle: la propuesta de ruta declara por que se descarta la interpretacion literal cuando la evidencia la contradice
+    tipo: humana
+  work: "20261013-instalador-todo-en-uno"

@@ -1,0 +1,17 @@
+﻿precondicion: herdr NO esta en el PATH
+
+  roamgate - instalador (dist dinamicapps)
+  ----------------------------------------
+  [ok]    Windows
+  [..]    Herdr no esta instalado: instalando desde https://herdr.dev ...
+          ==> Fetching Herdr stable manifest
+          ==> Installing Herdr 0.9.3 for x86_64-pc-windows-msvc
+          ==> Downloading Herdr
+          ==> PATH updated for future PowerShell sessions.
+          ==> Current PowerShell session: herdr
+          ==> Future PowerShell windows: open a new PowerShell window and run: herdr
+          Herdr 0.9.3 installed successfully.
+  [ok]    Herdr instalado: C:\Users\julio\AppData\Local\Temp\claude\E--DinamicAPPS-github-roamgate\f03b827a-7f49-40d6-8966-d2c76fb2700b\scratchpad\herdr-iso\home\packages\standalone\releases\0.9.3-x86_64-pc-windows-msvc\herdr.exe
+  [ABORT] -Password debe tener entre 15 y 1024 caracteres (tiene 5).
+          
+            No se instalo nada.

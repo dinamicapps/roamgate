@@ -47,3 +47,17 @@
     detalle: defectos de entorno detectados en E4 y no despues del cierre
     tipo: outcome
   work: "20261012-tab-archivos-vinculado"
+- arte: verificar
+  categoria: acierto-repetible
+  causa_atribuida: Los fallos estaban en la interaccion con el SO (arbol de procesos, entorno heredado de Herdr, StrictMode) que ninguna prueba aislada reproduce.
+  disparador: Cuando el entregable es un script de instalacion o despliegue que toca estado del sistema operativo.
+  evidencia:
+    - ancla: 20261013-instalador-todo-en-uno/T-005
+      tipo: work-record
+  fecha: "2026-10-13"
+  leccion_candidata: Verifica instaladores corriendolos de verdad por escenario, aislando el estado real (respaldo del registro, APPDATA/HOME temporales, nombres de tarea distintos) en vez de conformarte con parseo y unitarias.
+  observacion: Ejecutar el instalador real en escenarios (limpio, misma version, actualizar con tarea viva, -SinServicio, Herdr aislado) destapo 3 defectos que unitarias y parseo no veian.
+  verificacion:
+    detalle: la verificacion de un instalador lista escenarios ejecutados con su salida en evidencia/
+    tipo: humana
+  work: "20261013-instalador-todo-en-uno"
